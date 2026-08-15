@@ -57,6 +57,9 @@ ENV NODE_ENV=production
 
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/packages/contracts/node_modules ./packages/contracts/node_modules
+# pnpm's isolated linker puts each service's direct dependencies (including the
+# @straitsx/contracts workspace link) under that service's node_modules.
+COPY --from=deps /app/services ./services
 COPY . .
 
 # Non-root. node:alpine ships uid 1000 `node`; nothing in the image needs write
@@ -72,5 +75,7 @@ HEALTHCHECK --interval=15s --timeout=3s --start-period=20s --retries=3 \
   CMD node -e "fetch('http://127.0.0.1:'+process.env.PORT+'/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 
 ENTRYPOINT ["/sbin/tini", "--"]
-# Shell form via sh -c so SERVICE_ENTRY expands at runtime.
-CMD ["sh", "-c", "exec pnpm exec tsx \"$SERVICE_ENTRY\""]
+# Execute the installed binary directly. Invoking pnpm here delegates to
+# Corepack, which needs a writable cache and may attempt a network download at
+# container startup; neither is available in a read-only production task.
+CMD ["sh", "-c", "exec ./node_modules/.bin/tsx \"$SERVICE_ENTRY\""]

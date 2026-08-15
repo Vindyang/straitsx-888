@@ -59,10 +59,11 @@ service discovery that silently goes stale is worse than none.
 
 Since C already runs ECS/Fargate in this cluster, A/B joins it.
 
-**Consequence: A/B needs Dockerfiles and none exist.** `services/{ledger,policy,signer,chain-gateway}`
-have no container build today. C's `services/dashboard/Dockerfile` and
-`services/agent-orchestrator/Dockerfile` are the reference for the house style (non-root,
-read-only, digest-pinned).
+**Container build:** one parameterised root `Dockerfile` builds ledger, policy, signer, and
+chain-gateway from the pnpm workspace. Keeping one build definition prevents runtime and
+hardening drift between four otherwise identical service images. The images run as `node`, use
+`tini`, and support a read-only root filesystem. Local builds and smoke tests passed on
+2026-08-16; registry push and ECS deployment remain separate steps.
 
 ---
 
@@ -181,12 +182,36 @@ That is the claim that matters: the rail holds against a caller that has already
 signer, which is the compromised-policy-service scenario from
 [execution_plan.md §12b 2.2](execution_plan.md).
 
+### Container build and smoke verification (2026-08-16)
+
+The root Dockerfile was built with the frozen pnpm lockfile for these local tags:
+
+```
+straitsx/ledger-service:local       services/ledger-service/src/index.ts       4001
+straitsx/policy-service:local       services/policy-service/src/index.ts       4002
+straitsx/signer-service:local       services/signer-service/src/main.ts        4003
+straitsx/chain-gateway:local        services/chain-gateway/src/main.ts          4004
+```
+
+Image inspection confirmed `User=node`, the matching exposed port, and the `/health`
+healthcheck for each tag. All four containers became healthy with `--read-only` and a `/tmp`
+tmpfs, and each loopback `/health` request returned 2xx. The signer used the public dev-only
+private-scalar-1 vector, derived `0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf`, and reported
+`kmsKeyId: null`; no KMS or signing call occurred. Filesystem scans returned only
+`/app/.env.example`, confirming the developer `.env` was not included.
+
+The baseline also caught and corrected two runtime-only issues: Corepack needed a writable cache
+when `pnpm exec` was used as the container command, and the runtime image omitted pnpm's
+service-local workspace links. The final image calls the installed `tsx` binary directly and
+copies the installed service workspace trees from the dependency stage. Temporary containers
+were removed, local images were retained, and no image was pushed.
+
 ---
 
 ## 8. Not yet done
 
-- **No A/B Dockerfiles.** Blocks step 4 entirely.
-- **A/B is not deployed.** Sections 3 and 6 are the plan, not a record.
+- **A/B images are not pushed or deployed.** The shared Dockerfile and four local images are
+  verified, but sections 3 and 6 remain the deployment plan rather than a deployment record.
 - **The isolation screenshot is outstanding.** Needs a task in the orchestrator SG — not
   blocked on Module C being finished, only on A/B being reachable.
 - **Mainnet is untouched.** `registry.json` has no 43114 address (A5), the production 402 is

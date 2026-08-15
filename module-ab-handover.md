@@ -26,6 +26,7 @@ on-chain evidence.
 | A17 nonce decision | **Complete** — canonical intent hash and fixed-width commitment nonce are active |
 | A18 production 402 | Script written; blocked on organiser clearance |
 | A5 mainnet registry | **Not done.** Last item blocked on nobody |
+| A/B containers | **Locally verified** — four images build and pass read-only health smoke tests; not pushed or deployed |
 | B checks 1–9 | Complete |
 | B escalation auth | Complete — EIP-191 signature verification, added this session |
 
@@ -146,6 +147,29 @@ automatically and EC2 would require hand-maintaining.
 Steps 1 and 3 are applied in `808198486011` and must be repeated in C's account.
 Full detail in [docs/deployment.md](docs/deployment.md).
 
+### Local container evidence (2026-08-16)
+
+The shared root `Dockerfile` now builds all four local images with Docker Engine 28.0.1:
+
+| Image | Entry | Port | Result |
+| --- | --- | ---: | --- |
+| `straitsx/ledger-service:local` | `services/ledger-service/src/index.ts` | 4001 | healthy; `/health` → `{"ok":true}` |
+| `straitsx/policy-service:local` | `services/policy-service/src/index.ts` | 4002 | healthy; `/health` → `{"ok":true}` |
+| `straitsx/signer-service:local` | `services/signer-service/src/main.ts` | 4003 | healthy; public dev key derived `0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf`, `kmsKeyId: null` |
+| `straitsx/chain-gateway:local` | `services/chain-gateway/src/main.ts` | 4004 | healthy; `/health` → `{"ok":true}` |
+
+The first unchanged-image smoke run produced two useful failures in sequence: Corepack tried to
+create `/home/node/.cache` on the read-only filesystem, then the service could not resolve the
+service-local `@straitsx/contracts` pnpm link. The Dockerfile now executes its installed `tsx`
+binary directly and carries the service workspace dependency trees from the dependency stage.
+
+All final images declare user `node`, the intended exposed port and `/health` healthcheck. Each
+container ran with `--read-only` and a `/tmp` tmpfs, and every loopback health probe returned 2xx.
+An image filesystem scan found only `/app/.env.example`; the local `.env` was neither copied nor
+mounted. The signer used the public test vector for private scalar 1 with local-key mode explicitly
+enabled, made no signing request, and did not contact AWS KMS. Temporary containers were removed;
+the four local images were retained and **not pushed**.
+
 ## 6. What C must know about A/B
 
 - **`POST /sign` requires `accepted` and `resource`.** Deploy A and B from the **same commit**;
@@ -168,15 +192,10 @@ on nobody. Its own note calls leaving it late *"unrecoverable"*: if production c
 never arrives, a mainnet registry plus a real mainnet XSGD movement is the fallback that keeps
 the submission compliant. 0.2 AVAX is already there.
 
-**2. No A/B Dockerfiles were building at handover.** `Dockerfile` + `.dockerignore` exist at
-the repo root, parameterised by `SERVICE_ENTRY`/`SERVICE_PORT`, and every path they reference
-is verified present — but **the image has never been built**, because the Docker daemon was not
-running. Build all four before trusting it.
-
-**3. A15 screenshot** — needs A/B reachable in C's cluster. Use C's probe, not ours: ours
+**2. A15 screenshot** — needs A/B reachable in C's cluster. Use C's probe, not ours: ours
 checks one target and cannot prove the positive controls.
 
-**4. A18 production 402** — `scripts/probe-production-402.ts` refuses to run without an explicit
+**3. A18 production 402** — `scripts/probe-production-402.ts` refuses to run without an explicit
 `--url` and `--cleared`. Until it runs, `MAINNET.settlementRecipient` and `eip712Version` stay
 `null` and every mainnet path refuses. That refusal is the safety property.
 
