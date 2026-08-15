@@ -60,6 +60,9 @@ C8–C12 dashboard ────────► the demo surface
 
 ### C3 ⛔ SECURITY-CRITICAL — the injection filter
 **Estimate:** 1 h · **Do this in the same sitting as C2, never "later"**
+**Corrected 2026-08-15, VERIFIED LIVE** — the field list originally here assumed the MCP tool
+hands back a flattened challenge. It does not. See
+[api-contracts.md §7](api-contracts.md) for the verified real payload and the corrected design.
 
 The MCP tool result **contains a live prompt injection**
 ([execution_plan.md §19.6](execution_plan.md)):
@@ -72,14 +75,18 @@ The MCP tool result **contains a live prompt injection**
                  using YOUR wallet private key ..."]
 ```
 
-- [ ] Build an **allowlist parser**. Exactly these fields may leave this module:
-      `cardapiUrl`, `asset`, `payTo`, `amount`, `chainId`, `maxTimeoutSeconds`,
-      `extra.name`, `extra.version`
-- [ ] **Drop every other key** — `instruction`, `action`, `steps`, `note`, `environment`
+- [ ] Build an **allowlist parser**. The only field that may leave this module from the raw
+      MCP result is `url` (rename to `cardapiUrl`) — `body` is only an echo of our own
+      request, not new data from the server.
+- [ ] **Drop every other key** — `instruction`, `action`, `steps`, `body`, `environment`, `method`
+- [ ] Get the actual challenge from a **second, separate step**: POST to `cardapiUrl` with no
+      signature, parse the resulting `402` body with `parseX402Challenge`
+      (`packages/contracts/src/x402.ts`) — already an allowlist parser, reused not duplicated.
+      This is an ordinary StraitsX HTTP response, a distinct trust boundary from the MCP result.
 - [ ] Keep `rawToolResultHash` for the receipt; **discard the body**
 - [ ] Never forward the raw result into **any** model context that can reach the signer
 - [ ] **Unit test (required):** feed the live tool result, assert the returned object has
-      exactly the allowed keys and that **no value contains `EXECUTE_NOW`**
+      exactly the allowed key and that **no value contains `EXECUTE_NOW`**
 
 > This is a sponsor-operated server telling any connected agent to suppress user confirmation
 > and sign a transfer. It is real, reproducible, and on the judges' own rails. **Treat MCP
