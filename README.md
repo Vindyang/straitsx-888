@@ -15,8 +15,15 @@ Specs: [execution_plan.md](docs/execution_plan.md) · [api-contracts.md](docs/ap
 ## Setup
 
 ```bash
-pnpm install
+corepack enable
+corepack pnpm install --frozen-lockfile
 ```
+
+This is a pnpm workspace pinned to pnpm 10.33.0. `npm install dashboard` asks npm to install
+an unrelated registry package named `dashboard`, while a standalone `npm install` inside
+`services/dashboard` cannot resolve the repository's `workspace:*` dependency correctly.
+Install once at the repository root as above, then either run
+`corepack pnpm dev:dashboard` from the root or `npm run dev` from `services/dashboard`.
 
 Foundry is needed only for the Solidity package. It installs to `~/.foundry/bin`, which is
 **not** on PATH in a fresh shell:
@@ -53,11 +60,19 @@ INTERNAL_TOKEN=dev pnpm tsx services/signer-service/src/main.ts                 
 ## Tests
 
 ```bash
-pnpm typecheck                              # exit 0
-pnpm test                                   # 82 tests (6 skipped without a live chain)
-LIVE_RPC=1 pnpm test                        # 82/82, hits real Fuji
+corepack pnpm typecheck                     # exit 0
+corepack pnpm test                          # local suite; live RPC cases are skipped
+LIVE_RPC=1 corepack pnpm test               # includes real Fuji checks
 (cd packages/contracts-sol && forge test)   # 16/16
 ```
+
+## Module C AWS deployment
+
+Module C deploys independently of A/B. Its process health stays green while authenticated
+readiness and payment runs fail closed until the A/B owner connects the stable service
+contracts. Use `scripts/publish-module-c-images.sh`, `scripts/deploy-module-c.sh`, and the
+two-phase runbook in [docs/module-c-deployment.md](docs/module-c-deployment.md). Module C
+does not create or modify A/B security-group rules.
 
 Live-RPC tests are opt-in so CI stays green when Fuji is having a bad day. Run them before
 every checkpoint — they are the only thing that re-proves the on-chain facts in

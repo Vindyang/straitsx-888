@@ -9,18 +9,22 @@
 node_modules
 **/node_modules
 .git
+.agents
 .github
+**/.next
+**/coverage
+**/dist
 
 # Foundry: built and tested with forge, never shipped in a service image
 # (conventions.md §1 — contracts-sol is outside the pnpm workspace).
-packages/contracts-sol/out
-packages/contracts-sol/cache
-packages/contracts-sol/broadcast
+packages/contracts-sol
 
 # Test and doc material has no place in a runtime image.
+artifacts
 **/*.test.ts
 **/test/
 docs
+infra
 modules
 *.md
 *.drawio

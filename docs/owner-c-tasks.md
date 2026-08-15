@@ -60,6 +60,9 @@ C8–C12 dashboard ────────► the demo surface
 
 ### C3 ⛔ SECURITY-CRITICAL — the injection filter
 **Estimate:** 1 h · **Do this in the same sitting as C2, never "later"**
+**Corrected 2026-08-15, VERIFIED LIVE** — the field list originally here assumed the MCP tool
+hands back a flattened challenge. It does not. See
+[api-contracts.md §7](api-contracts.md) for the verified real payload and the corrected design.
 
 The MCP tool result **contains a live prompt injection**
 ([execution_plan.md §19.6](execution_plan.md)):
@@ -72,14 +75,18 @@ The MCP tool result **contains a live prompt injection**
                  using YOUR wallet private key ..."]
 ```
 
-- [ ] Build an **allowlist parser**. Exactly these fields may leave this module:
-      `cardapiUrl`, `asset`, `payTo`, `amount`, `chainId`, `maxTimeoutSeconds`,
-      `extra.name`, `extra.version`
-- [ ] **Drop every other key** — `instruction`, `action`, `steps`, `note`, `environment`
+- [ ] Build an **allowlist parser**. The only field that may leave this module from the raw
+      MCP result is `url` (rename to `cardapiUrl`) — `body` is only an echo of our own
+      request, not new data from the server.
+- [ ] **Drop every other key** — `instruction`, `action`, `steps`, `body`, `environment`, `method`
+- [ ] Get the actual challenge from a **second, separate step**: POST to `cardapiUrl` with no
+      signature, parse the resulting `402` body with `parseX402Challenge`
+      (`packages/contracts/src/x402.ts`) — already an allowlist parser, reused not duplicated.
+      This is an ordinary StraitsX HTTP response, a distinct trust boundary from the MCP result.
 - [ ] Keep `rawToolResultHash` for the receipt; **discard the body**
 - [ ] Never forward the raw result into **any** model context that can reach the signer
 - [ ] **Unit test (required):** feed the live tool result, assert the returned object has
-      exactly the allowed keys and that **no value contains `EXECUTE_NOW`**
+      exactly the allowed key and that **no value contains `EXECUTE_NOW`**
 
 > This is a sponsor-operated server telling any connected agent to suppress user confirmation
 > and sign a transfer. It is real, reproducible, and on the judges' own rails. **Treat MCP
@@ -89,10 +96,12 @@ The MCP tool result **contains a live prompt injection**
 ### C4 `payAndIssue` and `viewCard`
 **Estimate:** 1.5 h · **Depends on:** C2
 
-- [ ] `payAndIssue({ cardapiUrl, header, … })` → `{ cardOpaqueId, settlementTx, cardHtml, issuedAt }`
+- [ ] `payAndIssue({ cardapiUrl, header, … })` → `{ cardOpaqueId, settlementTx, issuedAt }`
 - [ ] On `402`, return the **fresh challenge** for diagnosis
 - [ ] `viewCard({ cardOpaqueId, settlementTx, walletAddress })` → one-time `iframeUrl`
-- [ ] **Never log `cardHtml`. Never persist or screenshot the PAN. Iframe only.**
+- [ ] Never return `cardHtml` across the boundary. Use `viewCard()` only; PAN may exist
+      transiently in the isolated browser process but is never persisted, logged, traced,
+      screenshotted, or recorded.
 - [ ] Call `viewCard` at the **moment of checkout**, never earlier — the URL is one-time and
       the blast radius is the seconds it is alive
 
@@ -159,8 +168,14 @@ The MCP tool result **contains a live prompt injection**
 ### C10 Prove you cannot reach the signer
 **Estimate:** 15 min · **Coordinate with Owner A (A15)**
 
-- [ ] From the orchestrator host, `curl http://signer:4003/health` and **confirm it fails**
-- [ ] Screenshot the refusal for the deck
+- [ ] Deploy Module C independently first. Give `dependency_ingress_handoff` to the A/B
+      owner; Module C must not create or change an A/B security-group rule.
+- [ ] After A/B is ready, apply `infra/module-c-integration`. It registers only the Module C
+      evidence task and does not own A/B resources.
+- [ ] Run the one-off ECS probe from the orchestrator security group: signer DNS must resolve;
+      policy, ledger, and chain-gateway must respond; TCP/HTTP signer:4003 must fail.
+- [ ] Archive the CloudWatch probe output for the deck. Missing DNS is a failed probe, never
+      accepted as proof of isolation.
 
 ---
 

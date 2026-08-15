@@ -61,6 +61,20 @@ export const ErrorCode = {
    */
   SIGNER_DOMAIN_MISMATCH: "SIGNER_DOMAIN_MISMATCH", // 403
   SIGNER_KMS_FAILED: "SIGNER_KMS_FAILED", // 502
+
+  // agent-orchestrator / card-gateway (Owner C, api-contracts.md §7-8)
+  RUN_NOT_FOUND: "RUN_NOT_FOUND", // 404
+  /** A required remote service contract is not currently reachable. Module C
+   *  is live but not ready to accept a payment run. */
+  DEPENDENCY_UNAVAILABLE: "DEPENDENCY_UNAVAILABLE", // 503, retryable
+  /** C9 post-issuance control: current page doesn't match the discovered, intent-matched URL. */
+  DOMAIN_MISMATCH: "DOMAIN_MISMATCH", // 403
+  /** MCP SSE handshake or JSON-RPC call failed (transport, not payload shape). */
+  MCP_UNREACHABLE: "MCP_UNREACHABLE", // 502, retryable
+  /** MCP tool result did not have the expected shape (missing text block, bad JSON, etc). */
+  MCP_RESULT_MALFORMED: "MCP_RESULT_MALFORMED", // 502
+  /** cardapi retry with the signed header failed for a reason other than a fresh 402. */
+  CARDAPI_FAILED: "CARDAPI_FAILED", // 502
 } as const;
 
 export type ErrorCodeValue = (typeof ErrorCode)[keyof typeof ErrorCode];

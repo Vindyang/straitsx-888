@@ -1,0 +1,41 @@
+name       = "straitsx-module-c"
+aws_region = "ap-southeast-1"
+
+vpc_id   = "vpc-replace-me"
+vpc_cidr = "10.20.0.0/16"
+
+private_subnet_ids = ["subnet-private-a", "subnet-private-b"]
+public_subnet_ids  = ["subnet-public-a", "subnet-public-b"]
+
+ecs_cluster_arn         = "arn:aws:ecs:ap-southeast-1:111122223333:cluster/straitsx"
+cloudmap_namespace_id   = "ns-replace-me"
+cloudmap_namespace_name = "internal"
+
+dashboard_image    = "111122223333.dkr.ecr.ap-southeast-1.amazonaws.com/straitsx/module-c-dashboard@sha256:replace-me"
+orchestrator_image = "111122223333.dkr.ecr.ap-southeast-1.amazonaws.com/straitsx/module-c-orchestrator@sha256:replace-me"
+fixture_image      = "111122223333.dkr.ecr.ap-southeast-1.amazonaws.com/straitsx/module-c-orchestrator@sha256:replace-me"
+
+certificate_arn = "arn:aws:acm:ap-southeast-1:111122223333:certificate/replace-me"
+
+# Stable interface names are configuration contracts, not Terraform resource
+# references. They may have no registered A/B tasks during the first C deploy.
+ledger_service_name        = "ledger.internal"
+policy_service_name        = "policy.internal"
+chain_gateway_service_name = "chain-gateway.internal"
+
+internal_token_secret_arn = "arn:aws:secretsmanager:ap-southeast-1:111122223333:secret:replace-me"
+paying_wallet_ssm_arn      = "arn:aws:ssm:ap-southeast-1:111122223333:parameter/straitsx/paying-wallet"
+
+# Current /32s for the allowlisted StraitsX and merchant HTTPS hosts. Never use
+# 0.0.0.0/0. Re-resolve immediately before a controlled demo deployment.
+https_egress_cidrs = ["203.0.113.10/32"]
+
+cloudwatch_kms_key_arn = "arn:aws:kms:ap-southeast-1:111122223333:key/replace-me"
+alb_access_logs_bucket = "replace-me-alb-logs"
+alarm_topic_arn        = "arn:aws:sns:ap-southeast-1:111122223333:module-c-alarms"
+
+tags = {
+  Environment = "demo"
+  Owner       = "module-c"
+  Application = "straitsx-888"
+}
