@@ -39,7 +39,7 @@ function defaultForm() {
     maxAuthValiditySeconds: 300,
     expiresAt: now + 30 * DAY_SECONDS,
     intentConstraint: "500ml stainless steel water bottle, under S$20",
-    merchantAllowlist: "shop.example",
+    merchantAllowlist: "localhost",
   };
 }
 

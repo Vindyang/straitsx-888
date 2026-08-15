@@ -21,6 +21,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <Link href="/">Run</Link>
           <Link href="/mandates">Mandates</Link>
           <Link href="/runs">Runs</Link>
+          <Link href="/injection-demo">Injection boundary</Link>
         </nav>
         {children}
       </body>

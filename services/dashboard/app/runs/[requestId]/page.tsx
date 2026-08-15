@@ -3,17 +3,18 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { connectWallet } from "../../../lib/wallet";
+import { signEscalationDecision } from "../../../lib/wallet";
 
 type RunOutcome =
   | { status: "refused"; check: string; checkIndex: number | null; detail: string; humanExplanation: string }
   | { status: "escalated"; reason: string; approvalUrl: string; expiresAt: number; ttlSeconds: number }
+  | { status: "checkout-pending"; settlementTx: string; cardOpaqueId: string }
   | { status: "signed"; settlementTx: string | null; cardOpaqueId: string | null }
   | { status: "failed"; message: string };
 
 type RunRecord = {
   requestId: string;
-  meta: { instruction: string; mandateId: string; fixture: string; productUrl: string };
+  meta: { instruction: string; mandateId: string; fixture?: string; source?: { kind: string; name?: string; profileId?: string }; productUrl: string };
   state: string;
   events: Array<{ seq: number; stage: string; status?: string; check?: string; at: string }>;
   resolvedItem?: { title: string; sku: string; price: string; merchantDomain: string; checkoutUrl: string };
@@ -51,14 +52,15 @@ export default function RunDetailPage() {
       .then(setIndependent);
   }, [run?.outcome?.status, requestId]);
 
-  async function respond(decision: "approve" | "deny") {
+  async function respond(decision: "approve" | "deny", standing = false) {
+    if (run?.outcome?.status !== "escalated") return;
     setError(null);
     setBusy(true);
     try {
-      const approvedBy = await connectWallet();
-      const res = await fetch(`/api/approve/${requestId}`, {
+      const { approvedBy, signature } = await signEscalationDecision(requestId, decision, run.outcome.expiresAt);
+      const res = await fetch(`/api/run/${requestId}/escalation`, {
         method: "POST",
-        body: JSON.stringify({ decision, approvedBy }),
+        body: JSON.stringify({ decision, approvedBy, signature, ...(standing ? { standingApproval: { scope: "merchant-window" } } : {}) }),
       });
       if (!res.ok) {
         const body = (await res.json().catch(() => ({}))) as { error?: { message?: string } };
@@ -88,7 +90,7 @@ export default function RunDetailPage() {
       </p>
       <h1>Run {requestId.slice(0, 8)}</h1>
       <p style={{ color: "#666" }}>
-        {run.meta.instruction} — fixture: {run.meta.fixture}
+        {run.meta.instruction} — source: {run.meta.fixture ?? run.meta.source?.profileId ?? run.meta.source?.name}
       </p>
 
       {outcome?.status === "refused" && (
@@ -114,23 +116,22 @@ export default function RunDetailPage() {
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginTop: "1rem" }}>
             <div>
               <h3>Agent&apos;s self-report (not ground truth)</h3>
-              <pre style={{ whiteSpace: "pre-wrap", fontSize: "0.85em" }}>
-                {JSON.stringify(run.resolvedItem, null, 2)}
-              </pre>
+              <ComparisonData data={run.resolvedItem ?? {}} other={independent?.independentlyFetched} />
             </div>
             <div>
               <h3>Independently re-fetched (the real control)</h3>
-              <pre style={{ whiteSpace: "pre-wrap", fontSize: "0.85em" }}>
-                {independent ? JSON.stringify(independent.independentlyFetched, null, 2) : "loading…"}
-              </pre>
+              {independent ? <ComparisonData data={independent.independentlyFetched} other={run.resolvedItem} /> : "loading…"}
             </div>
           </div>
 
           {error && <p style={{ color: "crimson" }}>{error}</p>}
-          <button type="button" onClick={() => respond("approve")} disabled={busy} style={{ marginRight: 8 }}>
-            Approve
+          <button type="button" onClick={() => respond("approve")} disabled={busy || isExpired(outcome.expiresAt)} style={{ marginRight: 8 }}>
+            Approve once
           </button>
-          <button type="button" onClick={() => respond("deny")} disabled={busy}>
+          <button type="button" onClick={() => respond("approve", true)} disabled={busy || isExpired(outcome.expiresAt)} style={{ marginRight: 8 }}>
+            Approve merchant for this window
+          </button>
+          <button type="button" onClick={() => respond("deny")} disabled={busy || isExpired(outcome.expiresAt)}>
             Deny
           </button>
         </section>
@@ -142,6 +143,13 @@ export default function RunDetailPage() {
           <p>
             <Link href={`/receipt/${requestId}`}>View receipt →</Link>
           </p>
+        </section>
+      )}
+
+      {(outcome?.status === "checkout-pending" || run.state === "AWAITING_CHECKOUT") && (
+        <section style={{ border: "2px solid #075985", borderRadius: 12, padding: "1.5rem", marginTop: "1.5rem" }}>
+          <h2 style={{ marginTop: 0 }}>Settlement verified — checkout in progress</h2>
+          <p>The one-time card view exists only inside the isolated browser context.</p>
         </section>
       )}
 
@@ -164,6 +172,17 @@ export default function RunDetailPage() {
       </ol>
     </main>
   );
+}
+
+function isExpired(expiresAt: number): boolean { return Math.floor(Date.now() / 1000) >= expiresAt; }
+
+function ComparisonData({ data, other }: { data: Record<string, unknown>; other?: Record<string, unknown> }) {
+  return <dl>{Object.entries(data).map(([key, value]) => {
+    const mismatch = other && key in other && String(other[key]) !== String(value);
+    return <div key={key} style={{ background: mismatch ? "#fff2f2" : "transparent", padding: 4 }}>
+      <dt style={{ fontWeight: 700 }}>{key}{mismatch ? " — mismatch" : ""}</dt><dd style={{ marginLeft: 0 }}>{String(value)}</dd>
+    </div>;
+  })}</dl>;
 }
 
 /** TTL + auto-deny (execution_plan.md §12b 2.1): expiry means DENY, never hang. */

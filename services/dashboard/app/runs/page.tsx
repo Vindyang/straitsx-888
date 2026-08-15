@@ -5,14 +5,15 @@ import Link from "next/link";
 
 type RunSummary = {
   requestId: string;
-  meta: { instruction: string; mandateId: string; fixture: string };
+  meta: { instruction: string; mandateId: string; fixture?: string; source?: { kind: string; name?: string; profileId?: string } };
   createdAt: string;
-  state: "RUNNING" | "DONE" | "REFUSED" | "ESCALATED" | "FAILED";
+  state: "RUNNING" | "AWAITING_CHECKOUT" | "DONE" | "REFUSED" | "ESCALATED" | "FAILED";
   outcome?: { status: string; check?: string };
 };
 
 const STATE_COLOR: Record<string, string> = {
   RUNNING: "#a60",
+  AWAITING_CHECKOUT: "#075985",
   DONE: "green",
   REFUSED: "crimson",
   ESCALATED: "#a60",
@@ -58,7 +59,7 @@ export default function RunsPage() {
           </div>
           <p style={{ margin: "0.5rem 0" }}>{run.meta.instruction}</p>
           <p style={{ margin: 0, color: "#666", fontSize: "0.9em" }}>
-            fixture: {run.meta.fixture}
+            source: {run.meta.fixture ?? run.meta.source?.profileId ?? run.meta.source?.name ?? "unknown"}
             {run.outcome && "check" in run.outcome && run.outcome.check ? ` · ${run.outcome.check}` : ""}
           </p>
         </Link>

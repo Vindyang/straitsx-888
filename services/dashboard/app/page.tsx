@@ -16,9 +16,11 @@ export default function Page() {
   const [mandateId, setMandateId] = useState("0x7f3a");
   const [agentId, setAgentId] = useState("shopper-1");
   const [instruction, setInstruction] = useState(
-    "Buy the 500ml stainless water bottle from shop.example, under S$20",
+    "Buy the 500ml stainless water bottle from localhost, under S$20",
   );
   const [fixture, setFixture] = useState<Fixture>("clean");
+  const [sourceKind, setSourceKind] = useState<"fixture" | "merchant">("fixture");
+  const [profileId, setProfileId] = useState("local-fixture");
   const [requestId, setRequestId] = useState<string | null>(null);
   const [events, setEvents] = useState<RunEvent[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -31,7 +33,7 @@ export default function Page() {
     const res = await fetch("/api/run", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ instruction, mandateId, agentId, fixture }),
+      body: JSON.stringify({ instruction, mandateId, agentId, source: sourceKind === "fixture" ? { kind: "fixture", name: fixture } : { kind: "merchant", profileId } }),
     });
     const data = (await res.json()) as { requestId?: string; error?: { message: string } };
     if (!res.ok || !data.requestId) {
@@ -50,10 +52,9 @@ export default function Page() {
 
   return (
     <main style={{ maxWidth: 720, margin: "0 auto", padding: "2rem" }}>
-      <h1>StraitsX — Module C scaffold</h1>
+      <h1>StraitsX mandated checkout</h1>
       <p style={{ color: "#666" }}>
-        This page drives agent-orchestrator directly through the run pipeline (C1-C10). Mandate
-        creation, the refusal panel, receipt view and spend meter (C11-C15) are a later phase.
+        Start a deterministic security fixture or a checked-in merchant checkout profile.
       </p>
 
       <fieldset style={{ marginTop: "1.5rem" }}>
@@ -71,15 +72,19 @@ export default function Page() {
           <input value={instruction} onChange={(e) => setInstruction(e.target.value)} style={{ width: "100%" }} />
         </label>
         <label style={{ display: "block", marginBottom: 8 }}>
-          fixture
-          <select value={fixture} onChange={(e) => setFixture(e.target.value as Fixture)}>
-            {FIXTURES.map((name) => (
-              <option key={name} value={name}>
-                {name}
-              </option>
-            ))}
+          source
+          <select value={sourceKind} onChange={(e) => setSourceKind(e.target.value as "fixture" | "merchant")}>
+            <option value="fixture">fixture</option><option value="merchant">merchant profile</option>
           </select>
         </label>
+        {sourceKind === "fixture" ? <label style={{ display: "block", marginBottom: 8 }}>
+          fixture
+          <select value={fixture} onChange={(e) => setFixture(e.target.value as Fixture)}>
+            {FIXTURES.map((name) => <option key={name} value={name}>{name}</option>)}
+          </select>
+        </label> : <label style={{ display: "block", marginBottom: 8 }}>
+          profileId <input value={profileId} onChange={(e) => setProfileId(e.target.value)} />
+        </label>}
         <button onClick={startRun}>Start run</button>
       </fieldset>
 
