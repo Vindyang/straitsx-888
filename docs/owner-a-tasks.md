@@ -26,6 +26,7 @@ A12 network isolation ⛔ ─────► the security claim + the deck
 # Phase 0 — Hour 0–1 (do not skip, everything waits on this)
 
 ### A1 ⛔ Stub signer-service and chain-gateway
+
 **Estimate:** 45 min · **Blocks:** all of Owner B, all of Owner C
 
 - [ ] `signer-service` on **4003**: `POST /sign` → fixed dummy `header`, random `nonce`,
@@ -34,7 +35,7 @@ A12 network isolation ⛔ ─────► the security claim + the deck
       `GET /token/constants` → Fuji constants with `version: null`
 - [ ] Both `GET /health` → `{ "ok": true }`
 - [ ] Commit shared types to `packages/contracts/`
-- [ ] Post in team channel: *"stubs up — 4003 signer, 4004 chain-gateway"*
+- [ ] Post in team channel: _"stubs up — 4003 signer, 4004 chain-gateway"_
 
 **Done when:** Owner B can `curl` both and get shape-correct JSON.
 
@@ -43,6 +44,7 @@ A12 network isolation ⛔ ─────► the security claim + the deck
 # Phase 1 — mandate-registry
 
 ### A2 ⛔ Implement and deploy the registry
+
 **Estimate:** 2 h · **Blocks:** B3, C10 · **Hard deadline: hour 2**
 
 - [ ] Foundry project under `packages/contracts-sol/`
@@ -56,6 +58,7 @@ A12 network isolation ⛔ ─────► the security claim + the deck
 **Done when:** `forge test` green and the contract is deployed to Fuji.
 
 ### A3 Write the registry test suite
+
 **Estimate:** 45 min · **Depends on:** A2
 
 - [ ] non-owner `revoke` → reverts
@@ -65,6 +68,7 @@ A12 network isolation ⛔ ─────► the security claim + the deck
 - [ ] unknown id → `owner == address(0)`
 
 ### A4 ⛔ Publish `registry.json`
+
 **Estimate:** 20 min · **Depends on:** A2 · **Blocks:** B3, C10
 
 - [ ] Commit `packages/contracts/registry.json`:
@@ -72,6 +76,7 @@ A12 network isolation ⛔ ─────► the security claim + the deck
 - [ ] Announce the address in the team channel
 
 ### A5 Deploy the registry to **mainnet 43114** as well
+
 **Estimate:** 30 min · **Depends on:** A2 · **Do this Saturday, not Sunday**
 
 - [ ] Deploy to 43114 (you have 0.2 AVAX there; a deploy is a fraction of it)
@@ -89,6 +94,7 @@ A12 network isolation ⛔ ─────► the security claim + the deck
 The **only** component that opens an RPC connection. No policy logic. No signing.
 
 ### A6 `GET /token/constants`
+
 **Estimate:** 45 min · **Depends on:** A1
 
 - [ ] Read `name()` and `decimals()` on-chain
@@ -104,6 +110,7 @@ The **only** component that opens an RPC connection. No policy logic. No signing
 > `version` from `challenge.extra.version`.
 
 ### A7 `GET /mandate/:mandateId`
+
 **Estimate:** 30 min · **Depends on:** A4
 
 - [ ] Read the registry via the published ABI
@@ -111,6 +118,7 @@ The **only** component that opens an RPC connection. No policy logic. No signing
 - [ ] Include `readAtBlock` in the response
 
 ### A8 `POST /settlement/confirm`
+
 **Estimate:** 1 h · **Depends on:** A1
 
 - [ ] Fetch the receipt by `txHash`
@@ -122,6 +130,7 @@ The **only** component that opens an RPC connection. No policy logic. No signing
 receipt trustworthy rather than decorative.
 
 ### A9 `GET /balance` and `POST /tx/build-revoke`
+
 **Estimate:** 45 min
 
 - [ ] `/balance`: XSGD via `balanceOf`, AVAX via `eth_getBalance`, both as base-unit strings
@@ -129,6 +138,7 @@ receipt trustworthy rather than decorative.
 - [ ] **chain-gateway never signs.** The human signs in their own wallet from the dashboard.
 
 ### A10 RPC failure handling
+
 **Estimate:** 30 min
 
 - [ ] Every RPC error → `502` with `retryable: true`
@@ -141,21 +151,24 @@ receipt trustworthy rather than decorative.
 # Phase 3 — signer-service (CHECKPOINT 2 — highest risk in the project)
 
 ### A11 ⛔ KMS key + custody proof
+
 **Estimate:** 1 h · **Blocks:** every signature that will ever settle · **Do this first**
 
 - [ ] Create an AWS KMS **asymmetric secp256k1** key
 - [ ] IAM: only `signer-service`'s execution role may call `Sign`
 - [ ] Derive the Ethereum address from the KMS public key at boot
 - [ ] Expose it as `derivedAddress` on `GET /health`
-- [ ] **Assert `derivedAddress == 0x9f6B4A5DE73CE365238F27236ea04A747E691bF7`**
+- [ ] **Assert `derivedAddress == EXPECTED_SIGNER_ADDRESS`** (env; replaces the literal, see §19.5)
 
-> **This is the custody proof.** That wallet holds 30 XSGD on **both** chains
-> ([execution_plan.md §19.5](execution_plan.md)). On-chain reads prove it is funded; they
-> cannot prove we hold the key. This boot assertion is the proof, and it never touches key
-> material. **If it mismatches, stop and tell the team** — you are signing from an account
-> with no money and no signature will ever settle.
+> **This is the custody proof.** A fresh KMS key derives its own address. The 30 XSGD must
+> be transferred from the funding-origin wallet (`0x9f6B…1bF7`) to the KMS-derived address
+> (Fuji first, mainnet only after Fuji lands). On-chain reads prove the address is funded;
+> they cannot prove we hold the key. This boot assertion is the proof, and it never touches
+> key material. **If it mismatches, stop and tell the team** — you are signing from an
+> account with no money and no signature will ever settle.
 
 ### A12 EIP-3009 typed data construction
+
 **Estimate:** 1 h · **Depends on:** A11
 
 - [ ] Build `TransferWithAuthorization(address from, address to, uint256 value, uint256 validAfter, uint256 validBefore, bytes32 nonce)`
@@ -166,6 +179,7 @@ receipt trustworthy rather than decorative.
 - [ ] `value` is a base-unit string at **6 decimals** — `"5000000"` is 5 XSGD
 
 ### A13 KMS signature normalisation — budget real time for this
+
 **Estimate:** 1–2 h · **Depends on:** A12 · **The classic KMS bug**
 
 - [ ] Parse the DER signature KMS returns into `r` and `s`
@@ -178,21 +192,22 @@ receipt trustworthy rather than decorative.
 > clears and it looks exactly like a wrong-domain bug. Do this offline first.
 
 ### A14 Signer hard-invariant rail
+
 **Estimate:** 1 h · **Depends on:** A12 · **Source: [§12b 2.2](execution_plan.md)**
 
 - [ ] Load an **immutable map from env at boot**, never from the request:
       `mandateId → { settlementRecipient, hardMaxTotal }`
 - [ ] Refuse with `403` + code:
 
-| Condition | `code` |
-| --- | --- |
-| `mandateId` not in the pinned map | `SIGNER_UNPINNED_MANDATE` |
-| `message.to` != pinned `settlementRecipient` | `SIGNER_WRONG_RECIPIENT` |
-| `message.value` > pinned `hardMaxTotal` | `SIGNER_CEILING` |
-| `message.from` != paying wallet | `SIGNER_WRONG_FROM` |
-| `domain.chainId` != configured chain | `SIGNER_WRONG_CHAIN` |
-| `validBefore - validAfter` > 600 | `SIGNER_WINDOW` |
-| `requestId` already signed | `SIGNER_REPLAY` (409) |
+| Condition                                    | `code`                    |
+| -------------------------------------------- | ------------------------- |
+| `mandateId` not in the pinned map            | `SIGNER_UNPINNED_MANDATE` |
+| `message.to` != pinned `settlementRecipient` | `SIGNER_WRONG_RECIPIENT`  |
+| `message.value` > pinned `hardMaxTotal`      | `SIGNER_CEILING`          |
+| `message.from` != paying wallet              | `SIGNER_WRONG_FROM`       |
+| `domain.chainId` != configured chain         | `SIGNER_WRONG_CHAIN`      |
+| `validBefore - validAfter` > 600             | `SIGNER_WINDOW`           |
+| `requestId` already signed                   | `SIGNER_REPLAY` (409)     |
 
 - [ ] Unit-test all seven refusals
 
@@ -201,6 +216,7 @@ receipt trustworthy rather than decorative.
 > They hold **even if policy-service is fully compromised**, which is the entire point.
 
 ### A15 ⛔ Network isolation + the probe test
+
 **Estimate:** 1 h · **Source: [§11](execution_plan.md)**
 
 - [ ] Firewall / security group: **only policy-service may reach port 4003**
@@ -214,6 +230,7 @@ receipt trustworthy rather than decorative.
 > will find it. This test is a deliverable, not hygiene.
 
 ### A16 CHECKPOINT 2 — first real signature
+
 **Estimate:** 2 h · **Depends on:** A11–A14 · **Lead this personally**
 
 - [ ] Fetch a live challenge (free, creates nothing):
@@ -233,6 +250,7 @@ receipt trustworthy rather than decorative.
 # Phase 4 — Decisions and follow-through
 
 ### A17 Decide the nonce strategy — **before A16**
+
 **Estimate:** 15 min discussion
 
 - [ ] Choose: random-and-reserved (current plan) **or**
@@ -247,6 +265,7 @@ receipt trustworthy rather than decorative.
 > decide now.
 
 ### A18 Production 402 probe — unblocks the mainnet leg
+
 **Estimate:** 20 min · **Ask the organisers about clearance first**
 
 - [ ] Confirm with organisers that teams are cleared for `/production/sse`
@@ -261,7 +280,8 @@ receipt trustworthy rather than decorative.
 
 - [ ] `registry.json` committed with **both** chain addresses
 - [ ] `forge test` green
-- [ ] `/health` shows `derivedAddress == 0x9f6B…1bF7`
+- [ ] `/health` shows `derivedAddress == EXPECTED_SIGNER_ADDRESS` (env, KMS-derived — **not**
+      the funding-origin wallet; see §19.5)
 - [ ] A real signature accepted by cardapi; `settlementTx` exists on Fuji
 - [ ] `confirmSettlement` verifies a real `Transfer` log and rejects a mismatched one
 - [ ] Orchestrator→signer connection **demonstrably refused**, screenshotted

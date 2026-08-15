@@ -190,12 +190,12 @@ cryptographically.
 
 ### Environment
 
-|               | Sandbox                      | Production                          |
-| ------------- | ---------------------------- | ----------------------------------- |
-| Endpoint      | `/sandbox/sse`               | `/production/sse`                   |
-| Chain         | Fuji 43113 (CONFIRMED — 402 `network: eip155:43113`) | presumed C-Chain 43114 (UNVERIFIED — see §19.7) |
-| XSGD          | `0xd769410dc8772695a7f55a304d2125320a65c2a5` (RESOLVED) | `0xb2F85b7AB3c2b6f62DF06dE6aE7D09c010a5096E` |
-| Cost per card | none                         | 5–30 SGD of real money              |
+|               | Sandbox                                                 | Production                                      |
+| ------------- | ------------------------------------------------------- | ----------------------------------------------- |
+| Endpoint      | `/sandbox/sse`                                          | `/production/sse`                               |
+| Chain         | Fuji 43113 (CONFIRMED — 402 `network: eip155:43113`)    | presumed C-Chain 43114 (UNVERIFIED — see §19.7) |
+| XSGD          | `0xd769410dc8772695a7f55a304d2125320a65c2a5` (RESOLVED) | `0xb2F85b7AB3c2b6f62DF06dE6aE7D09c010a5096E`    |
+| Cost per card | none                                                    | 5–30 SGD of real money                          |
 
 There is no public XSGD testnet faucet, and the Core faucet
 (core.app/tools/testnet-faucet) supplies Fuji AVAX only. Testnet XSGD is allocated by the
@@ -496,8 +496,8 @@ crashes before it can sign anything. See §19.2.
 
 The working rule:
 
-| Field               | Source                                                              |
-| ------------------- | ------------------------------------------------------------------- |
+| Field               | Source                                                               |
+| ------------------- | -------------------------------------------------------------------- |
 | `name`              | 402 `extra.name` (cross-check against on-chain `name()`)             |
 | `version`           | **402 `extra.version` only** — not readable on-chain on either chain |
 | `chainId`           | 402 `chainId`                                                        |
@@ -515,6 +515,38 @@ here fail silently rather than loudly.
 ---
 
 ## 10. Nonce lifecycle & failure handling (Bug A fixed)
+
+### Nonce strategy — RESOLVED 2026-08-15 (A17)
+
+**Decision: the commitment variant.**
+
+```
+nonce = keccak256(requestId ‖ policyHash ‖ intentHash ‖ merchantDomain)
+```
+
+Not random-and-reserved. The nonce is a **commitment to the human's intent**, which makes the
+on-chain settlement itself carry the authorisation context: anyone holding the receipt can
+recompute the nonce from `requestId`, `policyHash`, `intentHash` and `merchantDomain` and check
+it against the `nonce` in the settled `transferWithAuthorization`. That turns the receipt from
+a claim in our database into something verifiable from chain data alone — which is the whole
+difference between "we logged that this was approved" and "the chain proves this settlement
+was authorised by that mandate and that intent."
+
+Consequences:
+
+- **policy-service computes the nonce** and passes it in the sign request. One line on Owner
+  B's side, none on Owner A's — the signer treats `nonce` as opaque `bytes32` either way.
+- The **reservation machinery below still applies**. The commitment makes the nonce
+  *meaningful*, not *unique-by-construction across retries*: the same `requestId` legitimately
+  recomputes the same nonce, so the conditional-write reservation is still what prevents a
+  second live authorisation.
+- Determinism is the point and also the trap — a retry that reuses `requestId` reuses the
+  nonce, which is correct (idempotent), while a **fresh** `intentId` after a post-signature
+  failure produces a genuinely different nonce, as §10 requires.
+- **Decided before the first real signature**, per A17. Changing it after a signature exists
+  means a new nonce and a new authorization.
+
+### Reservation and release
 
 The nonce is reserved against the intent **before** signing (conditional write; a second
 reservation must fail), so the same authorization cannot be replayed against a different
@@ -849,14 +881,14 @@ signer → fixed dummy signature; policy → always `signed`; ledger → in-memo
 card-gateway → hardcoded challenge; chain-gateway → static live mandate. Then all three
 people develop against real interfaces and integration is a swap, not a merge.
 
-| Checkpoint                  | Definition                                                                                                                                                                                           |
-| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **1**                       | Registry live: `getMandate` returns real data; dashboard creates a mandate                                                                                                                           |
+| Checkpoint                  | Definition                                                                                                                                                                                                                                                                                                              |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **1**                       | Registry live: `getMandate` returns real data; dashboard creates a mandate                                                                                                                                                                                                                                              |
 | **2**                       | **First real signature accepted by cardapi — HIGHEST-RISK.** A wrong EIP-712 domain surfaces here. **Also measure 202→settlement latency now and set `maxAuthValiditySeconds` from data (check 7).** _Status: UNBLOCKED — domain, asset and 30 XSGD balance all resolved (§19.4–19.5). No external dependency remains._ |
-| **3**                       | One clean run: agent-orchestrator goes intent → card with policy-service in path                                                                                                                     |
-| **4**                       | **One refusal: poisoned page produces a refusal on check 4 (recipient pinned), visible in dashboard. AT THIS POINT THE PROJECT IS PRESENTABLE.**                                                     |
-| **5** _(stretch, cut last)_ | Intent-match escalation fires (check 9) — the honest intent-scoping story                                                                                                                            |
-| **6** _(stretch, cut last)_ | Post-issuance controls: `assertCheckoutDomain` refuses a mismatched fill; `recordSpend` extends the receipt through the spend leg (Section 12)                                                       |
+| **3**                       | One clean run: agent-orchestrator goes intent → card with policy-service in path                                                                                                                                                                                                                                        |
+| **4**                       | **One refusal: poisoned page produces a refusal on check 4 (recipient pinned), visible in dashboard. AT THIS POINT THE PROJECT IS PRESENTABLE.**                                                                                                                                                                        |
+| **5** _(stretch, cut last)_ | Intent-match escalation fires (check 9) — the honest intent-scoping story                                                                                                                                                                                                                                               |
+| **6** _(stretch, cut last)_ | Post-issuance controls: `assertCheckoutDomain` refuses a mismatched fill; `recordSpend` extends the receipt through the spend leg (Section 12)                                                                                                                                                                          |
 
 Checkpoint 4 is worth more than any polish on 1–3. Checkpoint 5 is the difference between
 "bounded agent" and "trustworthy-ish agent," but it is a heuristic and is the first thing
@@ -1005,14 +1037,25 @@ Returns `402` with the requirements in the JSON body _and_ base64 in the `Paymen
 header:
 
 ```json
-{ "x402Version": 1, "accepts": [{
-    "scheme": "exact", "network": "eip155:43113", "chainId": 43113,
-    "amount": "5000000",
-    "asset":  "0xd769410dc8772695a7f55a304d2125320a65c2a5",
-    "payTo":  "0x99a2B2962a6AC463FBe04664027Fdb3F68bd4Cc8",
-    "maxTimeoutSeconds": 300,
-    "extra": { "assetTransferMethod": "eip3009", "name": "XSGD", "version": "2" }
-}]}
+{
+  "x402Version": 1,
+  "accepts": [
+    {
+      "scheme": "exact",
+      "network": "eip155:43113",
+      "chainId": 43113,
+      "amount": "5000000",
+      "asset": "0xd769410dc8772695a7f55a304d2125320a65c2a5",
+      "payTo": "0x99a2B2962a6AC463FBe04664027Fdb3F68bd4Cc8",
+      "maxTimeoutSeconds": 300,
+      "extra": {
+        "assetTransferMethod": "eip3009",
+        "name": "XSGD",
+        "version": "2"
+      }
+    }
+  ]
+}
 ```
 
 `amount: "5000000"` for a 5 SGD card confirms the 6-decimal encoding end to end. `payTo` has
@@ -1044,14 +1087,25 @@ it, **refuse to sign** — that mismatch is either a chain misconfiguration or a
 
 ### 19.5 Paying wallet (resolved)
 
-`0x9f6B4A5DE73CE365238F27236ea04A747E691bF7` — valid EIP-55 checksum, verified 2026-08-15.
+`0x9f6B4A5DE73CE365238F27236ea04A747E691bF7` — **funding-origin wallet** (valid EIP-55 checksum, verified 2026-08-15). This is NOT the paying wallet after the A11 custody change. The actual paying wallet is `EXPECTED_SIGNER_ADDRESS` (env), derived from the KMS public key.
 
-| | Fuji 43113 | Mainnet 43114 |
-| --- | --- | --- |
-| `eth_getCode` | `0x` → **EOA** | `0x` → **EOA** |
-| **XSGD** | **30.000000** ✅ | **30.000000** ✅ |
-| AVAX (gas) | 0.001 | 0.2 |
-| nonce | 0 (never transacted) | 0 (never transacted) |
+**Custody move status (2026-08-15):**
+
+| Chain | Funding-origin | KMS-derived paying wallet | State |
+| --- | --- | --- | --- |
+| Fuji 43113 | 0 XSGD | **30 XSGD** | ✅ moved, verified on-chain |
+| Mainnet 43114 | 30 XSGD | 0 XSGD | not moved — deliberately deferred until the mainnet leg is live (§19.7 production clearance is still open) |
+
+The Fuji move was made as 1 XSGD first, then the remaining 29, so a wrong derivation would have
+cost 1 XSGD rather than 30. The paying wallet holds **0 AVAX and needs none**: EIP-3009 is a
+pull mechanism, so it only ever signs authorisations and never submits a transaction itself.
+
+|               | Fuji 43113           | Mainnet 43114        |
+| ------------- | -------------------- | -------------------- |
+| `eth_getCode` | `0x` → **EOA**       | `0x` → **EOA**       |
+| **XSGD**      | **30.000000** ✅     | **30.000000** ✅     |
+| AVAX (gas)    | 0.001                | 0.2                  |
+| nonce         | 0 (never transacted) | 0 (never transacted) |
 
 Consequences:
 

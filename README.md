@@ -108,7 +108,15 @@ unreadable.** `sync-registry.ts` warns on this; announce it immediately if it ha
 | EIP-712 `version` | `"2"`, from the 402 | **unknown — do NOT inherit `"2"`** |
 | settlement recipient | `0x99a2B2962a6AC463FBe04664027Fdb3F68bd4Cc8` | `null` until the production 402 is fetched |
 
-Paying wallet `0x9f6B4A5DE73CE365238F27236ea04A747E691bF7` holds **30 XSGD on both chains**.
+**Custody (A11, done 2026-08-15).** The paying wallet is the **KMS-derived address**, held in
+`.env` as `EXPECTED_SIGNER_ADDRESS`; signer-service derives it from the KMS public key at boot
+and refuses to start on mismatch. No private key for it exists outside KMS.
+
+`0x9f6B4A5DE73CE365238F27236ea04A747E691bF7` is the **funding-origin** wallet — an EOA whose
+key lives in a wallet app. Its **30 XSGD on Fuji have been transferred** to the KMS-derived
+address; its **mainnet 30 XSGD is untouched** and stays there until the mainnet leg is in play.
+It remains the mandate **owner** (the human who signs revokes and escalation approvals), so
+`owner`, `approvedBy` and `tx/build-revoke.from` still legitimately name it.
 
 Three traps worth knowing before you write any signing code:
 
@@ -161,9 +169,9 @@ cd ../.. && pnpm tsx scripts/sync-registry.ts <chainId>
 | --- | --- | --- | --- |
 | Registry address on 43114 | A5 deploy | `registry.json` (automatic) | B, C |
 | KMS key id | A11 | `.env` `KMS_KEY_ID` | — |
-| KMS-derived address | A11 | `.env` `EXPECTED_SIGNER_ADDRESS`, **and replace `0x9f6B…1bF7`** in api-contracts §0, execution_plan §19.5, owner-a-tasks A11 | B, C |
+| ~~KMS-derived address~~ | A11 | ✅ **done 2026-08-15** — `EXPECTED_SIGNER_ADDRESS` in `.env`; docs updated; Fuji custody moved | B, C (announced) |
 | **`202`→settlement latency** | A16 | here | **B — sets `maxAuthValiditySeconds` (check 7) from data, not a guess** |
-| Nonce strategy | A17, **before A16** | execution_plan §10 | **B — one line their side** |
+| ~~Nonce strategy~~ | A17 | ✅ **decided 2026-08-15** — commitment hash, execution_plan §10 | **B — action item in owner-b-tasks B10** |
 | Mainnet `extra.version`, `payTo`, `asset` | A18 production 402 | execution_plan §19.7 | B, C |
 | First real `settlementTx` | A16 | here + deck screenshot | all |
 | Orchestrator→signer refusal | A15 | `docs/evidence/` screenshot | all |

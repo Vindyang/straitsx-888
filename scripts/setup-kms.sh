@@ -240,9 +240,37 @@ say "The key policy will allow Sign to ONE role only: the role signer-service ru
 note "execution_plan.md §11: policy-service and signer-service run under DIFFERENT"
 note "roles, so a compromised policy-service still cannot call Sign directly."
 printf '\n'
-step "If that role does not exist yet, create it in the IAM console first."
-open_url "https://console.aws.amazon.com/iam/home#/roles"
-ask SIGNER_ROLE_ARN "Paste the signer-service role ARN (arn:aws:iam::...:role/...):"
+
+# The role is created by its own script rather than by hand, so the same three
+# roles (and their explicit denies) exist identically every time. If it is
+# already there, offer its ARN as the default instead of asking cold.
+SIGNER_ROLE_DEFAULT=""
+if command -v aws >/dev/null 2>&1; then
+  SIGNER_ROLE_DEFAULT=$(aws iam get-role --role-name straitsx-888-signer-service \
+                          --query 'Role.Arn' --output text 2>/dev/null) || SIGNER_ROLE_DEFAULT=""
+fi
+
+if [[ -n "$SIGNER_ROLE_DEFAULT" ]]; then
+  found_role="$SIGNER_ROLE_DEFAULT"
+  say "Found the signer role already created:"
+  note "  $found_role"
+  if confirm "Use it?"; then
+    SIGNER_ROLE_ARN="$found_role"
+  else
+    ask SIGNER_ROLE_ARN "Paste the signer-service role ARN (arn:aws:iam::...:role/...):"
+  fi
+else
+  warn "the signer role does not exist yet."
+  say "Create it (plus the policy-service and orchestrator roles, with their"
+  say "explicit kms Deny statements) by running this first, in another terminal:"
+  printf '\n'
+  note "  scripts/setup-iam-roles.sh --apply"
+  printf '\n'
+  say "It prints the ARN to paste here. Doing it that way also gives you the"
+  say "A15 IAM split, which is a separate deliverable from this key."
+  printf '\n'
+  ask SIGNER_ROLE_ARN "Paste the signer-service role ARN (arn:aws:iam::...:role/...):"
+fi
 
 if [[ ! "$SIGNER_ROLE_ARN" =~ ^arn:aws:iam::[0-9]+:role/ ]]; then
   warn "that does not look like an IAM role ARN."

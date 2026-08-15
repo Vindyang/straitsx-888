@@ -128,9 +128,37 @@ isolation. Order matters: cheapest and most damning first.
 
 - [ ] Order of operations, exactly:
       precondition → parse challenge → load policy + window usage → read registry →
-      checks 1–8 → intent-match gate (9) → reserve nonce → call signer → record decision
+      checks 1–8 → intent-match gate (9) → compute + reserve nonce → call signer →
+      record decision
 - [ ] Every path writes a `POST /decision`
 - [ ] Refusal → `422`, escalation → `202`, signed → `200`
+
+> ### ⚠️ NONCE — changed 2026-08-15 (A17 decided). Action required here.
+>
+> **policy-service computes the nonce. It is no longer random.**
+>
+> ```ts
+> nonce = keccak256(concat([requestId, policyHash, intentHash, merchantDomain]))
+> ```
+>
+> Pass it in the `POST /sign` request as before — the signer treats `nonce` as opaque
+> `bytes32` and is unchanged by this. **One line on your side, none on Owner A's.**
+>
+> **Why it matters if you miss it:** with a random nonce the settlement is still replay-safe,
+> but the link between the on-chain transfer and the human's intent exists *only in our
+> database*. With the commitment, anyone holding the receipt can recompute the nonce and check
+> it against the `nonce` in the settled `transferWithAuthorization` — the chain itself proves
+> which mandate and which intent authorised that payment. That verifiability is the point of
+> the receipt, and a random nonce silently forfeits it while everything still appears to work.
+>
+> **Reservation is unchanged.** The commitment makes the nonce *meaningful*, not
+> *unique-by-construction*: the same `requestId` deliberately recomputes the same nonce, so
+> the conditional-write reservation (B5) is still what stops a second live authorisation. A
+> retry with the same `requestId` is idempotent by design; a post-signature failure rotates to
+> a **fresh `intentId`**, which yields a genuinely different nonce
+> ([execution_plan.md §10](execution_plan.md)).
+>
+> Full rationale: [execution_plan.md §10](execution_plan.md) "Nonce strategy — RESOLVED".
 
 ### B11 Precondition — `precondition_intent_exists`
 **Estimate:** 20 min
