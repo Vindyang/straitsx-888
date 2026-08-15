@@ -49,6 +49,10 @@ export type Mandate = {
   maxAuthValiditySeconds: number;
   expiresAt: number; // unix seconds
   revoked: boolean;
+  // api-contracts.md §1 omits this field; execution_plan.md §7's full schema requires it
+  // and owner-b-tasks.md B2/B13 requires it be hashed. Included per the latter — a tampered
+  // intentConstraint must fail check 2.
+  intentConstraint: string;
   merchantAllowlist: string[]; // ADVISORY — binds only a behaving agent
   policyVersion: number;
 };

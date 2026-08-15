@@ -13,6 +13,8 @@
     "test:isolation": "./scripts/test-isolation.sh",
     "dev:chain-gateway": "pnpm --filter @straitsx/chain-gateway dev",
     "dev:signer": "pnpm --filter @straitsx/signer-service dev",
+    "dev:ledger": "pnpm --filter @straitsx/ledger-service dev",
+    "dev:policy": "pnpm --filter @straitsx/policy-service dev",
     "sol:test": "forge test --root packages/contracts-sol",
     "sol:build": "forge build --root packages/contracts-sol"
   },
