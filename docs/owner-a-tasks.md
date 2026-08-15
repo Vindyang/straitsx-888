@@ -233,17 +233,35 @@ receipt trustworthy rather than decorative.
 
 **Estimate:** 2 h · **Depends on:** A11–A14 · **Lead this personally**
 
-- [ ] Fetch a live challenge (free, creates nothing):
-      `curl -i -X POST https://card.straitsx.ai/sandbox/cardapi/issue_card -H 'content-type: application/json' -d '{"amount_sgd":5,"cardholder_name":"Test Probe"}'`
-- [ ] Build typed data from that exact challenge
-- [ ] Sign via KMS
-- [ ] Retry with `PAYMENT-SIGNATURE` → expect `card_opaque_id`, `settlement_tx`
-- [ ] Verify the settlement tx on Fuji with A8
-- [ ] **Measure `202` → settlement latency and hand the number to Owner B** — it sets
-      `maxAuthValiditySeconds` from data, not a guess (check 7)
+## ✅ PASSED 2026-08-15. Automated as `scripts/probe-checkpoint2.ts`.
 
-**Nothing external blocks this.** Domain, asset, and the 30 XSGD balance are all resolved
-([§19.4–19.5](execution_plan.md)).
+- [x] Fetch a live challenge (free, creates nothing) — `probe-checkpoint2.ts` with no flags
+      does exactly this and stops; run it as often as you like
+- [x] Build typed data from that exact challenge
+- [x] Sign via KMS
+- [x] Retry with `PAYMENT-SIGNATURE` → `card_opaque_id` `01KASWWW33N045ABPJKFGSPTM1`,
+      `settlement_tx` `0xe6dcb85e…`
+- [x] Verify the settlement tx on Fuji with A8 — `ok:true`, `transferMatched:true`,
+      `logIndex:1`; and a mismatched `expect` returns `ok:false` on all three of wrong
+      amount, wrong recipient and wrong asset
+- [x] **`202` → settlement latency: ~11 s** (10.7–11.7 s; the probe polls at 1 s granularity,
+      so do not quote it as precise). Hand to Owner B for `maxAuthValiditySeconds`.
+
+**Evidence.** Settlement
+[`0xe6dcb85e…`](https://testnet.snowtrace.io/tx/0xe6dcb85eb3880f9daff8ace963e60bba346d3a785411e19cd4e04972da6094c6)
+at block 57777207 moved 5 XSGD to the recorded settlement recipient. The transaction was
+**submitted and paid for by `0x4b9e841a…`, not by us** — EIP-3009 is a pull mechanism, so the
+paying wallet has never sent a transaction and holds no AVAX. That is the custody claim
+demonstrated rather than asserted, and it is the row to show a judge.
+
+**What it cost to get here.** `PAYMENT-SIGNATURE` was carrying base64 of the EIP-712 typed
+data, which contains no signature at all, and the only test on it asserted the value was a
+string. Three payload shapes were rejected before the right one; all are recorded in
+[api-contracts.md §4](api-contracts.md). Every failure presented as a 402 that never clears —
+indistinguishable at a glance from a domain bug, exactly as A13 warns.
+
+**Budget:** each run spends 5 XSGD of a finite 30. Two are gone; **20 XSGD (4 cards) remain.**
+Use challenge-only mode for anything that does not require a real signature.
 
 ---
 
@@ -279,14 +297,17 @@ receipt trustworthy rather than decorative.
 ## Definition of done
 
 - [ ] `registry.json` committed with **both** chain addresses
-- [ ] `forge test` green
-- [ ] `/health` shows `derivedAddress == EXPECTED_SIGNER_ADDRESS` (env, KMS-derived — **not**
-      the funding-origin wallet; see §19.5)
-- [ ] A real signature accepted by cardapi; `settlementTx` exists on Fuji
-- [ ] `confirmSettlement` verifies a real `Transfer` log and rejects a mismatched one
+- [x] `forge test` green — 16/16, 2026-08-15
+- [x] `/health` shows `derivedAddress == EXPECTED_SIGNER_ADDRESS` — verified 2026-08-15
+      against the real KMS key: `{"ok":true,"derivedAddress":"0x0F6DdD…7CA7",
+      "kmsKeyId":"arn:aws:kms:…:key/****b03f","chainId":43113}`. The key id is masked and no
+      stub flag remains. **A mismatch provably refuses to start** — booting with a wrong
+      `EXPECTED_SIGNER_ADDRESS` throws and never binds the port.
+- [x] A real signature accepted by cardapi; `settlementTx` exists on Fuji — `0xe6dcb85e…`
+- [x] `confirmSettlement` verifies a real `Transfer` log and rejects a mismatched one — checked against the live checkpoint-2 tx, mismatched amount/recipient/asset all return `ok:false`
 - [ ] Orchestrator→signer connection **demonstrably refused**, screenshotted
-- [ ] All seven signer invariant refusals unit-tested
-- [ ] `202`→settlement latency measured and handed to Owner B
+- [x] All seven signer invariant refusals unit-tested
+- [x] `202`→settlement latency measured (~11 s) — **still to hand to Owner B**
 
 ## Never
 
