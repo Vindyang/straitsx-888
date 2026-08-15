@@ -1,16 +1,30 @@
 {
   "name": "straitsx-888",
   "private": true,
-  "packageManager": "pnpm@11.21.0",
+  "type": "module",
+  "packageManager": "pnpm@10.33.0",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
-    "build": "pnpm -r build",
-    "test": "pnpm -r test",
-    "dev:ledger": "pnpm --filter ledger-service dev",
-    "dev:policy": "pnpm --filter policy-service dev"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:isolation": "./scripts/test-isolation.sh",
+    "dev:chain-gateway": "pnpm --filter @straitsx/chain-gateway dev",
+    "dev:signer": "pnpm --filter @straitsx/signer-service dev",
+    "dev:ledger": "pnpm --filter @straitsx/ledger-service dev",
+    "dev:policy": "pnpm --filter @straitsx/policy-service dev",
+    "sol:test": "forge test --root packages/contracts-sol",
+    "sol:build": "forge build --root packages/contracts-sol"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["esbuild"]
   },
   "devDependencies": {
-    "@types/node": "^22.10.0",
-    "typescript": "^5.6.3",
-    "vitest": "^2.1.5"
+    "@types/node": "^22.10.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
   }
 }

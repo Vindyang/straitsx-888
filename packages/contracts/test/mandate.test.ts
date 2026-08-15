@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { hashPolicy, type Mandate } from "../src/mandate.js";
+import { hashPolicy, type Mandate } from "../src/index";
 
 const baseMandate: Mandate = {
   mandateId: "0x7f3a000000000000000000000000000000000000000000000000000000000000",

@@ -11,15 +11,15 @@ type IntentRecord = {
   mandateId: string;
   instruction: string;
   createdAt: string;
-  challenge?: X402Requirements;
-  challengeAttachedAt?: string;
-  nonce?: string;
-  nonceReleased?: boolean;
-  decision?: string;
-  decidedAt?: string;
-  policyHash?: string;
-  validAfter?: number;
-  validBefore?: number;
+  challenge?: X402Requirements | undefined;
+  challengeAttachedAt?: string | undefined;
+  nonce?: string | undefined;
+  nonceReleased?: boolean | undefined;
+  decision?: string | undefined;
+  decidedAt?: string | undefined;
+  policyHash?: string | undefined;
+  validAfter?: number | undefined;
+  validBefore?: number | undefined;
 };
 
 type PolicyRecord = { policy: Mandate; policyVersion: number };
@@ -35,21 +35,21 @@ type EscalationRecord = {
   expiresAt: number;
   ttlSeconds: number;
   resolved: boolean;
-  decision?: "approve" | "deny";
-  approvedBy?: string;
-  resolvedAt?: string;
-  merchantDomain?: string;
+  decision?: "approve" | "deny" | undefined;
+  approvedBy?: string | undefined;
+  resolvedAt?: string | undefined;
+  merchantDomain?: string | undefined;
 };
 
 type DecisionEntry = {
   requestId: string;
   decision: "signed" | "refused" | "escalated";
-  check?: string;
-  detail?: string;
+  check?: string | undefined;
+  detail?: string | undefined;
   decidedAt: string;
-  policyHash?: string;
-  validAfter?: number;
-  validBefore?: number;
+  policyHash?: string | undefined;
+  validAfter?: number | undefined;
+  validBefore?: number | undefined;
 };
 
 const intents = new Map<string, IntentRecord>();
@@ -162,7 +162,7 @@ export async function createEscalation(entry: {
   reason: EscalationReason;
   approvalUrl: string;
   ttlSeconds: number;
-  merchantDomain?: string;
+  merchantDomain?: string | undefined;
 }): Promise<EscalationRecord> {
   const existing = escalations.get(entry.requestId);
   if (existing) return existing;

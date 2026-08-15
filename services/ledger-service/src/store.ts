@@ -14,20 +14,20 @@ export type IntentRecord = {
   instruction: string;
   instructionHash: string;
   createdAt: string;
-  challenge?: X402Requirements;
-  challengeAttachedAt?: string;
-  nonce?: string;
-  nonceReservedAt?: string;
-  nonceReleased?: boolean;
-  decision?: "signed" | "refused" | "escalated";
-  decidedAt?: string;
+  challenge?: X402Requirements | undefined;
+  challengeAttachedAt?: string | undefined;
+  nonce?: string | undefined;
+  nonceReservedAt?: string | undefined;
+  nonceReleased?: boolean | undefined;
+  decision?: "signed" | "refused" | "escalated" | undefined;
+  decidedAt?: string | undefined;
   // Only policy-service knows these at the moment it signs — carried in via POST /decision
   // (a deliberate extension beyond api-contracts.md §5's documented body) so the receipt can
   // report them instead of null.
-  policyHash?: string;
-  validAfter?: number;
-  validBefore?: number;
-  settlement?: { settlementTx: string; blockNumber: number; cardOpaqueId: string };
+  policyHash?: string | undefined;
+  validAfter?: number | undefined;
+  validBefore?: number | undefined;
+  settlement?: { settlementTx: string; blockNumber: number; cardOpaqueId: string } | undefined;
   spend?: {
     merchantDomain: string;
     orderTotal: string;
@@ -42,8 +42,8 @@ export type DecisionLogEntry = {
   sequence: number;
   requestId: string;
   decision: "signed" | "refused" | "escalated";
-  check?: string;
-  detail?: string;
+  check?: string | undefined;
+  detail?: string | undefined;
   decidedAt: string;
 };
 
@@ -63,12 +63,12 @@ export type EscalationRecord = {
   expiresAt: number; // unix seconds
   ttlSeconds: number;
   resolved: boolean;
-  decision?: "approve" | "deny";
-  approvedBy?: string;
-  resolvedAt?: string;
+  decision?: "approve" | "deny" | undefined;
+  approvedBy?: string | undefined;
+  resolvedAt?: string | undefined;
   // Only set for check9 (INTENT_MISMATCH) escalations — lets "approve this merchant for this
   // window" (B21) turn into a standing approval without the caller re-sending it at resolve time.
-  merchantDomain?: string;
+  merchantDomain?: string | undefined;
 };
 
 // In-memory Map per B1. A Postgres/DynamoDB swap lands later without changing the routes.

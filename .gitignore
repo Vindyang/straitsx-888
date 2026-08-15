@@ -1,5 +1,54 @@
 node_modules/
 dist/
-.env
-.env.local
 *.log
+.DS_Store
+*.tsbuildinfo
+
+# --- secrets ------------------------------------------------------------------
+# "Never commit keys. KMS key id in env is fine; key material never leaves KMS."
+# (execution_plan.md §18)
+.env
+.env.*
+!.env.example
+
+# Safety net, not a policy. Nothing in this repo should ever hold key material —
+# the signer's key lives in KMS and the deployer's in an encrypted keystore
+# under ~/.foundry. These patterns exist so a stray file cannot be committed by
+# accident during a hackathon at 3am.
+*.pem
+*.key
+*.p8
+*.p12
+*.pfx
+*.keystore
+keystore/
+keystores/
+.aws/
+aws-credentials*
+
+# --- Foundry ------------------------------------------------------------------
+# Scoped, not a bare `out/` — a bare pattern would silently swallow unrelated
+# build directories elsewhere in the monorepo.
+packages/contracts-sol/out/
+packages/contracts-sol/cache/
+# Broadcast records are per-deploy and chain-specific, and forge writes a
+# "Sensitive values" file alongside them. The published artefact is
+# packages/contracts/registry.json, generated from these by
+# scripts/sync-registry.ts — that is what Owner B and Owner C consume.
+packages/contracts-sol/broadcast/
+.foundry/
+
+# --- test / build output ------------------------------------------------------
+coverage/
+*.lcov
+.vitest-reports/
+.turbo/
+.next/
+
+# --- editors ------------------------------------------------------------------
+.vscode/
+.idea/
+*.swp
+
+# NOT ignored, deliberately: docs/evidence/ holds A15's refused-connection
+# screenshot and the checkpoint-2 settlement proof. Those are deliverables.

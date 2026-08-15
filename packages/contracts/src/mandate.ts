@@ -1,30 +1,14 @@
+/**
+ * Canonical mandate serialisation and policy hashing (owner-b-tasks.md B2).
+ *
+ * The `Mandate`, `Address`, `Hex` and `Uint` types live in ./types — this module
+ * owns only the encoding. Nobody reimplements `serialise`; the dashboard and
+ * policy-service both import it from here, or check 2 fails permanently and
+ * looks like a contract bug for hours (api-contracts.md §10.1).
+ */
+
 import { keccak256, toBytes } from "viem";
-
-export type Address = string; // "0x" + 40 hex, EIP-55 checksummed in JSON, compare lowercased
-export type Hex = string; // "0x" + even-length lowercase hex
-export type Uint = string; // base-unit decimal string, e.g. "5000000" = 5 XSGD
-
-export type Mandate = {
-  mandateId: Hex;
-  owner: Address;
-  agentId: string;
-  chainId: 43113 | 43114;
-  asset: Address;
-  settlementRecipient: Address;
-  maxPerCard: Uint;
-  maxPerWindow: Uint;
-  maxCardsPerWindow: number;
-  windowSeconds: number;
-  maxAuthValiditySeconds: number;
-  expiresAt: number; // unix seconds
-  revoked: boolean;
-  // api-contracts.md §1 omits this field; execution_plan.md §7's full schema requires it
-  // and owner-b-tasks.md B2/B13 requires it be hashed. Included per the latter — a tampered
-  // intentConstraint must fail check 2.
-  intentConstraint: string;
-  merchantAllowlist: string[]; // advisory
-  policyVersion: number;
-};
+import type { Hex, Mandate } from "./types";
 
 const FIELD_ORDER = [
   "mandateId",

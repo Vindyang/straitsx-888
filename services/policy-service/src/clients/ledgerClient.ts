@@ -8,10 +8,10 @@ type IntentRecord = {
   mandateId: string;
   instruction: string;
   createdAt: string;
-  challenge?: X402Requirements;
-  challengeAttachedAt?: string;
-  nonce?: string;
-  decision?: string;
+  challenge?: X402Requirements | undefined;
+  challengeAttachedAt?: string | undefined;
+  nonce?: string | undefined;
+  decision?: string | undefined;
 };
 
 async function call(path: string, init?: RequestInit): Promise<Response> {
@@ -71,14 +71,14 @@ export async function releaseNonce(requestId: string, reason: string): Promise<v
 export async function recordDecision(entry: {
   requestId: string;
   decision: "signed" | "refused" | "escalated";
-  check?: string;
-  detail?: string;
+  check?: string | undefined;
+  detail?: string | undefined;
   decidedAt: string;
   // Only meaningful alongside decision:"signed" — lets GET /receipt/:requestId on ledger-service
   // report these instead of null (they're computed here, not stored anywhere else).
-  policyHash?: string;
-  validAfter?: number;
-  validBefore?: number;
+  policyHash?: string | undefined;
+  validAfter?: number | undefined;
+  validBefore?: number | undefined;
 }): Promise<void> {
   const res = await call("/decision", { method: "POST", body: JSON.stringify(entry) });
   if (!res.ok) throw new Error(`ledger recordDecision ${res.status}`);
@@ -95,10 +95,10 @@ export type EscalationRecord = {
   expiresAt: number;
   ttlSeconds: number;
   resolved: boolean;
-  decision?: "approve" | "deny";
-  approvedBy?: string;
-  resolvedAt?: string;
-  merchantDomain?: string;
+  decision?: "approve" | "deny" | undefined;
+  approvedBy?: string | undefined;
+  resolvedAt?: string | undefined;
+  merchantDomain?: string | undefined;
 };
 
 export async function createEscalation(entry: {
@@ -107,7 +107,7 @@ export async function createEscalation(entry: {
   reason: EscalationReason;
   approvalUrl: string;
   ttlSeconds: number;
-  merchantDomain?: string;
+  merchantDomain?: string | undefined;
 }): Promise<EscalationRecord> {
   const res = await call("/escalation", { method: "POST", body: JSON.stringify(entry) });
   if (!res.ok) throw new Error(`ledger createEscalation ${res.status}`);

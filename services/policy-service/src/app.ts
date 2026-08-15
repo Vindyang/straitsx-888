@@ -14,11 +14,11 @@ import { sendError } from "./errors.js";
 import { performSigning } from "./signing.js";
 
 export type BuildAppOptions = {
-  internalToken?: string;
-  maxSaneValiditySeconds?: number;
-  escalationTtlSeconds?: number;
-  dashboardUrl?: string;
-  logger?: boolean;
+  internalToken?: string | undefined;
+  maxSaneValiditySeconds?: number | undefined;
+  escalationTtlSeconds?: number | undefined;
+  dashboardUrl?: string | undefined;
+  logger?: boolean | undefined;
 };
 
 export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
@@ -43,11 +43,11 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
   const nowSec = () => Math.floor(Date.now() / 1000);
 
   type PaymentRequestBody = {
-    requestId?: string;
-    mandateId?: string;
-    requestedAmount?: string;
-    challenge?: X402Requirements;
-    resolvedItem?: ResolvedItem;
+    requestId?: string | undefined;
+    mandateId?: string | undefined;
+    requestedAmount?: string | undefined;
+    challenge?: X402Requirements | undefined;
+    resolvedItem?: ResolvedItem | undefined;
   };
 
   app.post("/payment/request", async (request, reply) => {
@@ -190,10 +190,10 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
   app.post("/escalation/:requestId/resolve", async (request, reply) => {
     const { requestId } = request.params as { requestId: string };
     const { decision, approvedBy, standingApproval } = request.body as {
-      decision?: "approve" | "deny";
-      approvedBy?: string;
-      signature?: string;
-      standingApproval?: { scope: "once" | "merchant-window" };
+      decision?: "approve" | "deny" | undefined;
+      approvedBy?: string | undefined;
+      signature?: string | undefined;
+      standingApproval?: { scope: "once" | "merchant-window" } | undefined;
     };
     if (!decision) {
       return sendError(reply, 400, "INVALID_BODY", "decision is required", requestId);
