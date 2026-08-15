@@ -1,0 +1,14 @@
+{
+  "name": "@straitsx/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./registry.json": "./registry.json"
+  },
+  "dependencies": {
+    "fastify": "^5.2.0",
+    "viem": "^2.21.55"
+  }
+}

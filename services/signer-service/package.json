@@ -1,0 +1,17 @@
+{
+  "name": "@straitsx/signer-service",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/main.ts",
+    "start": "tsx src/main.ts"
+  },
+  "dependencies": {
+    "@aws-sdk/client-kms": "^3.712.0",
+    "@noble/curves": "^1.7.0",
+    "@straitsx/contracts": "workspace:*",
+    "fastify": "^5.2.0",
+    "viem": "^2.21.55"
+  }
+}
