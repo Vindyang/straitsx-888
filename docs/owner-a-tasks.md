@@ -267,15 +267,15 @@ Use challenge-only mode for anything that does not require a real signature.
 
 # Phase 4 — Decisions and follow-through
 
-### A17 Decide the nonce strategy — **before A16**
+### A17 Decide the nonce strategy — **complete**
 
 **Estimate:** 15 min discussion
 
-- [ ] Choose: random-and-reserved (current plan) **or**
-      `keccak256(requestId ‖ policyHash ‖ intentHash ‖ merchantDomain)`
-- [ ] Tell Owner B — policy-service computes the nonce and passes it in, so this is one line
-      on B's side and none on yours
-- [ ] Record the decision in [execution_plan.md §10](execution_plan.md)
+- [x] Chose the fixed-width commitment encoding documented in
+      [execution_plan.md §10](execution_plan.md)
+- [x] Owner B implemented canonical `intentHash`, commitment nonce generation, reservation,
+      and receipt fields; signer-service remains unchanged and treats the nonce as opaque
+- [x] Decision and exact byte encoding recorded in [execution_plan.md §10](execution_plan.md)
 
 > The commitment variant makes the on-chain settlement itself commit to the human's intent,
 > turning the receipt from a database claim into something anyone can verify from chain data.

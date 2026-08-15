@@ -1,6 +1,6 @@
 # Module A/B handover — chain, keys, signing, policy
 
-Generated: 2026-08-15 · Branch `module-a` · AWS account `808198486011` (ap-southeast-1)
+Updated: 2026-08-16 · Branch `module-a` · AWS account `808198486011` (ap-southeast-1)
 Counterpart: `module-c-aws-integration-handover.md` (account `732031180826`)
 
 ## 1. Scope and honest status
@@ -23,13 +23,13 @@ on-chain evidence.
 | A14 hard-invariant rail | Complete, 7 refusals unit-tested and verified over HTTP |
 | A15 isolation | IAM applied; security groups scripted **not applied**; screenshot outstanding |
 | **A16 CHECKPOINT 2** | **PASSED** — two real settlements on Fuji |
-| A17 nonce decision | Decided (commitment); **not switched on**, see §7 |
+| A17 nonce decision | **Complete** — canonical intent hash and fixed-width commitment nonce are active |
 | A18 production 402 | Script written; blocked on organiser clearance |
 | A5 mainnet registry | **Not done.** Last item blocked on nobody |
 | B checks 1–9 | Complete |
 | B escalation auth | Complete — EIP-191 signature verification, added this session |
 
-Verification at handover: `pnpm typecheck` exit 0 · `pnpm test` **195 passed, 6 skipped** ·
+Verification at handover: `pnpm typecheck` exit 0 · `pnpm test` **199 passed, 6 skipped** ·
 `forge test` **16 passed**.
 
 ## 2. Identifiers
@@ -155,6 +155,10 @@ Full detail in [docs/deployment.md](docs/deployment.md).
 - **`rawToolResultHash`** is accepted on settlement and returned on the receipt. Optional,
   validated as 32-byte hex. Send the **hash**, never the body.
 - **Escalation approval is now a signature.** See §7 — this needs reconciling.
+- **`resolvedItem.merchantDomain` is required for signing.** Policy refuses before nonce
+  reservation when it is absent, and budget escalations preserve it for approval resume.
+- **Receipts expose `intentHash` and the signed `merchantDomain`.** Together with `requestId`,
+  `policyHash`, and `authorization.nonce`, this makes the commitment independently recomputable.
 
 ## 7. Open items, in priority order
 
@@ -177,22 +181,15 @@ on nobody. Its own note calls leaving it late *"unrecoverable"*: if production c
 never arrives, a mainnet registry plus a real mainnet XSGD movement is the fallback that keeps
 the submission compliant. 0.2 AVAX is already there.
 
-**3. `intentHash` is undefined, so the commitment nonce is not switched on.** A17 chose
-`keccak256(requestId ‖ policyHash ‖ intentHash ‖ merchantDomain)` and `buildCommitmentNonce`
-is implemented and tested — but nothing defines a canonical hash over an intent record.
-`policy-service/src/signing.ts` still generates a random nonce with a TODO. **Until this
-lands, nonces are replay-safe but receipts are NOT chain-verifiable**, which is the property
-A17 was chosen for. Decide alongside check 8 (B19), since they must agree.
-
-**4. No A/B Dockerfiles were building at handover.** `Dockerfile` + `.dockerignore` exist at
+**3. No A/B Dockerfiles were building at handover.** `Dockerfile` + `.dockerignore` exist at
 the repo root, parameterised by `SERVICE_ENTRY`/`SERVICE_PORT`, and every path they reference
 is verified present — but **the image has never been built**, because the Docker daemon was not
 running. Build all four before trusting it.
 
-**5. A15 screenshot** — needs A/B reachable in C's cluster. Use C's probe, not ours: ours
+**4. A15 screenshot** — needs A/B reachable in C's cluster. Use C's probe, not ours: ours
 checks one target and cannot prove the positive controls.
 
-**6. A18 production 402** — `scripts/probe-production-402.ts` refuses to run without an explicit
+**5. A18 production 402** — `scripts/probe-production-402.ts` refuses to run without an explicit
 `--url` and `--cleared`. Until it runs, `MAINNET.settlementRecipient` and `eip712Version` stay
 `null` and every mainnet path refuses. That refusal is the safety property.
 

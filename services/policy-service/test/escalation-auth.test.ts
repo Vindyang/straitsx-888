@@ -86,6 +86,7 @@ async function escalate(requestId: string): Promise<void> {
     requestId,
     mandateId: "m1",
     instruction: "buy sneakers",
+    instructionHash: "0x6ee31b84b68935428c7fc50e1236c8918ad2860145a57933e008dc95db791449",
     createdAt: "2026-08-15T06:00:00Z",
     challenge,
     challengeAttachedAt: "2026-08-15T06:01:00Z",
@@ -94,7 +95,19 @@ async function escalate(requestId: string): Promise<void> {
     method: "POST",
     url: "/payment/request",
     headers: auth(),
-    payload: { requestId, mandateId: "m1", requestedAmount: challenge.amount, challenge },
+    payload: {
+      requestId,
+      mandateId: "m1",
+      requestedAmount: challenge.amount,
+      challenge,
+      resolvedItem: {
+        title: "Black Running Sneakers Size 42",
+        sku: "SNK-42-BLK",
+        price: challenge.amount,
+        merchantDomain: "shop.example",
+        checkoutUrl: "https://shop.example/checkout/sneakers",
+      },
+    },
   });
   expect(res.statusCode).toBe(202);
 }
@@ -181,5 +194,25 @@ describe("escalation resolve requires a valid owner signature", () => {
     });
     expect(res.statusCode).toBe(200);
     expect(fakeSigner.getCalls()).toHaveLength(1);
+    expect(res.json().nonce).toBe("0xc0d327c63c90abbba4476b41da4e2e18ef1723dda77f0fdf6021b2bc15512b36");
+  });
+
+  it("fails closed if the stored escalation has no merchant domain", async () => {
+    await escalate("e6");
+    const escalation = fakeLedger.getEscalationRecord("e6");
+    expect(escalation).toBeDefined();
+    escalation!.merchantDomain = undefined;
+
+    const signature = await sign("e6", "approve");
+    const res = await resolve("e6", {
+      decision: "approve",
+      approvedBy: owner.address,
+      signature,
+    });
+
+    expect(res.statusCode).toBe(422);
+    expect(res.json().error.code).toBe("MERCHANT_DOMAIN_REQUIRED");
+    expect(fakeSigner.getCalls()).toHaveLength(0);
+    expect(fakeLedger.getEscalationRecord("e6")).toMatchObject({ resolved: true, decision: "deny" });
   });
 });

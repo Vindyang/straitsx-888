@@ -9,7 +9,7 @@
 
 import { describe, expect, it } from "vitest";
 import { keccak256, toBytes } from "viem";
-import { buildCommitmentNonce } from "../src/mandate";
+import { buildCommitmentNonce, hashIntentInstruction } from "../src/mandate";
 import type { Hex } from "../src/types";
 
 const POLICY_HASH = `0x${"11".repeat(32)}` as Hex;
@@ -21,6 +21,23 @@ const BASE = {
   intentHash: INTENT_HASH,
   merchantDomain: "card.straitsx.ai",
 };
+
+describe("hashIntentInstruction", () => {
+  it("hashes the exact UTF-8 instruction to the canonical 32-byte value", () => {
+    expect(hashIntentInstruction("buy sneakers")).toBe(
+      "0x6ee31b84b68935428c7fc50e1236c8918ad2860145a57933e008dc95db791449",
+    );
+  });
+
+  it("is byte-sensitive and does not trim or normalize the instruction", () => {
+    expect(hashIntentInstruction("buy sneakers ")).not.toBe(
+      hashIntentInstruction("buy sneakers"),
+    );
+    expect(hashIntentInstruction("Buy sneakers")).not.toBe(
+      hashIntentInstruction("buy sneakers"),
+    );
+  });
+});
 
 describe("buildCommitmentNonce", () => {
   it("returns a 32-byte hex value", () => {

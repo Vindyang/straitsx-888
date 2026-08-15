@@ -270,10 +270,11 @@ export function buildApp(
       decidedAt?: string;
       // Only meaningful (and only ever sent) alongside decision:"signed" — see IntentRecord.
       policyHash?: string;
+      merchantDomain?: string;
       validAfter?: number;
       validBefore?: number;
     };
-    const { requestId, decision, check, detail, decidedAt, policyHash, validAfter, validBefore } = body;
+    const { requestId, decision, check, detail, decidedAt, policyHash, merchantDomain, validAfter, validBefore } = body;
     if (!requestId || !decision || !decidedAt) {
       return sendError(reply, 400, "INVALID_BODY", "requestId, decision, decidedAt are required", requestId ?? "n/a");
     }
@@ -288,6 +289,7 @@ export function buildApp(
     if (decision === "signed") {
       intent.state = "SIGNED";
       intent.policyHash = policyHash;
+      intent.merchantDomain = merchantDomain;
       intent.validAfter = validAfter;
       intent.validBefore = validBefore;
     }
@@ -357,6 +359,8 @@ export function buildApp(
       mandateId: intent.mandateId,
       policyHash: intent.policyHash ?? null,
       intent: intent.instruction,
+      intentHash: intent.instructionHash,
+      merchantDomain: intent.merchantDomain ?? null,
       challenge: intent.challenge
         ? {
             payTo: intent.challenge.payTo,

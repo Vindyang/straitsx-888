@@ -1,5 +1,4 @@
-import { randomBytes } from "node:crypto";
-import type { Mandate, X402Requirements } from "@straitsx/contracts";
+import { buildCommitmentNonce, type Hex, type Mandate, type X402Requirements } from "@straitsx/contracts";
 import * as ledger from "./clients/ledgerClient.js";
 import * as signer from "./clients/signerClient.js";
 import { buildTypedData } from "./typedData.js";
@@ -7,6 +6,12 @@ import { buildTypedData } from "./typedData.js";
 export type SigningOutcome =
   | { ok: true; header: string; nonce: string; validAfter: number; validBefore: number }
   | { ok: false; statusCode: number; code: string; message: string; retryable: boolean };
+
+export type SigningCommitment = {
+  policyHash: Hex;
+  intentHash: Hex;
+  merchantDomain: string;
+};
 
 /**
  * The tail end of B10's pipeline: reserve nonce -> compute validity window -> sign.
@@ -30,19 +35,9 @@ export async function performSigning(
    * becomes the real value instead of an assumption.
    */
   resource: string,
+  commitment: SigningCommitment,
 ): Promise<SigningOutcome> {
-  // TODO(A17): this is still the RANDOM nonce. execution_plan §10 decided the
-  // commitment variant — keccak256(requestId ‖ policyHash ‖ intentHash ‖
-  // merchantDomain), available as buildCommitmentNonce() in @straitsx/contracts.
-  //
-  // It is not switched on yet because `intentHash` DOES NOT EXIST: nothing in
-  // the codebase defines a canonical hash over the intent record. Inventing one
-  // here would bake in an encoding that check 8 (intent binding) has to agree
-  // with, so it needs deciding alongside B19 rather than in passing.
-  //
-  // Until then the nonce is replay-safe but carries no meaning, and receipts are
-  // NOT chain-verifiable. See owner-b-tasks.md B10.
-  const nonce = `0x${randomBytes(32).toString("hex")}`;
+  const nonce = buildCommitmentNonce({ requestId, ...commitment });
   const reserved = await ledger.reserveNonce(requestId, nonce);
   if (!reserved.ok) {
     return { ok: false, statusCode: 409, code: reserved.code, message: `nonce reservation failed for ${requestId}`, retryable: false };

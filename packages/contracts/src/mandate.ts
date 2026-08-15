@@ -67,6 +67,15 @@ export function hashPolicy(mandate: Mandate): Hex {
 }
 
 /**
+ * Canonical commitment to the exact human instruction stored by ledger-service.
+ * The bytes are UTF-8 exactly as received: no trimming, case folding, or Unicode
+ * normalization. Changing any byte means a different intent.
+ */
+export function hashIntentInstruction(instruction: string): Hex {
+  return keccak256(toBytes(instruction));
+}
+
+/**
  * The EIP-3009 authorization nonce (A17, decided 2026-08-15 — execution_plan §10).
  *
  * The nonce is a COMMITMENT to the human's intent, not a random value. It makes

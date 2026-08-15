@@ -359,6 +359,8 @@ The A/B owner must provide all of the following before Module C can be accepted 
   route;
 - Module B approval-signature verification for the canonical EIP-191 escalation decision;
 - Module B receipt storage for the optional migration field `rawToolResultHash`;
+- Module B canonical intent commitment nonce, with `intentHash` and the signed
+  `merchantDomain` exposed on the receipt;
 - live Module A settlement confirmation returning success only when both `ok` and
   `transferMatched` are true;
 - the expected paying-wallet address, chain configuration, and signer DNS name for the
@@ -369,8 +371,8 @@ Module C calls are:
 
 | Owner | Contract used by C |
 |---|---|
-| Ledger B | `POST /intent`; attach challenge; nonce/decision/settlement/spend recording; `GET /receipt/:requestId`; `GET /window/:mandateId`; settlement evidence includes `rawToolResultHash`. |
-| Policy B | `POST /payment/request`; only validated `signed`, `refused`, or `escalated`; `POST /escalation/:requestId/resolve` with signature verification and expiry denial. |
+| Ledger B | `POST /intent`; attach challenge; nonce/decision/settlement/spend recording; `GET /receipt/:requestId`; `GET /window/:mandateId`; receipts include `intentHash`, signed `merchantDomain`, and optional settlement evidence `rawToolResultHash`. |
+| Policy B | `POST /payment/request` with a complete `resolvedItem`, including non-empty `merchantDomain`; only validated `signed`, `refused`, or `escalated`; `POST /escalation/:requestId/resolve` with signature verification and expiry denial. Missing merchant domains refuse before nonce reservation. |
 | Chain gateway A | `POST /settlement/confirm`; C proceeds only for `ok && transferMatched`; mandate/token/read models used by the dashboard. |
 | Signer A | **No direct C contract.** Only policy may call signer `4003`. |
 

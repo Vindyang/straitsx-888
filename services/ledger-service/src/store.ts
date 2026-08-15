@@ -1,4 +1,4 @@
-import type { Mandate, X402Requirements } from "@straitsx/contracts";
+import { hashIntentInstruction, type Mandate, type X402Requirements } from "@straitsx/contracts";
 
 export type IntentState =
   | "INTENT_CREATED"
@@ -25,6 +25,8 @@ export type IntentRecord = {
   // (a deliberate extension beyond api-contracts.md §5's documented body) so the receipt can
   // report them instead of null.
   policyHash?: string | undefined;
+  /** Domain committed into the signed authorization nonce. */
+  merchantDomain?: string | undefined;
   validAfter?: number | undefined;
   validBefore?: number | undefined;
   settlement?:
@@ -102,10 +104,5 @@ export function resetStore(): void {
 }
 
 export function instructionHashOf(instruction: string): string {
-  // Cheap non-cryptographic placeholder good enough for the stub; swap for keccak256 if the
-  // receipt ever needs to prove instruction integrity on-chain.
-  let hash = 0n;
-  const bytes = Buffer.from(instruction, "utf8");
-  for (const byte of bytes) hash = (hash * 31n + BigInt(byte)) & 0xffffffffffffffffn;
-  return `0x${hash.toString(16).padStart(16, "0")}`;
+  return hashIntentInstruction(instruction);
 }

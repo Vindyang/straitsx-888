@@ -46,10 +46,44 @@ describe("auth", () => {
 });
 
 describe("POST /intent", () => {
-  it("creates an intent", async () => {
+  it("creates an intent and exposes its canonical 32-byte hash through intent and receipt APIs", async () => {
+    const expectedIntentHash = "0xdfd5d184274bbe6af0c6e70316bb14b2ce03d9476b7f09c3b986f1463df7901f";
     const res = await app.inject({ method: "POST", url: "/intent", headers: auth(), payload: baseIntent });
     expect(res.statusCode).toBe(201);
-    expect(res.json()).toMatchObject({ requestId: "r1", state: "INTENT_CREATED", immutable: true });
+    expect(res.json()).toMatchObject({
+      requestId: "r1",
+      state: "INTENT_CREATED",
+      instructionHash: expectedIntentHash,
+      immutable: true,
+    });
+
+    const intent = await app.inject({ method: "GET", url: "/intent/r1", headers: auth() });
+    expect(intent.json()).toMatchObject({ instruction: "buy bottle", instructionHash: expectedIntentHash });
+
+    const receipt = await app.inject({ method: "GET", url: "/receipt/r1", headers: auth() });
+    expect(receipt.json()).toMatchObject({ intent: "buy bottle", intentHash: expectedIntentHash });
+
+    await app.inject({ method: "POST", url: "/intent/r1/nonce", headers: auth(), payload: { nonce: "0xaaa" } });
+    await app.inject({
+      method: "POST",
+      url: "/decision",
+      headers: auth(),
+      payload: {
+        requestId: "r1",
+        decision: "signed",
+        decidedAt: "2026-08-15T06:01:50Z",
+        policyHash: "0xpolicy",
+        merchantDomain: "shop.example",
+      },
+    });
+    const signedReceipt = await app.inject({ method: "GET", url: "/receipt/r1", headers: auth() });
+    expect(signedReceipt.json()).toMatchObject({
+      requestId: "r1",
+      policyHash: "0xpolicy",
+      intentHash: expectedIntentHash,
+      merchantDomain: "shop.example",
+      authorization: { nonce: "0xaaa" },
+    });
   });
 
   it("is append-only: a duplicate requestId returns 409 INTENT_EXISTS", async () => {

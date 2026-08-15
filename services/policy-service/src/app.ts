@@ -111,6 +111,14 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
       return refuseAndRecord(preconditionFailure.check, preconditionFailure.detail);
     }
 
+    if (!resolvedItem || typeof resolvedItem.merchantDomain !== "string" || resolvedItem.merchantDomain.trim().length === 0) {
+      return refuseAndRecord(
+        "precondition_merchant_domain",
+        "resolvedItem.merchantDomain is required to bind the authorization nonce",
+      );
+    }
+    const merchantDomain = resolvedItem.merchantDomain;
+
     // B10 — load policy + window usage; read registry.
     const policyRecord = await ledger.getPolicy(mandateId);
     if (!policyRecord) {
@@ -142,29 +150,37 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
         continue;
       }
       if (failure.outcome === "escalate") {
-        return escalateAndRespond(failure.check, failure.reason as "WINDOW_BUDGET_EXCEEDED", failure.detail);
+        return escalateAndRespond(failure.check, failure.reason as "WINDOW_BUDGET_EXCEEDED", failure.detail, merchantDomain);
       }
       return refuseAndRecord(failure.check, failure.detail);
     }
 
-    // B20 — the intent-match gate. Only runs when discovery data is present; Runs 1-3 don't
-    // depend on Owner C having wired resolvedItem yet.
-    if (resolvedItem) {
-      const hasStandingApproval = await ledger.getStandingApproval(mandateId, resolvedItem.merchantDomain);
-      const c9 = check9_intent_match({
-        resolvedItem,
-        intentConstraint: mandate.intentConstraint,
-        merchantAllowlist: mandate.merchantAllowlist,
-        hasStandingApproval,
-      });
-      if (c9) {
-        return escalateAndRespond(c9.check, c9.reason, c9.detail, resolvedItem.merchantDomain);
-      }
-      checksPassed.push("check9_intent_match");
+    // B20 — the intent-match gate. Merchant discovery is now mandatory because its domain is
+    // one of the four inputs committed into every signed EIP-3009 nonce.
+    const hasStandingApproval = await ledger.getStandingApproval(mandateId, merchantDomain);
+    const c9 = check9_intent_match({
+      resolvedItem,
+      intentConstraint: mandate.intentConstraint,
+      merchantAllowlist: mandate.merchantAllowlist,
+      hasStandingApproval,
+    });
+    if (c9) {
+      return escalateAndRespond(c9.check, c9.reason, c9.detail, merchantDomain);
     }
+    checksPassed.push("check9_intent_match");
 
     // Checks passed. Reserve the nonce and sign.
-    const signing = await performSigning(requestId, mandateId, mandate, challenge, requestedAmount, ctx.now, CARDAPI_SANDBOX_ISSUE_CARD);
+    const policyHash = hashPolicy(mandate);
+    const signing = await performSigning(
+      requestId,
+      mandateId,
+      mandate,
+      challenge,
+      requestedAmount,
+      ctx.now,
+      CARDAPI_SANDBOX_ISSUE_CARD,
+      { policyHash, intentHash: intentRecord!.instructionHash, merchantDomain },
+    );
     if (!signing.ok) {
       await ledger.recordDecision({ requestId, decision: "refused", check: "signer_refused", detail: signing.message, decidedAt: nowIso() });
       return sendError(reply, signing.statusCode, signing.code, signing.message, requestId, signing.retryable);
@@ -174,7 +190,8 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
       requestId,
       decision: "signed",
       decidedAt: nowIso(),
-      policyHash: hashPolicy(mandate),
+      policyHash,
+      merchantDomain,
       validAfter: signing.validAfter,
       validBefore: signing.validBefore,
     });
@@ -282,7 +299,36 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
       return sendError(reply, 404, "CHALLENGE_NOT_FOUND", `no challenge attached to intent ${requestId}`, requestId);
     }
 
-    const signing = await performSigning(requestId, escalation.mandateId, mandate, intentRecord.challenge, intentRecord.challenge.amount, nowSec(), CARDAPI_SANDBOX_ISSUE_CARD);
+    const merchantDomain = escalation.merchantDomain;
+    if (typeof merchantDomain !== "string" || merchantDomain.trim().length === 0) {
+      await ledger.resolveEscalationStorage(requestId, "deny", approvedBy);
+      await ledger.recordDecision({
+        requestId,
+        decision: "refused",
+        check: "precondition_merchant_domain",
+        detail: "the escalation does not contain the merchant domain required to bind the authorization nonce",
+        decidedAt: nowIso(),
+      });
+      return sendError(
+        reply,
+        422,
+        "MERCHANT_DOMAIN_REQUIRED",
+        "the escalation does not contain the merchant domain required to bind the authorization nonce",
+        requestId,
+      );
+    }
+
+    const policyHash = hashPolicy(mandate);
+    const signing = await performSigning(
+      requestId,
+      escalation.mandateId,
+      mandate,
+      intentRecord.challenge,
+      intentRecord.challenge.amount,
+      nowSec(),
+      CARDAPI_SANDBOX_ISSUE_CARD,
+      { policyHash, intentHash: intentRecord.instructionHash, merchantDomain },
+    );
     if (!signing.ok) {
       await ledger.resolveEscalationStorage(requestId, "deny", approvedBy);
       await ledger.recordDecision({ requestId, decision: "refused", check: "signer_refused", detail: signing.message, decidedAt: nowIso() });
@@ -294,7 +340,8 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
       requestId,
       decision: "signed",
       decidedAt: nowIso(),
-      policyHash: hashPolicy(mandate),
+      policyHash,
+      merchantDomain,
       validAfter: signing.validAfter,
       validBefore: signing.validBefore,
     });

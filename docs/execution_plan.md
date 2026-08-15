@@ -521,8 +521,15 @@ here fail silently rather than loudly.
 **Decision: the commitment variant.**
 
 ```
-nonce = keccak256(requestId ‖ policyHash ‖ intentHash ‖ merchantDomain)
+requestIdHash    = keccak256(utf8(requestId))
+merchantHash     = keccak256(utf8(merchantDomain))
+intentHash       = keccak256(utf8(verbatimHumanInstruction))
+nonce            = keccak256(requestIdHash ‖ policyHash ‖ intentHash ‖ merchantHash)
 ```
+
+All four concatenated values are fixed 32-byte words. The exact implementation lives in
+`hashIntentInstruction` and `buildCommitmentNonce` in `@straitsx/contracts`; raw strings are
+never concatenated and the verbatim instruction is never normalized.
 
 Not random-and-reserved. The nonce is a **commitment to the human's intent**, which makes the
 on-chain settlement itself carry the authorisation context: anyone holding the receipt can

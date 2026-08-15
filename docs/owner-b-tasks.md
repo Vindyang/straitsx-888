@@ -138,7 +138,13 @@ isolation. Order matters: cheapest and most damning first.
 > **policy-service computes the nonce. It is no longer random.**
 >
 > ```ts
-> nonce = keccak256(concat([requestId, policyHash, intentHash, merchantDomain]))
+> intentHash = keccak256(utf8(verbatimHumanInstruction))
+> nonce = keccak256(concat([
+>   keccak256(utf8(requestId)),
+>   policyHash,
+>   intentHash,
+>   keccak256(utf8(merchantDomain)),
+> ]))
 > ```
 >
 > Pass it in the `POST /sign` request as before — the signer treats `nonce` as opaque

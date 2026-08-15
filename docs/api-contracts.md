@@ -435,12 +435,11 @@ policy-service is fully compromised ([execution_plan.md §12b 2.2](execution_pla
 `derivedAddress` must equal the paying wallet. **This is the custody proof** — it is how you
 confirm you hold the key without touching key material. If it mismatches, stop everything.
 
-> **Flagged design decision, not yet adopted.** `nonce` is currently random-and-reserved. It
-> could instead be `keccak256(requestId ‖ policyHash ‖ intentHash ‖ merchantDomain)`, making
-> the on-chain settlement itself commit to the human's intent and turning the receipt from a
-> database claim into a chain-verifiable one. The API above supports either — the nonce is
-> computed by policy-service and passed in. **Decide before checkpoint 2**; changing it after
-> a signature exists means a new nonce and a new authorization.
+> **Adopted commitment nonce.** Policy-service computes
+> `keccak256(keccak256(utf8(requestId)) ‖ policyHash ‖ intentHash ‖ keccak256(utf8(merchantDomain)))`
+> and passes it to signer-service as opaque `bytes32`. The fixed-width encoding is owned by
+> `buildCommitmentNonce` in `@straitsx/contracts`; do not concatenate raw strings or
+> reimplement it in a service.
 
 ---
 
@@ -471,6 +470,8 @@ System of record. Nothing else touches storage.
 
 **Append-only.** A second `POST` with the same `requestId` returns `409 INTENT_EXISTS` — it
 never updates. No component, including the agent, may edit an instruction after write.
+`instructionHash` is the lowercase 32-byte `keccak256` of the instruction's exact UTF-8
+bytes. There is no trimming, case folding, Unicode normalization, or JSON wrapping.
 
 ### `GET /intent/:requestId`
 
@@ -625,6 +626,8 @@ observation as proof.
   "mandateId": "0x7f3a…",
   "policyHash": "0xab12…",
   "intent": "Buy the 500ml stainless water bottle from shop.example, under S$20",
+  "intentHash": "0x4a…",
+  "merchantDomain": "shop.example",
   "challenge": {
     "payTo": "0x99a2B2962a6AC463FBe04664027Fdb3F68bd4Cc8",
     "asset": "0xd769410dc8772695a7f55a304d2125320a65c2a5",
@@ -639,6 +642,7 @@ observation as proof.
   "settlementTx": "0xdead…",
   "blockNumber": 41230044,
   "cardOpaqueId": "crd_…",
+  "rawToolResultHash": "0x7b…",
   "decision": "signed",
   "decidedAt": "2026-08-15T06:01:50Z",
   "spendLeg": {
@@ -657,6 +661,11 @@ observation as proof.
 
 `authorization` is a **sibling of** `challenge`, not nested inside it — the window is our
 choice, not part of what StraitsX sent.
+
+`requestId`, `policyHash`, `intentHash`, `merchantDomain`, and `authorization.nonce` are
+present together so a verifier can recompute the commitment nonce. `merchantDomain` is the
+validated value stored when policy-service records the signed decision; it does not depend on
+the later optional spend observation.
 
 ---
 
@@ -701,6 +710,11 @@ choice, not part of what StraitsX sent.
 check 9 renders an **independently fetched** checkout page to the human, never this object
 ([execution_plan.md §12b 2.3](execution_plan.md)).
 
+`resolvedItem.merchantDomain` is mandatory for every path that may sign, including budget
+escalations. Missing or empty values are refused before nonce reservation. An escalation
+stores the domain and approval resumes from that stored value; it does not accept a replacement
+domain in the resolve request.
+
 **Signed** — `200`:
 
 ```json
@@ -715,11 +729,12 @@ check 9 renders an **independently fetched** checkout page to the human, never t
     "check1_mandate_live",
     "check2_policy_hash",
     "check3_chain_asset",
-    "check4_recipient",
-    "check5_amount",
-    "check6_window",
-    "check7_validity",
-    "check8_intent_bound"
+    "check4_recipient_pinned",
+    "check5_amount_bounds",
+    "check6_window_budget",
+    "check7_validity_sane",
+    "check8_intent_bound",
+    "check9_intent_match"
   ],
   "decidedAt": "2026-08-15T06:01:50Z"
 }
