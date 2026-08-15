@@ -1,0 +1,95 @@
+import type { Mandate, X402Requirements } from "@straitsx/contracts";
+
+export type IntentState =
+  | "INTENT_CREATED"
+  | "CHALLENGE_ATTACHED"
+  | "NONCE_RESERVED"
+  | "SIGNED"
+  | "SETTLED";
+
+export type IntentRecord = {
+  requestId: string;
+  mandateId: string;
+  agentId: string;
+  instruction: string;
+  instructionHash: string;
+  createdAt: string;
+  challenge?: X402Requirements;
+  challengeAttachedAt?: string;
+  nonce?: string;
+  nonceReservedAt?: string;
+  nonceReleased?: boolean;
+  decision?: "signed" | "refused" | "escalated";
+  decidedAt?: string;
+  settlement?: { settlementTx: string; blockNumber: number; cardOpaqueId: string };
+  spend?: {
+    merchantDomain: string;
+    orderTotal: string;
+    itemSku: string;
+    orderId: string;
+    observedAt: string;
+  };
+  state: IntentState;
+};
+
+export type DecisionLogEntry = {
+  sequence: number;
+  requestId: string;
+  decision: "signed" | "refused" | "escalated";
+  check?: string;
+  detail?: string;
+  decidedAt: string;
+};
+
+export type PolicyRecord = {
+  policy: Mandate;
+  policyVersion: number;
+};
+
+export type EscalationReason = "WINDOW_BUDGET_EXCEEDED" | "INTENT_MISMATCH";
+
+export type EscalationRecord = {
+  requestId: string;
+  mandateId: string;
+  reason: EscalationReason;
+  approvalUrl: string;
+  createdAt: string;
+  expiresAt: number; // unix seconds
+  ttlSeconds: number;
+  resolved: boolean;
+  decision?: "approve" | "deny";
+  approvedBy?: string;
+  resolvedAt?: string;
+  // Only set for check9 (INTENT_MISMATCH) escalations — lets "approve this merchant for this
+  // window" (B21) turn into a standing approval without the caller re-sending it at resolve time.
+  merchantDomain?: string;
+};
+
+// In-memory Map per B1. A Postgres/DynamoDB swap lands later without changing the routes.
+export const intents = new Map<string, IntentRecord>();
+export const decisionLog: DecisionLogEntry[] = [];
+// Raw storage only — no hash-drift validation here. That belongs in policy-service (B22);
+// "storage logic in policy-service" and "validation logic in ledger-service" are both listed
+// as Never in owner-b-tasks.md.
+export const policies = new Map<string, PolicyRecord>();
+export const escalations = new Map<string, EscalationRecord>();
+// key: `${mandateId}::${merchantDomain.toLowerCase()}`, value: expiresAt (unix seconds)
+export const standingApprovals = new Map<string, number>();
+
+/** Test-only: wipe all in-memory state between test cases. */
+export function resetStore(): void {
+  intents.clear();
+  policies.clear();
+  decisionLog.length = 0;
+  escalations.clear();
+  standingApprovals.clear();
+}
+
+export function instructionHashOf(instruction: string): string {
+  // Cheap non-cryptographic placeholder good enough for the stub; swap for keccak256 if the
+  // receipt ever needs to prove instruction integrity on-chain.
+  let hash = 0n;
+  const bytes = Buffer.from(instruction, "utf8");
+  for (const byte of bytes) hash = (hash * 31n + BigInt(byte)) & 0xffffffffffffffffn;
+  return `0x${hash.toString(16).padStart(16, "0")}`;
+}

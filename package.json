@@ -1,0 +1,16 @@
+{
+  "name": "straitsx-888",
+  "private": true,
+  "packageManager": "pnpm@11.21.0",
+  "scripts": {
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "dev:ledger": "pnpm --filter ledger-service dev",
+    "dev:policy": "pnpm --filter policy-service dev"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.5"
+  }
+}
