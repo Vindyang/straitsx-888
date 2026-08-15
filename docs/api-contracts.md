@@ -322,6 +322,75 @@ Enforce with a security group / firewall rule, not a code check.
 
 `header` is the base64 `PAYMENT-SIGNATURE` value, ready to send verbatim.
 
+#### `POST /sign` also requires `accepted` and `resource`
+
+```json
+{
+  "requestId": "3f6c8b2e-…",
+  "mandateId": "0x7f3a…",
+  "typedData": { "…": "as above" },
+  "resource": "https://card.straitsx.ai/sandbox/cardapi/issue_card",
+  "accepted": { "…": "the accepts[] entry from the 402, passed straight through" }
+}
+```
+
+`accepted` is **required**. It is one entry of the challenge's `accepts[]` — the requirement
+this payment satisfies — copied verbatim from the 402. policy-service computes nothing here.
+
+#### The `PAYMENT-SIGNATURE` payload — VERIFIED at checkpoint 2 (2026-08-15)
+
+The header is base64 of the **x402 v2** payment payload:
+
+```json
+{
+  "x402Version": 1,
+  "resource": "https://card.straitsx.ai/sandbox/cardapi/issue_card",
+  "accepted": {
+    "scheme": "exact",
+    "network": "eip155:43113",
+    "chainId": 43113,
+    "amount": "5000000",
+    "asset": "0xd769410dc8772695a7f55a304d2125320a65c2a5",
+    "payTo": "0x99a2B2962a6AC463FBe04664027Fdb3F68bd4Cc8",
+    "maxTimeoutSeconds": 300,
+    "extra": { "assetTransferMethod": "eip3009", "name": "XSGD", "version": "2" }
+  },
+  "payload": {
+    "signature": "0x<65 bytes: r ‖ s ‖ v>",
+    "authorization": {
+      "from": "0x…", "to": "0x…",
+      "value": "5000000",
+      "validAfter": "1786803732",
+      "validBefore": "1786804032",
+      "nonce": "0x…"
+    }
+  },
+  "extensions": {}
+}
+```
+
+Confirmed live: settlement
+[`0xe6dcb85e…`](https://testnet.snowtrace.io/tx/0xe6dcb85eb3880f9daff8ace963e60bba346d3a785411e19cd4e04972da6094c6),
+block 57777207, 5 XSGD moved. Pinned by `signer-service/test/x402-header.test.ts`.
+
+**Three shapes that were rejected**, recorded so nobody re-derives them:
+
+| Sent | Result |
+| --- | --- |
+| base64 of the EIP-712 typed data | carried **no signature at all** |
+| v1 envelope `{x402Version, scheme, network, payload}` | `cannot parse payment amount: invalid atomic amount ""` |
+| requirements under `paymentRequirements` or `accepts` (plural) | identical error — the key is **`accepted`**, singular |
+
+Rules that follow:
+
+- `signature` is a **65-byte hex string** (`r ‖ s ‖ v`), not a `{v,r,s}` object. `v` stays
+  27/28; emitting 0/1 recovers a different address.
+- `value`, `validAfter`, `validBefore` are **strings** inside `authorization`, even though
+  `validAfter`/`validBefore` are numbers on the wire into `/sign`.
+- `network` is **CAIP-2** (`eip155:43113`), not a friendly name.
+- Every failure above presents as a 402 that never clears, which looks exactly like a
+  wrong-domain bug. Check the header shape **before** touching the domain assertion.
+
 **Hard-invariant rail** — the signer refuses these regardless of who asked, and these are the
 _only_ conditions it evaluates:
 

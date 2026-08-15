@@ -24,10 +24,12 @@ import {
   registerErrorHandler,
   registerInternalAuth,
   requireObject,
+  X402_VERSION,
   type Hex,
   type SignResponse,
+  type X402Accepted,
 } from "@straitsx/contracts";
-import { hexToBytes, type Address } from "viem";
+import { hexToBytes, type Address, type Hex as ViemHex } from "viem";
 import type { KeySource } from "./keys/key-source";
 import {
   checkRail,
@@ -72,6 +74,11 @@ function parseSignBody(body: unknown): {
   requestId: string;
   mandateId: Hex;
   typedData: BuildTypedDataInput;
+  /** The `accepts[]` entry from the 402 that this payment satisfies. */
+  accepted: X402Accepted;
+  /** The resource URL being paid for. */
+  resource: string;
+  x402Version: number;
 } {
   const obj = requireObject(body);
 
@@ -107,9 +114,50 @@ function parseSignBody(body: unknown): {
     "typedData.domain.verifyingContract",
   );
 
+  // The `accepts[]` entry being satisfied, passed through from the 402. This is
+  // REQUIRED, not optional: the facilitator reads `accepted.amount` and has no
+  // other source for it. Omitting it produced
+  // `cannot parse payment amount: invalid atomic amount ""` at checkpoint 2, so
+  // we refuse here rather than emit a header that cannot settle.
+  const accepted = requireObject(obj["accepted"], "accepted");
+  const acceptedAmount = parseUint(accepted["amount"], "accepted.amount");
+  const acceptedExtra = requireObject(accepted["extra"], "accepted.extra");
+
+  const resource = obj["resource"];
+  if (typeof resource !== "string" || resource.length === 0) {
+    throw AppError.badRequest("resource is required (the cardapi URL)");
+  }
+
+  const rawVersion = obj["x402Version"];
+  if (rawVersion !== undefined && typeof rawVersion !== "number") {
+    throw AppError.badRequest("x402Version must be a number when present");
+  }
+
   return {
     requestId,
     mandateId,
+    resource,
+    accepted: {
+      scheme: "exact",
+      network: requireString(accepted["network"], "accepted.network"),
+      chainId: parseChainId(accepted["chainId"]),
+      amount: acceptedAmount,
+      asset: parseAddress(accepted["asset"], "accepted.asset"),
+      payTo: parseAddress(accepted["payTo"], "accepted.payTo"),
+      maxTimeoutSeconds: requireNumber(
+        accepted["maxTimeoutSeconds"],
+        "accepted.maxTimeoutSeconds",
+      ),
+      extra: {
+        assetTransferMethod: "eip3009",
+        name: requireString(acceptedExtra["name"], "accepted.extra.name"),
+        version: requireString(
+          acceptedExtra["version"],
+          "accepted.extra.version",
+        ),
+      },
+    },
+    x402Version: rawVersion ?? X402_VERSION,
     typedData: {
       from,
       to,
@@ -157,7 +205,8 @@ export function buildSignerApp(opts: BuildSignerAppOptions): FastifyInstance {
   }));
 
   app.post("/sign", async (req) => {
-    const { requestId, mandateId, typedData } = parseSignBody(req.body);
+    const { requestId, mandateId, typedData, accepted, resource, x402Version } =
+      parseSignBody(req.body);
 
     // 1. The hard-invariant rail (A14) — before any domain work or signing.
     const railConfig: RailConfig = {
@@ -191,7 +240,23 @@ export function buildSignerApp(opts: BuildSignerAppOptions): FastifyInstance {
       opts.keySource,
       hexToBytes(digest),
       opts.signerAddress,
-      fullTypedData,
+      {
+        x402Version,
+        resource,
+        // Passed straight through from the challenge. `accepted.amount` is the
+        // only place the facilitator reads the payment amount from.
+        accepted,
+        // value/validAfter/validBefore are STRINGS in the x402 payload, even
+        // though validAfter/validBefore are numbers on the wire into /sign.
+        authorization: {
+          from: typedData.from as Address,
+          to: typedData.to as Address,
+          value: typedData.value,
+          validAfter: String(typedData.validAfter),
+          validBefore: String(typedData.validBefore),
+          nonce: typedData.nonce as ViemHex,
+        },
+      },
     );
 
     // 4. Mark the requestId as seen (replay guard) AFTER a successful sign.

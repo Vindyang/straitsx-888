@@ -52,6 +52,23 @@ function validSignBody() {
         nonce: `0x${"9c1f".padStart(64, "0")}`,
       },
     },
+    // The `accepts[]` entry being satisfied. REQUIRED — the facilitator reads
+    // `accepted.amount` and the emitted header cannot settle without it.
+    resource: "https://card.straitsx.ai/sandbox/cardapi/issue_card",
+    accepted: {
+      scheme: "exact",
+      network: "eip155:43113",
+      chainId: 43113,
+      amount: "5000000",
+      asset: "0xd769410dc8772695a7f55a304d2125320a65c2a5",
+      payTo: RECIPIENT,
+      maxTimeoutSeconds: 300,
+      extra: {
+        assetTransferMethod: "eip3009",
+        name: "XSGD",
+        version: "2",
+      },
+    },
   };
 }
 

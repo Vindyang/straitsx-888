@@ -53,6 +53,38 @@ function makeTypedData(): BuildTypedDataInput {
   };
 }
 
+/** The x402 header input matching makeTypedData(). `value`, `validAfter` and
+ *  `validBefore` are STRINGS here — that is the spec shape, not a slip. */
+function makeHeaderInput() {
+  const t = makeTypedData();
+  return {
+    x402Version: 1,
+    resource: "https://card.straitsx.ai/sandbox/cardapi/issue_card",
+    accepted: {
+      scheme: "exact" as const,
+      network: "eip155:43113",
+      chainId: 43113,
+      amount: t.value,
+      asset: "0xd769410dc8772695a7f55a304d2125320a65c2a5",
+      payTo: t.to,
+      maxTimeoutSeconds: 300,
+      extra: {
+        assetTransferMethod: "eip3009" as const,
+        name: t.domain.name,
+        version: t.domain.version,
+      },
+    },
+    authorization: {
+      from: t.from as `0x${string}`,
+      to: t.to as `0x${string}`,
+      value: t.value,
+      validAfter: String(t.validAfter),
+      validBefore: String(t.validBefore),
+      nonce: t.nonce as `0x${string}`,
+    },
+  };
+}
+
 describe("A13 signature vectors", () => {
   it("vector 1: LocalKeySource + pipeline is byte-identical to viem signTypedData", async () => {
     const source = buildLocalKeySource(PRIVATE_KEY);
@@ -75,7 +107,7 @@ describe("A13 signature vectors", () => {
       source,
       hexToBytes(digest),
       expectedAddress,
-      { x402Version: 1, scheme: "exact" },
+      makeHeaderInput(),
     );
 
     expect(result.signature.r).toBe(viemParsed.r);
@@ -110,7 +142,7 @@ describe("A13 signature vectors", () => {
       highSsource,
       digestBytes,
       expectedAddress,
-      {},
+      makeHeaderInput(),
     );
 
     // The pipeline must normalise s back down to low-s and still recover a v.

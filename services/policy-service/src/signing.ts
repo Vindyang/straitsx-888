@@ -20,7 +20,28 @@ export async function performSigning(
   challenge: X402Requirements,
   amount: string,
   now: number,
+  /**
+   * The resource being paid for — the cardapi URL from the 402 exchange.
+   *
+   * TODO(owner-c-plumbing): this should arrive with the challenge. `get_card_sandbox`
+   * returns `{ cardapiUrl, challenge }` (execution_plan §6), but `cardapiUrl` is
+   * currently dropped before it reaches policy-service, so callers pass the
+   * sandbox constant. Thread it through the intent record and this parameter
+   * becomes the real value instead of an assumption.
+   */
+  resource: string,
 ): Promise<SigningOutcome> {
+  // TODO(A17): this is still the RANDOM nonce. execution_plan §10 decided the
+  // commitment variant — keccak256(requestId ‖ policyHash ‖ intentHash ‖
+  // merchantDomain), available as buildCommitmentNonce() in @straitsx/contracts.
+  //
+  // It is not switched on yet because `intentHash` DOES NOT EXIST: nothing in
+  // the codebase defines a canonical hash over the intent record. Inventing one
+  // here would bake in an encoding that check 8 (intent binding) has to agree
+  // with, so it needs deciding alongside B19 rather than in passing.
+  //
+  // Until then the nonce is replay-safe but carries no meaning, and receipts are
+  // NOT chain-verifiable. See owner-b-tasks.md B10.
   const nonce = `0x${randomBytes(32).toString("hex")}`;
   const reserved = await ledger.reserveNonce(requestId, nonce);
   if (!reserved.ok) {
@@ -32,7 +53,18 @@ export async function performSigning(
   const validBefore = validAfter + window;
   const typedData = buildTypedData(mandate, challenge, amount, validAfter, validBefore, nonce);
 
-  const signResult = await signer.sign(requestId, mandateId, typedData);
+  // `accepted` is the challenge minus its top-level x402Version — the entry the
+  // payment satisfies. Derived here rather than asked of every caller, since the
+  // challenge already carries every field.
+  const { x402Version: _x402Version, ...accepted } = challenge;
+
+  const signResult = await signer.sign(
+    requestId,
+    mandateId,
+    typedData,
+    accepted,
+    resource,
+  );
   if (!signResult.ok) {
     // Pre-signature failure: release the nonce so a retry with a fresh nonce can succeed (B6).
     await ledger.releaseNonce(requestId, signResult.code);

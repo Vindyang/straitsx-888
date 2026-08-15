@@ -1,5 +1,11 @@
 import Fastify, { type FastifyInstance } from "fastify";
-import { hashPolicy, type Mandate, type ResolvedItem, type X402Requirements } from "@straitsx/contracts";
+import {
+  CARDAPI_SANDBOX_ISSUE_CARD,
+  hashPolicy,
+  type Mandate,
+  type ResolvedItem,
+  type X402Requirements,
+} from "@straitsx/contracts";
 import * as chainGateway from "./clients/chainGatewayClient.js";
 import * as ledger from "./clients/ledgerClient.js";
 import {
@@ -157,7 +163,7 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
     }
 
     // Checks passed. Reserve the nonce and sign.
-    const signing = await performSigning(requestId, mandateId, mandate, challenge, requestedAmount, ctx.now);
+    const signing = await performSigning(requestId, mandateId, mandate, challenge, requestedAmount, ctx.now, CARDAPI_SANDBOX_ISSUE_CARD);
     if (!signing.ok) {
       await ledger.recordDecision({ requestId, decision: "refused", check: "signer_refused", detail: signing.message, decidedAt: nowIso() });
       return sendError(reply, signing.statusCode, signing.code, signing.message, requestId, signing.retryable);
@@ -249,7 +255,7 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
       return sendError(reply, 404, "CHALLENGE_NOT_FOUND", `no challenge attached to intent ${requestId}`, requestId);
     }
 
-    const signing = await performSigning(requestId, escalation.mandateId, mandate, intentRecord.challenge, intentRecord.challenge.amount, nowSec());
+    const signing = await performSigning(requestId, escalation.mandateId, mandate, intentRecord.challenge, intentRecord.challenge.amount, nowSec(), CARDAPI_SANDBOX_ISSUE_CARD);
     if (!signing.ok) {
       await ledger.resolveEscalationStorage(requestId, "deny", approvedBy);
       await ledger.recordDecision({ requestId, decision: "refused", check: "signer_refused", detail: signing.message, decidedAt: nowIso() });

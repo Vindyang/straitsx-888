@@ -98,6 +98,31 @@ export const MCP_SSE_PRODUCTION: string | null = null;
 export const FUNDING_ORIGIN_WALLET: Address =
   "0x9f6B4A5DE73CE365238F27236ea04A747E691bF7";
 
+/**
+ * The x402 `network` identifier per chain, used in the `PAYMENT-SIGNATURE`
+ * payload (`{ x402Version, scheme, network, payload }`).
+ *
+ * **CAIP-2 form, observed live on 2026-08-15.** The sandbox 402 returns
+ * `"eip155:43113"`, NOT a friendly name like `"avalanche-fuji"` — that guess was
+ * wrong and the A16 probe caught it before a signature was ever sent. A payload
+ * carrying the wrong network string is rejected by the facilitator, and the
+ * symptom is a 402 that never clears.
+ *
+ * Still prefer the challenge's own `network` when you have it: `accepts[0]`
+ * carries it, that value is authoritative, and mainnet has never been observed.
+ * This map is only the fallback for callers that omit it.
+ */
+export const X402_NETWORK_BY_CHAIN: Record<ChainId, string> = {
+  43113: "eip155:43113",
+  // Unverified — mainnet's 402 has not been fetched (A18, §19.7 clearance open).
+  // CAIP-2 is mechanical, so this is a safe inference rather than a guess, but
+  // the production probe should still confirm it.
+  43114: "eip155:43114",
+};
+
+/** The x402 protocol version we build payloads for. */
+export const X402_VERSION = 1;
+
 export const SERVICE_PORTS = {
   ledger: 4001,
   policy: 4002,

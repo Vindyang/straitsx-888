@@ -21,7 +21,7 @@ import {
   type Address,
   type Hex,
 } from "viem";
-import { isoSeconds } from "@straitsx/contracts";
+import { isoSeconds, type X402Accepted } from "@straitsx/contracts";
 import type { KeySource } from "../keys/key-source";
 import { normaliseS, parseSignatureDer, type RSEcdsa } from "../keys/der";
 
@@ -36,6 +36,86 @@ export type PaymentSignatureHeader = {
   signerAddress: Address;
   signedAt: string;
 };
+
+/**
+ * The `authorization` block of the x402 `exact` payload. Note the STRING types
+ * on `value`, `validAfter` and `validBefore` — the spec example carries them as
+ * `"10000"`, `"1740672089"`, `"1740672154"`, not as JSON numbers. Sending them
+ * as numbers is the kind of mismatch a facilitator rejects without explaining.
+ */
+export type X402Authorization = {
+  from: Address;
+  to: Address;
+  value: string;
+  validAfter: string;
+  validBefore: string;
+  nonce: Hex;
+};
+
+export type X402HeaderInput = {
+  x402Version: number;
+  /** The resource being paid for — the cardapi URL from the challenge. */
+  resource: string;
+  /**
+   * The `accepts[]` entry being satisfied, passed through from the 402.
+   * The facilitator reads `accepted.amount`; there is no other source for it.
+   */
+  accepted: X402Accepted;
+  authorization: X402Authorization;
+};
+
+/**
+ * Pack `{ v, r, s }` into the 65-byte `r‖s‖v` hex string the x402 `exact`
+ * scheme carries as `payload.signature`.
+ *
+ * The spec calls for "the 65-byte signature of the transferWithAuthorization
+ * operation" — a single hex string, NOT a `{v,r,s}` object. `v` is the trailing
+ * byte and stays 27/28 (Ethereum wire form), because that is what `ecrecover`
+ * inside the token contract expects.
+ */
+export function packSignature65(parts: SignatureParts): Hex {
+  const r = BigInt(parts.r).toString(16).padStart(64, "0");
+  const s = BigInt(parts.s).toString(16).padStart(64, "0");
+  const v = parts.v.toString(16).padStart(2, "0");
+  return `0x${r}${s}${v}` as Hex;
+}
+
+/**
+ * Build the base64 `PAYMENT-SIGNATURE` value: the **x402 v2** payment payload.
+ *
+ *   { x402Version, resource, accepted, payload: { signature, authorization },
+ *     extensions }
+ *
+ * VERIFIED AGAINST THE LIVE FACILITATOR at checkpoint 2 (2026-08-15,
+ * settlement 0xe6dcb85e…). Two earlier shapes were rejected and are recorded
+ * here so nobody re-derives them:
+ *
+ *   - base64 of the EIP-712 typed data — carried NO SIGNATURE at all.
+ *   - the v1 envelope `{ x402Version, scheme, network, payload }` — rejected
+ *     with `cannot parse payment amount: invalid atomic amount ""`, because
+ *     `accepted` is the only place the facilitator reads the amount from.
+ *     Adding the requirements under `paymentRequirements` or `accepts` (plural)
+ *     changed nothing; the key is `accepted`, SINGULAR.
+ *
+ * Both failures present identically to a wrong-domain bug, which is why the
+ * shape is pinned by test/x402-header.test.ts rather than left to inspection.
+ */
+export function buildX402Header(
+  input: X402HeaderInput,
+  signature: SignatureParts,
+): string {
+  const payload = {
+    x402Version: input.x402Version,
+    resource: input.resource,
+    accepted: input.accepted,
+    payload: {
+      signature: packSignature65(signature),
+      authorization: input.authorization,
+    },
+    extensions: {},
+  };
+  return Buffer.from(JSON.stringify(payload), "utf8").toString("base64");
+}
 
 function toBigIntHex(value: bigint): Hex {
   let hex = value.toString(16);
@@ -114,7 +194,7 @@ export async function signDigestWithKeySource(
   keySource: KeySource,
   digest: Uint8Array,
   derivedAddress: Address,
-  headerPayload: unknown,
+  headerInput: X402HeaderInput,
 ): Promise<PaymentSignatureHeader> {
   if (digest.length !== 32) {
     throw new Error(`digest must be 32 bytes, got ${digest.length}`);
@@ -124,11 +204,11 @@ export async function signDigestWithKeySource(
   const { r, s } = parseAndNormalise(der);
   const v = recoverV(r, s, digest, derivedAddress);
 
+  const signature: SignatureParts = { v, r: toBigIntHex(r), s: toBigIntHex(s) };
+
   return {
-    header: Buffer.from(JSON.stringify(headerPayload), "utf8").toString(
-      "base64",
-    ),
-    signature: { v, r: toBigIntHex(r), s: toBigIntHex(s) },
+    header: buildX402Header(headerInput, signature),
+    signature,
     signerAddress: getAddress(derivedAddress),
     signedAt: isoSeconds(),
   };

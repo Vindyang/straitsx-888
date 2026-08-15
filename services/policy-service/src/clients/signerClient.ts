@@ -21,12 +21,38 @@ export type SignResult =
   | { ok: true; header: string; signerAddress: string; signedAt: string }
   | { ok: false; status: number; code: string; message: string };
 
+/**
+ * The `accepts[]` entry from the 402 that this payment satisfies, passed
+ * straight through to the signer. Nothing is computed here — it is the
+ * challenge's own object.
+ *
+ * REQUIRED. The facilitator reads `accepted.amount` and has no other source for
+ * it; omitting it produces `cannot parse payment amount: invalid atomic amount
+ * ""` and the 402 never clears (confirmed at checkpoint 2, 2026-08-15).
+ */
+export type Accepted = {
+  scheme: "exact";
+  network: string;
+  chainId: number;
+  amount: string;
+  asset: string;
+  payTo: string;
+  maxTimeoutSeconds: number;
+  extra: { assetTransferMethod: "eip3009"; name: string; version: string };
+};
+
 /** api-contracts.md §4 POST /sign. `mandateId` accompanies typedData for the hard-invariant rail. */
-export async function sign(requestId: string, mandateId: string, typedData: TypedData): Promise<SignResult> {
+export async function sign(
+  requestId: string,
+  mandateId: string,
+  typedData: TypedData,
+  accepted: Accepted,
+  resource: string,
+): Promise<SignResult> {
   const res = await fetch(`${SIGNER_URL}/sign`, {
     method: "POST",
     headers: { "content-type": "application/json", "x-internal-token": INTERNAL_TOKEN },
-    body: JSON.stringify({ requestId, mandateId, typedData }),
+    body: JSON.stringify({ requestId, mandateId, typedData, accepted, resource }),
   });
   if (res.ok) {
     const body = (await res.json()) as { header: string; signerAddress: string; signedAt: string };

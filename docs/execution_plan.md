@@ -1065,6 +1065,32 @@ no code (`eth_getCode` = `0x`) — it is StraitsX's receiving EOA, not a contrac
 from a constant.** The 402 is the authority; a hardcoded copy is how the wrong-chain failure
 gets shipped.
 
+#### `network` is CAIP-2 — observed 2026-08-15, and it broke an assumption
+
+The sandbox challenge returns:
+
+```
+network: "eip155:43113"
+```
+
+**Not** a friendly name like `"avalanche-fuji"`, which is what the x402 examples elsewhere use
+and what we initially coded as the fallback. `scripts/probe-checkpoint2.ts` caught this in
+challenge-only mode, before any signature was produced.
+
+This matters because `network` is a field of the `PAYMENT-SIGNATURE` payload
+(`{ x402Version, scheme, network, payload }`). A wrong value there is rejected by the
+facilitator and the symptom is a 402 that never clears — indistinguishable at a glance from a
+domain bug. `X402_NETWORK_BY_CHAIN` in `constants.ts` is corrected to the CAIP-2 form, but the
+challenge's own `network` remains authoritative and callers should pass it through.
+
+Everything else in the challenge matched the recorded constants exactly, verified live:
+`x402Version: 1`, `chainId: 43113`, `asset` = the Fuji XSGD address, `payTo` = the recorded
+settlement recipient, `extra.name: "XSGD"`, `extra.version: "2"`, `maxTimeoutSeconds: 300`.
+The A12 domain assertion passed against real data rather than a fixture.
+
+> `maxTimeoutSeconds: 300` is the merchant's own window and is TIGHTER than the signer's 600s
+> `SIGNER_WINDOW` ceiling. Honour the smaller of the two.
+
 ### 19.4 EIP-712 domain — Fuji (resolved)
 
 ```ts
