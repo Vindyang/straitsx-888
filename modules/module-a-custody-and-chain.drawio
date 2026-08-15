@@ -1,0 +1,133 @@
+<mxfile host="app.diagrams.net" agent="straitsx-module-split">
+  <diagram id="module-a" name="Module A — Custody &amp; Chain">
+    <mxGraphModel dx="1377" dy="752" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1740" pageHeight="1080" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="a1" parent="1" style="text;html=1;align=left;verticalAlign=middle;fontSize=24;fontStyle=1;fontColor=#0D3C61;" value="Module A — Custody &amp; Chain" vertex="1">
+          <mxGeometry height="34" width="900" x="40" y="24" as="geometry" />
+        </mxCell>
+        <mxCell id="a2" parent="1" style="text;html=1;align=left;verticalAlign=middle;fontSize=12;fontColor=#6B7280;" value="Owns: mandate-registry · chain-gateway · signer-service  ·  the only module that touches an RPC node or a key  ·  split from Straitsx.drawio, derived from docs/execution_plan.md §4 and §6" vertex="1">
+          <mxGeometry height="22" width="1200" x="40" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="a3" parent="1" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#D1D5DB;align=left;verticalAlign=top;spacingLeft=10;spacingTop=6;fontSize=11;fontStyle=1;fontColor=#6B7280;" value="Legend" vertex="1">
+          <mxGeometry height="106" width="410" x="1290" y="20" as="geometry" />
+        </mxCell>
+        <mxCell id="a4" parent="1" style="rounded=0;html=1;fillColor=#E3F2FD;strokeColor=#1565C0;" value="" vertex="1">
+          <mxGeometry height="14" width="14" x="1304" y="48" as="geometry" />
+        </mxCell>
+        <mxCell id="a5" parent="1" style="text;html=1;align=left;verticalAlign=middle;fontSize=10;fontColor=#4B5563;" value="yours — you build, test and own the contract" vertex="1">
+          <mxGeometry height="18" width="360" x="1324" y="46" as="geometry" />
+        </mxCell>
+        <mxCell id="a6" parent="1" style="rounded=0;html=1;fillColor=#F5F5F5;strokeColor=#9E9E9E;dashed=1;" value="" vertex="1">
+          <mxGeometry height="14" width="14" x="1304" y="72" as="geometry" />
+        </mxCell>
+        <mxCell id="a7" parent="1" style="text;html=1;align=left;verticalAlign=middle;fontSize=10;fontColor=#4B5563;" value="someone else&#39;s — stub it, mock it, do not build it" vertex="1">
+          <mxGeometry height="18" width="360" x="1324" y="70" as="geometry" />
+        </mxCell>
+        <mxCell id="a8" parent="1" style="rounded=0;html=1;fillColor=#ECEFF1;strokeColor=#546E7A;" value="" vertex="1">
+          <mxGeometry height="14" width="14" x="1304" y="96" as="geometry" />
+        </mxCell>
+        <mxCell id="a9" parent="1" style="text;html=1;align=left;verticalAlign=middle;fontSize=10;fontColor=#4B5563;" value="external / third-party — fixed, not negotiable" vertex="1">
+          <mxGeometry height="18" width="360" x="1324" y="94" as="geometry" />
+        </mxCell>
+        <mxCell id="a10" parent="1" style="rounded=1;arcSize=4;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#CFD8DC;dashed=1;align=left;verticalAlign=top;spacingLeft=10;spacingTop=6;fontSize=11;fontStyle=1;fontColor=#90A4AE;" value="CALLERS — other people&#39;s code" vertex="1">
+          <mxGeometry height="640" width="300" x="30" y="150" as="geometry" />
+        </mxCell>
+        <mxCell id="a11" parent="1" style="rounded=1;arcSize=4;whiteSpace=wrap;html=1;fillColor=#F7FBFF;strokeColor=#1565C0;align=left;verticalAlign=top;spacingLeft=12;spacingTop=8;fontSize=12;fontStyle=1;fontColor=#1565C0;" value="MODULE A — your repo, your tests, your CI" vertex="1">
+          <mxGeometry height="880" width="560" x="370" y="150" as="geometry" />
+        </mxCell>
+        <mxCell id="a12" parent="1" style="rounded=1;arcSize=4;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#CFD8DC;dashed=1;align=left;verticalAlign=top;spacingLeft=10;spacingTop=6;fontSize=11;fontStyle=1;fontColor=#90A4AE;" value="EXTERNAL — fixed surfaces" vertex="1">
+          <mxGeometry height="880" width="290" x="970" y="150" as="geometry" />
+        </mxCell>
+        <mxCell id="a20" parent="1" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=10;spacingTop=6;spacingRight=8;fontSize=11;fillColor=#F5F5F5;strokeColor=#9E9E9E;fontColor=#616161;dashed=1;" value="&lt;b&gt;policy-service&lt;/b&gt; &amp;nbsp;[B]&lt;br&gt;&lt;i&gt;stub for local dev&lt;/i&gt;&lt;br&gt;&lt;br&gt;your two biggest consumers live here.&lt;br&gt;it reads registry state through you and&lt;br&gt;is the &lt;b&gt;only&lt;/b&gt; caller the signer may accept." vertex="1">
+          <mxGeometry height="130" width="260" x="50" y="190" as="geometry" />
+        </mxCell>
+        <mxCell id="a21" parent="1" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=10;spacingTop=6;spacingRight=8;fontSize=11;fillColor=#F5F5F5;strokeColor=#9E9E9E;fontColor=#616161;dashed=1;" value="&lt;b&gt;dashboard&lt;/b&gt; &amp;nbsp;[C]&lt;br&gt;&lt;i&gt;stub&lt;/i&gt;&lt;br&gt;&lt;br&gt;mandate creation and the revoke button&lt;br&gt;both build transactions through you." vertex="1">
+          <mxGeometry height="110" width="260" x="50" y="390" as="geometry" />
+        </mxCell>
+        <mxCell id="a22" parent="1" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=10;spacingTop=6;spacingRight=8;fontSize=11;fillColor=#F5F5F5;strokeColor=#9E9E9E;fontColor=#616161;dashed=1;" value="&lt;b&gt;agent-orchestrator&lt;/b&gt; &amp;nbsp;[C]&lt;br&gt;&lt;i&gt;stub&lt;/i&gt;&lt;br&gt;&lt;br&gt;confirms settlement through you rather&lt;br&gt;than trusting the cardapi response." vertex="1">
+          <mxGeometry height="110" width="260" x="50" y="590" as="geometry" />
+        </mxCell>
+        <mxCell id="a23" parent="1" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=10;spacingTop=6;spacingRight=8;fontSize=11;fillColor=#FFEBEE;strokeColor=#C62828;fontColor=#7A1414;" value="&lt;b&gt;the agent must NEVER reach the signer.&lt;/b&gt;&lt;br&gt;enforce it at the network layer, then &lt;b&gt;prove&lt;/b&gt;&lt;br&gt;it with the probe test — this test is yours." vertex="1">
+          <mxGeometry height="80" width="260" x="30" y="850" as="geometry" />
+        </mxCell>
+        <mxCell id="a30" parent="1" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=10;spacingTop=6;spacingRight=8;fontSize=11;fillColor=#E3F2FD;strokeColor=#1565C0;fontColor=#0D3C61;" value="&lt;b&gt;chain-gateway&lt;/b&gt;&lt;br&gt;&lt;i&gt;library / small service — the ONLY RPC talker&lt;/i&gt;&lt;br&gt;&lt;br&gt;getMandate(mandateId) → { owner, policyHash, expiresAt, revoked }&lt;br&gt;getTokenConstants() → { name, version, decimals, address }&lt;br&gt;confirmSettlement(txHash) → { blockNumber, ok }&lt;br&gt;buildRevokeTx(mandateId)&lt;br&gt;buildCreateMandate(...)&lt;br&gt;&lt;br&gt;&lt;i&gt;no policy logic. no signing. token constants cached.&lt;/i&gt;" vertex="1">
+          <mxGeometry height="190" width="500" x="400" y="200" as="geometry" />
+        </mxCell>
+        <mxCell id="a31" parent="1" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=10;spacingTop=6;spacingRight=8;fontSize=11;fillColor=#E3F2FD;strokeColor=#1565C0;fontColor=#0D3C61;" value="&lt;b&gt;signer-service&lt;/b&gt;&lt;br&gt;&lt;i&gt;sole key holder · deliberately dumb · network-isolated&lt;/i&gt;&lt;br&gt;&lt;br&gt;sign(typedData, requestId) → { header, nonce }&lt;br&gt;&lt;br&gt;builds EIP-3009 TransferWithAuthorization typed data,&lt;br&gt;signs via KMS, encodes the PAYMENT-SIGNATURE header.&lt;br&gt;&lt;b&gt;never evaluates policy.&lt;/b&gt;&lt;br&gt;&lt;br&gt;&lt;b&gt;hard-invariant rail&lt;/b&gt; — holds an immutable map&lt;br&gt;mandateId → { settlementRecipient, hardMaxTotal }&lt;br&gt;and refuses any authorization off-recipient or over the&lt;br&gt;ceiling. a fixed invariant, not policy: it holds even if&lt;br&gt;policy-service is fully compromised." vertex="1">
+          <mxGeometry height="260" width="500" x="400" y="430" as="geometry" />
+        </mxCell>
+        <mxCell id="a32" parent="1" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=10;spacingTop=6;spacingRight=8;fontSize=11;fillColor=#E3F2FD;strokeColor=#1565C0;fontColor=#0D3C61;" value="&lt;b&gt;mandate-registry&lt;/b&gt;&lt;br&gt;&lt;i&gt;Solidity (Foundry) · Fuji 43113&lt;/i&gt;&lt;br&gt;&lt;br&gt;mandateId → { owner, policyHash, expiresAt, revoked }&lt;br&gt;&lt;br&gt;createMandate(mandateId, policyHash, expiresAt)&lt;br&gt;revoke(mandateId) &lt;i&gt;— owner only, NO timelock&lt;/i&gt;&lt;br&gt;get(mandateId) view&lt;br&gt;events: MandateCreated, MandateRevoked&lt;br&gt;&lt;br&gt;&lt;i&gt;non-goals: spend counters and the policy body — both live&lt;br&gt;off-chain in ledger-service. do not put them here.&lt;/i&gt;" vertex="1">
+          <mxGeometry height="220" width="500" x="400" y="730" as="geometry" />
+        </mxCell>
+        <mxCell id="a33" parent="1" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=8;fontSize=11;fillColor=#FFF8E1;strokeColor=#F9A825;fontColor=#7A5B00;" value="&lt;b&gt;Publish the deployed address + ABI to the team within two hours.&lt;/b&gt; Everyone else is blocked on it." vertex="1">
+          <mxGeometry height="46" width="500" x="400" y="965" as="geometry" />
+        </mxCell>
+        <mxCell id="a40" parent="1" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=10;spacingTop=6;spacingRight=8;fontSize=11;fillColor=#ECEFF1;strokeColor=#546E7A;fontColor=#28353C;" value="&lt;b&gt;Avalanche Fuji RPC&lt;/b&gt;&lt;br&gt;&lt;i&gt;chainId 43113&lt;/i&gt;&lt;br&gt;&lt;br&gt;eth_call&lt;br&gt;eth_getTransactionReceipt" vertex="1">
+          <mxGeometry height="110" width="250" x="990" y="200" as="geometry" />
+        </mxCell>
+        <mxCell id="a41" parent="1" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=10;spacingTop=6;spacingRight=8;fontSize=11;fillColor=#ECEFF1;strokeColor=#546E7A;fontColor=#28353C;" value="&lt;b&gt;XSGD&lt;/b&gt; (Avalanche)&lt;br&gt;&lt;i&gt;EIP-3009 TransferWithAuthorization&lt;/i&gt;&lt;br&gt;&lt;br&gt;&lt;b&gt;decimals = 6, NOT 18&lt;/b&gt;&lt;br&gt;EIP-712 domain name/version from a&lt;br&gt;verified source — version() reverts&lt;br&gt;on-chain&lt;br&gt;&lt;br&gt;&lt;i&gt;nonce enforces single use&lt;/i&gt;" vertex="1">
+          <mxGeometry height="160" width="250" x="990" y="330" as="geometry" />
+        </mxCell>
+        <mxCell id="a42" parent="1" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=10;spacingTop=6;spacingRight=8;fontSize=11;fillColor=#ECEFF1;strokeColor=#546E7A;fontColor=#28353C;" value="&lt;b&gt;AWS KMS&lt;/b&gt;&lt;br&gt;&lt;i&gt;asymmetric secp256k1&lt;/i&gt;&lt;br&gt;&lt;br&gt;KMS:Sign — signer role only&lt;br&gt;&lt;br&gt;&lt;i&gt;key material never leaves KMS;&lt;br&gt;only the key id is in env.&lt;br&gt;KMS is not substitutable.&lt;/i&gt;" vertex="1">
+          <mxGeometry height="140" width="250" x="990" y="510" as="geometry" />
+        </mxCell>
+        <mxCell id="a43" parent="1" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=10;spacingTop=6;spacingRight=8;fontSize=11;fillColor=#ECEFF1;strokeColor=#546E7A;fontColor=#28353C;" value="&lt;b&gt;deployed on Fuji 43113&lt;/b&gt;&lt;br&gt;&lt;br&gt;&lt;i&gt;the registry is the only piece of state&lt;br&gt;the whole system agrees on without&lt;br&gt;asking anyone. keep it small.&lt;/i&gt;" vertex="1">
+          <mxGeometry height="110" width="250" x="990" y="790" as="geometry" />
+        </mxCell>
+        <mxCell id="ae1" edge="1" parent="1" source="a20" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeWidth=1.6;strokeColor=#546E7A;fontSize=10;fontColor=#37474F;labelBackgroundColor=#FFFFFF;" target="a30" value="getMandate · getTokenConstants · confirmSettlement">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ae2" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeWidth=2.4;strokeColor=#1565C0;fontSize=10;fontStyle=1;fontColor=#0D3C61;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" value="sign(typedData, requestId) — the ONLY permitted caller">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="310" y="192" as="sourcePoint" />
+            <mxPoint x="650" y="432" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ae3" edge="1" parent="1" source="a21" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeWidth=1.6;strokeColor=#546E7A;fontSize=10;fontColor=#37474F;labelBackgroundColor=#FFFFFF;" target="a30" value="getMandate · buildRevokeTx · buildCreateMandate">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ae4" edge="1" parent="1" source="a22" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeWidth=1.6;strokeColor=#546E7A;fontSize=10;fontColor=#37474F;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" value="confirmSettlement(txHash)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="375" y="655" as="sourcePoint" />
+            <mxPoint x="715" y="400.0000000000002" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ae5" edge="1" parent="1" source="a23" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeWidth=2.4;dashed=1;dashPattern=6 6;strokeColor=#C62828;fontSize=10;fontStyle=1;fontColor=#C62828;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.9;entryDx=0;entryDy=0;" target="a31" value="BLOCKED — network-denied, probe-tested">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ae6" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=20;fontStyle=1;fontColor=#C62828;" value="✕" vertex="1">
+          <mxGeometry height="30" width="30" x="345" y="655" as="geometry" />
+        </mxCell>
+        <mxCell id="ae7" edge="1" parent="1" source="a30" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeWidth=1.6;strokeColor=#546E7A;fontSize=10;fontColor=#37474F;labelBackgroundColor=#FFFFFF;" target="a40" value="eth_call · eth_getTransactionReceipt">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ae8" edge="1" parent="1" source="a30" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeWidth=1.6;strokeColor=#546E7A;fontSize=10;fontColor=#37474F;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.75;exitDx=0;exitDy=0;" target="a41" value="read name · version · decimals">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ae9" edge="1" parent="1" source="a31" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeWidth=1.6;strokeColor=#546E7A;fontSize=10;fontColor=#37474F;labelBackgroundColor=#FFFFFF;" target="a42" value="KMS:Sign">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ae10" edge="1" parent="1" source="a30" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeWidth=1.6;strokeColor=#546E7A;fontSize=10;fontColor=#37474F;labelBackgroundColor=#FFFFFF;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0.25;entryY=0;entryDx=0;entryDy=0;" target="a32" value="get(mandateId) via eth_call">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ae11" edge="1" parent="1" source="a32" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=none;strokeWidth=1.6;dashed=1;strokeColor=#90A4AE;" target="a43" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a50" parent="1" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=12;spacingTop=8;spacingRight=10;fontSize=11;fillColor=#FFEBEE;strokeColor=#C62828;fontColor=#7A1414;" value="&lt;b&gt;LOAD-BEARING RULES&lt;/b&gt;&lt;br&gt;&lt;br&gt;&lt;b&gt;1.&lt;/b&gt; signer-service accepts calls from policy-service and &lt;b&gt;nothing else&lt;/b&gt;. Enforced at the network layer, not by convention. If agent-orchestrator can reach the signer, the entire security claim collapses.&lt;br&gt;&lt;br&gt;&lt;b&gt;2.&lt;/b&gt; &lt;b&gt;decimals = 6, not 18.&lt;/b&gt; Wrong decimals silently invalidates every signature. So does a hardcoded EIP-712 domain. Both risks are yours alone.&lt;br&gt;&lt;br&gt;&lt;b&gt;3.&lt;/b&gt; revoke is owner-only and has &lt;b&gt;no timelock&lt;/b&gt;. The next decision fails check 1 within a block — that is the whole point.&lt;br&gt;&lt;br&gt;&lt;b&gt;4.&lt;/b&gt; The hard-invariant rail is not policy. Keep it immutable and independent of anything B sends you." vertex="1">
+          <mxGeometry height="330" width="410" x="1290" y="150" as="geometry" />
+        </mxCell>
+        <mxCell id="a51" parent="1" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=12;spacingTop=8;spacingRight=10;fontSize=11;fillColor=#FFFFFF;strokeColor=#1565C0;fontColor=#0D3C61;" value="&lt;b&gt;YOUR SLICE OF THE PIPELINE&lt;/b&gt;&lt;br&gt;&lt;i&gt;step numbers match the Sequence page of Straitsx.drawio&lt;/i&gt;&lt;br&gt;&lt;br&gt;&lt;b&gt;3&lt;/b&gt;  buildCreateMandate — human wallet submits&lt;br&gt;&lt;b&gt;4&lt;/b&gt;  createMandate(mandateId, policyHash, expiresAt)&lt;br&gt;&lt;b&gt;18–19&lt;/b&gt;  getMandate → eth_call → owner, policyHash, expiresAt, revoked&lt;br&gt;&lt;b&gt;27–29&lt;/b&gt;  sign(typedData, requestId) → hard-invariant rail → { header, nonce }&lt;br&gt;&lt;b&gt;35–36&lt;/b&gt;  confirmSettlement(txHash) → eth_getTransactionReceipt → blockNumber&lt;br&gt;&lt;b&gt;46–47&lt;/b&gt;  buildRevokeTx → revoke — owner only, no timelock" vertex="1">
+          <mxGeometry height="210" width="410" x="1290" y="500" as="geometry" />
+        </mxCell>
+        <mxCell id="a52" parent="1" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=12;spacingTop=8;spacingRight=10;fontSize=11;fillColor=#F1F8E9;strokeColor=#7CB342;fontColor=#33691E;" value="&lt;b&gt;DEFINITION OF DONE&lt;/b&gt;&lt;br&gt;&lt;br&gt;☐ registry deployed to Fuji; address + ABI published to the team&lt;br&gt;☐ test: a non-owner cannot revoke&lt;br&gt;☐ test: a revoked mandate reads as revoked&lt;br&gt;☐ test: expiry is respected&lt;br&gt;☐ test: getTokenConstants returns decimals 6 against live XSGD&lt;br&gt;☐ test: a signature from signer-service verifies against XSGD&#39;s EIP-712 domain&lt;br&gt;☐ test: signer refuses an off-recipient authorization&lt;br&gt;☐ test: signer refuses value &amp;gt; hardMaxTotal&lt;br&gt;☐ &lt;b&gt;probe test: agent-orchestrator cannot open a socket to signer-service&lt;/b&gt;&lt;br&gt;☐ chain-gateway is the only package importing an RPC client (grep-provable)" vertex="1">
+          <mxGeometry height="280" width="410" x="1290" y="730" as="geometry" />
+        </mxCell>
+        <mxCell id="a53" parent="1" style="text;html=1;align=left;verticalAlign=middle;fontSize=11;fontColor=#6B7280;" value="&lt;b&gt;Freeze these interfaces first&lt;/b&gt; — B and C are blocked until they are stable: &lt;i&gt;registry ABI + address · chain-gateway signatures · signer-service sign()&lt;/i&gt;" vertex="1">
+          <mxGeometry height="22" width="900" x="40" y="708" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

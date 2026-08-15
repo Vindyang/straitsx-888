@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" agent="straitsx-module-split" type="device">
+  <diagram id="module-c" name="Module C — Agent &amp; Surfaces">
+    <mxGraphModel dx="1400" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1740" pageHeight="1080" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <mxCell id="c1" value="Module C — Agent &amp; Surfaces" style="text;html=1;align=left;verticalAlign=middle;fontSize=24;fontStyle=1;fontColor=#5A2C00;" vertex="1" parent="1">
+          <mxGeometry x="40" y="24" width="900" height="34" as="geometry" />
+        </mxCell>
+        <mxCell id="c2" value="Owns: agent-orchestrator · card-gateway · dashboard&#160;&#160;·&#160;&#160;everything here sits on the untrusted side of the boundary&#160;&#160;·&#160;&#160;holds no key, makes no decisions&#160;&#160;·&#160;&#160;split from Straitsx.drawio" style="text;html=1;align=left;verticalAlign=middle;fontSize=12;fontColor=#6B7280;" vertex="1" parent="1">
+          <mxGeometry x="40" y="60" width="1200" height="22" as="geometry" />
+        </mxCell>
+
+        <mxCell id="c3" value="Legend" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#D1D5DB;align=left;verticalAlign=top;spacingLeft=10;spacingTop=6;fontSize=11;fontStyle=1;fontColor=#6B7280;" vertex="1" parent="1">
+          <mxGeometry x="1290" y="20" width="410" height="106" as="geometry" />
+        </mxCell>
+        <mxCell id="c4" value="" style="rounded=0;html=1;fillColor=#FFF3E0;strokeColor=#EF6C00;" vertex="1" parent="1">
+          <mxGeometry x="1304" y="48" width="14" height="14" as="geometry" />
+        </mxCell>
+        <mxCell id="c5" value="yours — you build, test and own the contract" style="text;html=1;align=left;verticalAlign=middle;fontSize=10;fontColor=#4B5563;" vertex="1" parent="1">
+          <mxGeometry x="1324" y="46" width="360" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="c6" value="" style="rounded=0;html=1;fillColor=#F5F5F5;strokeColor=#9E9E9E;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="1304" y="72" width="14" height="14" as="geometry" />
+        </mxCell>
+        <mxCell id="c7" value="someone else&#x27;s — stub it, mock it, do not build it" style="text;html=1;align=left;verticalAlign=middle;fontSize=10;fontColor=#4B5563;" vertex="1" parent="1">
+          <mxGeometry x="1324" y="70" width="360" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="c8" value="" style="rounded=0;html=1;fillColor=#FFEBEE;strokeColor=#C62828;" vertex="1" parent="1">
+          <mxGeometry x="1304" y="96" width="14" height="14" as="geometry" />
+        </mxCell>
+        <mxCell id="c9" value="untrusted input — never an instruction" style="text;html=1;align=left;verticalAlign=middle;fontSize=10;fontColor=#4B5563;" vertex="1" parent="1">
+          <mxGeometry x="1324" y="94" width="360" height="18" as="geometry" />
+        </mxCell>
+
+        <mxCell id="c10" value="UNTRUSTED — the human and the open web" style="rounded=1;arcSize=4;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#C62828;dashed=1;align=left;verticalAlign=top;spacingLeft=10;spacingTop=6;fontSize=11;fontStyle=1;fontColor=#C62828;" vertex="1" parent="1">
+          <mxGeometry x="30" y="150" width="290" height="330" as="geometry" />
+        </mxCell>
+        <mxCell id="c11" value="MODULE C — your repo, your tests, your CI" style="rounded=1;arcSize=4;whiteSpace=wrap;html=1;fillColor=#FFFCF7;strokeColor=#EF6C00;align=left;verticalAlign=top;spacingLeft=12;spacingTop=8;fontSize=12;fontStyle=1;fontColor=#EF6C00;" vertex="1" parent="1">
+          <mxGeometry x="360" y="150" width="560" height="880" as="geometry" />
+        </mxCell>
+        <mxCell id="c12" value="EXTERNAL — fixed surfaces" style="rounded=1;arcSize=4;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#CFD8DC;dashed=1;align=left;verticalAlign=top;spacingLeft=10;spacingTop=6;fontSize=11;fontStyle=1;fontColor=#90A4AE;" vertex="1" parent="1">
+          <mxGeometry x="960" y="150" width="300" height="880" as="geometry" />
+        </mxCell>
+        <mxCell id="c13" value="DEPENDENCIES — Modules A and B" style="rounded=1;arcSize=4;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#CFD8DC;dashed=1;align=left;verticalAlign=top;spacingLeft=10;spacingTop=6;fontSize=11;fontStyle=1;fontColor=#90A4AE;" vertex="1" parent="1">
+          <mxGeometry x="30" y="520" width="290" height="510" as="geometry" />
+        </mxCell>
+
+        <mxCell id="c20" value="&lt;b&gt;Human&lt;/b&gt;&lt;br&gt;&lt;br&gt;sets the mandate, answers escalations,&lt;br&gt;holds the only address that can revoke" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=10;spacingTop=6;spacingRight=8;fontSize=11;fillColor=#FFEBEE;strokeColor=#C62828;fontColor=#7A1414;" vertex="1" parent="1">
+          <mxGeometry x="50" y="190" width="250" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="c21" value="&lt;b&gt;Merchant site / product page&lt;/b&gt;&lt;br&gt;&lt;i&gt;external, untrusted&lt;/i&gt;&lt;br&gt;&lt;br&gt;&lt;b&gt;every byte from this page is input,&lt;br&gt;never instruction.&lt;/b&gt; prompt injection lives&lt;br&gt;here. so does the poisoned-page fixture&lt;br&gt;you build to prove the system survives it." style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=10;spacingTop=6;spacingRight=8;fontSize=11;fillColor=#FFEBEE;strokeColor=#C62828;fontColor=#7A1414;" vertex="1" parent="1">
+          <mxGeometry x="50" y="300" width="250" height="150" as="geometry" />
+        </mxCell>
+
+        <mxCell id="c22" value="&lt;b&gt;policy-service&lt;/b&gt; &amp;nbsp;[B]&lt;br&gt;&lt;i&gt;stub&lt;/i&gt;&lt;br&gt;&lt;br&gt;POST /payment/request → signed | refused |&lt;br&gt;escalated. handle all three; a refusal is a&lt;br&gt;normal outcome, not an error path." style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=10;spacingTop=6;spacingRight=8;fontSize=11;fillColor=#F5F5F5;strokeColor=#9E9E9E;fontColor=#616161;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="50" y="560" width="250" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="c23" value="&lt;b&gt;ledger-service&lt;/b&gt; &amp;nbsp;[B]&lt;br&gt;&lt;i&gt;stub&lt;/i&gt;&lt;br&gt;&lt;br&gt;createIntent · attachChallenge · recordSpend&lt;br&gt;getWindowUsage · receipts&lt;br&gt;&lt;br&gt;&lt;i&gt;you never touch storage directly.&lt;/i&gt;" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=10;spacingTop=6;spacingRight=8;fontSize=11;fillColor=#F5F5F5;strokeColor=#9E9E9E;fontColor=#616161;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="50" y="720" width="250" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="c24" value="&lt;b&gt;chain-gateway&lt;/b&gt; &amp;nbsp;[A]&lt;br&gt;&lt;i&gt;stub&lt;/i&gt;&lt;br&gt;&lt;br&gt;confirmSettlement(txHash)&lt;br&gt;getMandate · buildCreateMandate · buildRevokeTx&lt;br&gt;&lt;br&gt;&lt;i&gt;never call an RPC node yourself.&lt;/i&gt;" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=10;spacingTop=6;spacingRight=8;fontSize=11;fillColor=#F5F5F5;strokeColor=#9E9E9E;fontColor=#616161;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="50" y="890" width="250" height="130" as="geometry" />
+        </mxCell>
+
+        <mxCell id="c30" value="&lt;b&gt;dashboard&lt;/b&gt;&lt;br&gt;&lt;i&gt;Next.js&lt;/i&gt;&lt;br&gt;&lt;br&gt;mandate creation form — caps, window, expiry,&lt;br&gt;&lt;b&gt;intentConstraint&lt;/b&gt;, &lt;b&gt;merchantAllowlist&lt;/b&gt;&lt;br&gt;running window spend · receipt view · revoke button&lt;br&gt;refusal panel showing the failing check&lt;br&gt;escalation review — renders an &lt;b&gt;independent fetch&lt;/b&gt; of the&lt;br&gt;checkout page, never the agent&#x27;s summary of it&lt;br&gt;&lt;br&gt;&lt;i&gt;computes policyHash via the shared package — never a&lt;br&gt;local reimplementation. card details render only inside&lt;br&gt;the one-time iframe.&lt;/i&gt;" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=10;spacingTop=6;spacingRight=8;fontSize=11;fillColor=#FFF3E0;strokeColor=#EF6C00;fontColor=#5A2C00;" vertex="1" parent="1">
+          <mxGeometry x="390" y="190" width="500" height="220" as="geometry" />
+        </mxCell>
+        <mxCell id="c31" value="&lt;b&gt;agent-orchestrator&lt;/b&gt;&lt;br&gt;&lt;i&gt;long-running process · discovery + orchestration&lt;/i&gt;&lt;br&gt;&lt;br&gt;createIntent → discovery (Playwright: title, sku, price,&lt;br&gt;merchantDomain, checkout URL) → pre-check price against&lt;br&gt;the per-card cap → card-gateway.getCard → attachChallenge&lt;br&gt;→ policy-service → retry cardapi with the header →&lt;br&gt;confirmSettlement → render card → checkout → recordSpend&lt;br&gt;&lt;br&gt;&lt;b&gt;post-issuance controls — the only enforcement you own&lt;br&gt;after issuance:&lt;/b&gt;&lt;br&gt;&#160;&#160;&lt;b&gt;assertCheckoutDomain()&lt;/b&gt; — refuse to fill if the page&lt;br&gt;&#160;&#160;domain or checkout URL differs from the discovered,&lt;br&gt;&#160;&#160;intent-matched one&lt;br&gt;&#160;&#160;&lt;b&gt;captureSpendAttestation()&lt;/b&gt; — { merchantDomain,&lt;br&gt;&#160;&#160;orderTotal, itemSku, timestamp } → recordSpend&lt;br&gt;&#160;&#160;&lt;i&gt;observational, not cryptographic — say so in the demo&lt;/i&gt;&lt;br&gt;&lt;br&gt;&lt;b&gt;holds no key. makes no decisions. must not be able to&lt;br&gt;reach signer-service.&lt;/b&gt; also builds the poisoned page fixture." style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=10;spacingTop=6;spacingRight=8;fontSize=11;fillColor=#FFF3E0;strokeColor=#EF6C00;fontColor=#5A2C00;" vertex="1" parent="1">
+          <mxGeometry x="390" y="440" width="500" height="360" as="geometry" />
+        </mxCell>
+        <mxCell id="c32" value="&lt;b&gt;card-gateway&lt;/b&gt;&lt;br&gt;&lt;i&gt;MCP SSE client&lt;/i&gt;&lt;br&gt;&lt;br&gt;getCard({ walletAddress, cardholderName, amountSgd })&lt;br&gt;&#160;&#160;→ { cardapiUrl, challenge }&lt;br&gt;viewCard({ cardOpaqueId, settlementTx, walletAddress })&lt;br&gt;&#160;&#160;→ iframeUrl&lt;br&gt;&lt;br&gt;handles the handshake, the &lt;i&gt;endpoint&lt;/i&gt; event and&lt;br&gt;202-then-stream. validates cardholderName 2–26 chars&lt;br&gt;and amountSgd 5–30 &lt;b&gt;before&lt;/b&gt; calling.&lt;br&gt;&lt;br&gt;&lt;i&gt;no signing, no policy, no persistence.&lt;/i&gt;" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=10;spacingTop=6;spacingRight=8;fontSize=11;fillColor=#FFF3E0;strokeColor=#EF6C00;fontColor=#5A2C00;" vertex="1" parent="1">
+          <mxGeometry x="390" y="830" width="500" height="230" as="geometry" />
+        </mxCell>
+
+        <mxCell id="c40" value="&lt;b&gt;one-time iframe&lt;/b&gt;&lt;br&gt;&lt;i&gt;view_card_sandbox&lt;/i&gt;&lt;br&gt;&lt;br&gt;fresh single-use URL, ownership verified&lt;br&gt;cryptographically&lt;br&gt;&lt;br&gt;&lt;b&gt;the PAN never touches your code&lt;/b&gt; — not&lt;br&gt;your logs, not your state, not your DOM." style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=10;spacingTop=6;spacingRight=8;fontSize=11;fillColor=#ECEFF1;strokeColor=#546E7A;fontColor=#28353C;" vertex="1" parent="1">
+          <mxGeometry x="980" y="190" width="260" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="c41" value="&lt;b&gt;StraitsX cardapi&lt;/b&gt;&lt;br&gt;&lt;i&gt;external&lt;/i&gt;&lt;br&gt;&lt;br&gt;HTTP 402 → retry with the&lt;br&gt;PAYMENT-SIGNATURE header&lt;br&gt;submits the authorization on-chain&lt;br&gt;(gasless for the payer)&lt;br&gt;&lt;br&gt;returns card_opaque_id, card_html,&lt;br&gt;settlement_tx&lt;br&gt;&lt;br&gt;&lt;i&gt;amount-bound only — takes no merchant&lt;br&gt;parameter. that is why merchant binding&lt;br&gt;has to be enforced by you at checkout.&lt;/i&gt;" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=10;spacingTop=6;spacingRight=8;fontSize=11;fillColor=#ECEFF1;strokeColor=#546E7A;fontColor=#28353C;" vertex="1" parent="1">
+          <mxGeometry x="980" y="440" width="260" height="230" as="geometry" />
+        </mxCell>
+        <mxCell id="c42" value="&lt;b&gt;StraitsX card MCP&lt;/b&gt;&lt;br&gt;&lt;i&gt;straitsx-card-mcp-sandbox 2.0.0&lt;/i&gt;&lt;br&gt;https://card.straitsx.ai/sandbox/sse&lt;br&gt;&lt;br&gt;get_card_sandbox&lt;br&gt;view_card_sandbox&lt;br&gt;&lt;br&gt;&lt;i&gt;tools only — no webhook, no RHA.&lt;br&gt;the answer arrives on the stream after&lt;br&gt;a 202, not in the response body.&lt;/i&gt;" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=10;spacingTop=6;spacingRight=8;fontSize=11;fillColor=#ECEFF1;strokeColor=#546E7A;fontColor=#28353C;" vertex="1" parent="1">
+          <mxGeometry x="980" y="830" width="260" height="200" as="geometry" />
+        </mxCell>
+
+        <mxCell id="ce1" value="mandate setup · approvals · revoke" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeWidth=1.6;strokeColor=#546E7A;fontSize=10;fontColor=#37474F;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="c20" target="c30">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ce2" value="verbatim purchase instruction" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeWidth=1.6;strokeColor=#546E7A;fontSize=10;fontColor=#37474F;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.8;exitDx=0;exitDy=0;entryX=0;entryY=0.1;entryDx=0;entryDy=0;" edge="1" parent="1" source="c20" target="c31">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ce3" value="discovery → { title, sku, price, merchantDomain }" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeWidth=2.4;dashed=1;dashPattern=6 6;strokeColor=#C62828;fontSize=10;fontStyle=1;fontColor=#C62828;labelBackgroundColor=#FFFFFF;entryX=0;entryY=0.3;entryDx=0;entryDy=0;" edge="1" parent="1" source="c21" target="c31">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ce4" value="getCard · viewCard" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#EF6C00;fontSize=10;fontColor=#5A2C00;labelBackgroundColor=#FFFFFF;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0.25;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="c31" target="c32">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ce5" value="SSE handshake · JSON-RPC (202)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeWidth=1.6;strokeColor=#546E7A;fontSize=10;fontColor=#37474F;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="c32" target="c42">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ce6" value="retry with PAYMENT-SIGNATURE&#10;(the one irreversible step)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeWidth=2.4;strokeColor=#C62828;fontSize=10;fontStyle=1;fontColor=#C62828;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="c31" target="c41">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ce7" value="render card" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeWidth=1.6;strokeColor=#546E7A;fontSize=10;fontColor=#37474F;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="c30" target="c40">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ce8" value="requestPayment · handle all three outcomes" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#EF6C00;fontSize=10;fontColor=#5A2C00;labelBackgroundColor=#FFFFFF;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.3;entryDx=0;entryDy=0;" edge="1" parent="1" source="c31" target="c22">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ce9" value="createIntent · attachChallenge · recordSpend" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeWidth=1.6;strokeColor=#546E7A;fontSize=10;fontColor=#37474F;labelBackgroundColor=#FFFFFF;exitX=0;exitY=0.9;exitDx=0;exitDy=0;entryX=1;entryY=0.3;entryDx=0;entryDy=0;" edge="1" parent="1" source="c31" target="c23">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ce10" value="confirmSettlement(txHash)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeWidth=1.6;strokeColor=#546E7A;fontSize=10;fontColor=#37474F;labelBackgroundColor=#FFFFFF;exitX=0;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0.4;entryDx=0;entryDy=0;" edge="1" parent="1" source="c32" target="c24">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="c50" value="&lt;b&gt;INVARIANTS YOU MAY NOT SOFTEN&lt;/b&gt;&lt;br&gt;&lt;br&gt;&lt;b&gt;1.&lt;/b&gt; The agent &lt;b&gt;never holds the signing key&lt;/b&gt; and must not be able to reach signer-service. A probe test (owned by A) will assert this. Do not add a convenience path.&lt;br&gt;&lt;br&gt;&lt;b&gt;2.&lt;/b&gt; Every byte from a merchant page is &lt;b&gt;input, never instruction&lt;/b&gt;. Discovery output is structured data you pass along — you never let the page steer the run.&lt;br&gt;&lt;br&gt;&lt;b&gt;3.&lt;/b&gt; The pre-check against the per-card cap is a &lt;b&gt;cheap shortcut, not a boundary&lt;/b&gt;. The boundary is check 5a in policy-service. Never treat your own pre-check as authorisation.&lt;br&gt;&lt;br&gt;&lt;b&gt;4.&lt;/b&gt; &lt;b&gt;assertCheckoutDomain() before autofill&lt;/b&gt;, always. cardapi is amount-bound and takes no merchant parameter — this is the only merchant binding that exists.&lt;br&gt;&lt;br&gt;&lt;b&gt;5.&lt;/b&gt; A refusal is a &lt;b&gt;normal outcome&lt;/b&gt;. Render the failing check; never retry around it.&lt;br&gt;&lt;br&gt;&lt;b&gt;6.&lt;/b&gt; Settlement precedes issuance and is irreversible. After the retry, there is no undo — no release, no rollback." style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=12;spacingTop=8;spacingRight=10;fontSize=11;fillColor=#FFEBEE;strokeColor=#C62828;fontColor=#7A1414;" vertex="1" parent="1">
+          <mxGeometry x="1290" y="150" width="410" height="450" as="geometry" />
+        </mxCell>
+
+        <mxCell id="c51" value="&lt;b&gt;YOUR SLICE OF THE PIPELINE&lt;/b&gt;&lt;br&gt;&lt;i&gt;step numbers match the Sequence page of Straitsx.drawio&lt;/i&gt;&lt;br&gt;&lt;br&gt;&lt;b&gt;1–2&lt;/b&gt;&#160;&#160;set caps, window, expiry, intentConstraint, merchantAllowlist → policyHash&lt;br&gt;&lt;b&gt;6&lt;/b&gt;&#160;&#160;purchase instruction (verbatim)&lt;br&gt;&lt;b&gt;8–9&lt;/b&gt;&#160;&#160;Playwright discovery → pre-check price&lt;br&gt;&lt;b&gt;10–13&lt;/b&gt;&#160;&#160;getCard → SSE handshake → { cardapiUrl, challenge }&lt;br&gt;&lt;b&gt;24&lt;/b&gt;&#160;&#160;review the &lt;b&gt;independent fetch&lt;/b&gt; of the checkout page&lt;br&gt;&lt;b&gt;31&lt;/b&gt;&#160;&#160;retry cardapi with the PAYMENT-SIGNATURE header&lt;br&gt;&lt;b&gt;34–35&lt;/b&gt;&#160;&#160;card_opaque_id, card_html, settlement_tx → confirmSettlement&lt;br&gt;&lt;b&gt;38–39&lt;/b&gt;&#160;&#160;viewCard → fresh one-time iframe URL&lt;br&gt;&lt;b&gt;40–42&lt;/b&gt;&#160;&#160;assertCheckoutDomain → autofill → captureSpendAttestation&lt;br&gt;&lt;b&gt;45&lt;/b&gt;&#160;&#160;revoke(mandateId) from the dashboard" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=12;spacingTop=8;spacingRight=10;fontSize=11;fillColor=#FFFFFF;strokeColor=#EF6C00;fontColor=#5A2C00;" vertex="1" parent="1">
+          <mxGeometry x="1290" y="620" width="410" height="240" as="geometry" />
+        </mxCell>
+
+        <mxCell id="c52" value="&lt;b&gt;DEFINITION OF DONE&lt;/b&gt;&lt;br&gt;&lt;br&gt;☐ card-gateway survives the 202-then-stream handshake reliably&lt;br&gt;☐ test: cardholderName and amount are validated before the MCP call&lt;br&gt;☐ &lt;b&gt;poisoned page fixture&lt;/b&gt; built, and the run does not follow its instructions&lt;br&gt;☐ test: assertCheckoutDomain refuses to fill on a mismatched domain&lt;br&gt;☐ dashboard renders each of signed / refused / escalated distinctly&lt;br&gt;☐ escalation screen shows an independent fetch, not the agent&#x27;s summary&lt;br&gt;☐ PAN appears nowhere in your logs, state or DOM — only in the iframe" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=12;spacingTop=8;spacingRight=10;fontSize=11;fillColor=#F1F8E9;strokeColor=#7CB342;fontColor=#33691E;" vertex="1" parent="1">
+          <mxGeometry x="1290" y="880" width="410" height="180" as="geometry" />
+        </mxCell>
+
+        <mxCell id="c53" value="&lt;b&gt;You are blocked on:&lt;/b&gt; A&#x27;s registry address + ABI and chain-gateway signatures · B&#x27;s POST /payment/request shape and ledger method list. Stub all of them on day one and integrate late." style="text;html=1;align=left;verticalAlign=middle;fontSize=11;fontColor=#6B7280;" vertex="1" parent="1">
+          <mxGeometry x="30" y="490" width="900" height="22" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -1,0 +1,378 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" agent="straitsx-module-split" type="device">
+  <diagram id="module-b" name="Module B — Scope">
+    <mxGraphModel dx="1400" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1740" pageHeight="1080" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <mxCell id="b1" value="Module B — Decision &amp; Record" style="text;html=1;align=left;verticalAlign=middle;fontSize=24;fontStyle=1;fontColor=#14401B;" vertex="1" parent="1">
+          <mxGeometry x="40" y="24" width="900" height="34" as="geometry" />
+        </mxCell>
+        <mxCell id="b2" value="Owns: policy-service · ledger-service&#160;&#160;·&#160;&#160;this is the project — everything else exists to feed it or carry out its answer&#160;&#160;·&#160;&#160;full ladder on the &lt;b&gt;Decision flow&lt;/b&gt; page of this file" style="text;html=1;align=left;verticalAlign=middle;fontSize=12;fontColor=#6B7280;" vertex="1" parent="1">
+          <mxGeometry x="40" y="60" width="1200" height="22" as="geometry" />
+        </mxCell>
+
+        <mxCell id="b3" value="Legend" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#D1D5DB;align=left;verticalAlign=top;spacingLeft=10;spacingTop=6;fontSize=11;fontStyle=1;fontColor=#6B7280;" vertex="1" parent="1">
+          <mxGeometry x="1290" y="20" width="410" height="106" as="geometry" />
+        </mxCell>
+        <mxCell id="b4" value="" style="rounded=0;html=1;fillColor=#E8F5E9;strokeColor=#2E7D32;" vertex="1" parent="1">
+          <mxGeometry x="1304" y="48" width="14" height="14" as="geometry" />
+        </mxCell>
+        <mxCell id="b5" value="yours — you build, test and own the contract" style="text;html=1;align=left;verticalAlign=middle;fontSize=10;fontColor=#4B5563;" vertex="1" parent="1">
+          <mxGeometry x="1324" y="46" width="360" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="b6" value="" style="rounded=0;html=1;fillColor=#F5F5F5;strokeColor=#9E9E9E;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="1304" y="72" width="14" height="14" as="geometry" />
+        </mxCell>
+        <mxCell id="b7" value="someone else&#x27;s — stub it, mock it, do not build it" style="text;html=1;align=left;verticalAlign=middle;fontSize=10;fontColor=#4B5563;" vertex="1" parent="1">
+          <mxGeometry x="1324" y="70" width="360" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="b8" value="" style="rounded=0;html=1;fillColor=#FFEBEE;strokeColor=#C62828;" vertex="1" parent="1">
+          <mxGeometry x="1304" y="96" width="14" height="14" as="geometry" />
+        </mxCell>
+        <mxCell id="b9" value="an invariant you are not allowed to soften" style="text;html=1;align=left;verticalAlign=middle;fontSize=10;fontColor=#4B5563;" vertex="1" parent="1">
+          <mxGeometry x="1324" y="94" width="360" height="18" as="geometry" />
+        </mxCell>
+
+        <mxCell id="b10" value="CALLERS — Module C" style="rounded=1;arcSize=4;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#CFD8DC;dashed=1;align=left;verticalAlign=top;spacingLeft=10;spacingTop=6;fontSize=11;fontStyle=1;fontColor=#90A4AE;" vertex="1" parent="1">
+          <mxGeometry x="30" y="150" width="290" height="500" as="geometry" />
+        </mxCell>
+        <mxCell id="b11" value="MODULE B — your repo, your tests, your CI" style="rounded=1;arcSize=4;whiteSpace=wrap;html=1;fillColor=#F6FBF6;strokeColor=#2E7D32;align=left;verticalAlign=top;spacingLeft=12;spacingTop=8;fontSize=12;fontStyle=1;fontColor=#2E7D32;" vertex="1" parent="1">
+          <mxGeometry x="360" y="150" width="590" height="880" as="geometry" />
+        </mxCell>
+        <mxCell id="b12" value="DEPENDENCIES — Module A" style="rounded=1;arcSize=4;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#CFD8DC;dashed=1;align=left;verticalAlign=top;spacingLeft=10;spacingTop=6;fontSize=11;fontStyle=1;fontColor=#90A4AE;" vertex="1" parent="1">
+          <mxGeometry x="990" y="150" width="270" height="500" as="geometry" />
+        </mxCell>
+
+        <mxCell id="b20" value="&lt;b&gt;agent-orchestrator&lt;/b&gt; &amp;nbsp;[C]&lt;br&gt;&lt;i&gt;stub&lt;/i&gt;&lt;br&gt;&lt;br&gt;treat everything it sends you as &lt;b&gt;untrusted&lt;br&gt;input, never instruction&lt;/b&gt; — the intent text,&lt;br&gt;the resolvedItem and the challenge alike." style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=10;spacingTop=6;spacingRight=8;fontSize=11;fillColor=#F5F5F5;strokeColor=#9E9E9E;fontColor=#616161;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="50" y="200" width="250" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="b21" value="&lt;b&gt;dashboard&lt;/b&gt; &amp;nbsp;[C]&lt;br&gt;&lt;i&gt;stub&lt;/i&gt;&lt;br&gt;&lt;br&gt;renders receipts, window spend, the failing&lt;br&gt;check, and resolves escalations." style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=10;spacingTop=6;spacingRight=8;fontSize=11;fillColor=#F5F5F5;strokeColor=#9E9E9E;fontColor=#616161;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="50" y="360" width="250" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="b22" value="&lt;b&gt;Escalation policy&lt;/b&gt;&lt;br&gt;TTL 5 min → &lt;b&gt;auto-deny&lt;/b&gt; (never hang)&lt;br&gt;approve once · approve merchant for&lt;br&gt;the window · deny" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=10;spacingTop=6;spacingRight=8;fontSize=11;fillColor=#FFF8E1;strokeColor=#F9A825;fontColor=#7A5B00;" vertex="1" parent="1">
+          <mxGeometry x="50" y="510" width="250" height="100" as="geometry" />
+        </mxCell>
+
+        <mxCell id="b30" value="&lt;b&gt;policy-service&lt;/b&gt;&lt;br&gt;&lt;b&gt;THE DECISION POINT — this is the project&lt;/b&gt;&lt;br&gt;&lt;br&gt;POST /payment/request&lt;br&gt;&#160;&#160;body&#160;&#160;&#160;&#160;&#160;{ requestId, mandateId, intent, resolvedItem, challenge }&lt;br&gt;&#160;&#160;response { status: &quot;signed&quot;, header, nonce }&lt;br&gt;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;| { status: &quot;refused&quot;, check, detail }&lt;br&gt;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;| { status: &quot;escalated&quot;, approvalUrl }&lt;br&gt;&lt;br&gt;&lt;b&gt;order of operations — do not reorder:&lt;/b&gt;&lt;br&gt;precondition (intent anchored) → parse challenge → load policy&lt;br&gt;+ window usage → read registry state → the eight checks →&lt;br&gt;gate 9 → reserveNonce → call signer → recordDecision&lt;br&gt;&lt;br&gt;&lt;i&gt;every outcome is logged, refusals included.&lt;/i&gt;" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=10;spacingTop=6;spacingRight=8;fontSize=11;fillColor=#E8F5E9;strokeColor=#2E7D32;fontColor=#14401B;" vertex="1" parent="1">
+          <mxGeometry x="390" y="200" width="530" height="250" as="geometry" />
+        </mxCell>
+        <mxCell id="b31" value="&lt;b&gt;THE EIGHT CHECKS&lt;/b&gt; — deterministic, pure functions, never LLM-judged&lt;br&gt;&lt;br&gt;&lt;b&gt;0&lt;/b&gt;&#160;&#160;precondition — an intent record exists for this requestId&lt;br&gt;&lt;b&gt;1&lt;/b&gt;&#160;&#160;mandate live — revoked == false and now &amp;lt; expiresAt&lt;br&gt;&lt;b&gt;2&lt;/b&gt;&#160;&#160;hashPolicy(loaded body) == registry policyHash&lt;br&gt;&lt;b&gt;3&lt;/b&gt;&#160;&#160;chainId and asset address pinned exactly&lt;br&gt;&lt;b&gt;4&lt;/b&gt;&#160;&#160;challenge.payTo == settlementRecipient&#160;&#160;&lt;b&gt;★ the important one&lt;/b&gt;&lt;br&gt;&lt;b&gt;5a&lt;/b&gt;&#160;&#160;5 ≤ amount ≤ min(maxPerCard, 30)&#160;&#160;&lt;i&gt;security boundary&lt;/i&gt;&lt;br&gt;&lt;b&gt;5b&lt;/b&gt;&#160;&#160;challenge amount == the amount the agent requested&#160;&#160;&lt;i&gt;consistency&lt;/i&gt;&lt;br&gt;&lt;b&gt;6&lt;/b&gt;&#160;&#160;window budget and card count&#160;&#160;&lt;i&gt;→ escalates, does not refuse&lt;/i&gt;&lt;br&gt;&lt;b&gt;7&lt;/b&gt;&#160;&#160;validBefore − validAfter ≤ maxAuthValiditySeconds&lt;br&gt;&lt;b&gt;8&lt;/b&gt;&#160;&#160;the intent record predates the challenge — no orphan signatures&lt;br&gt;&lt;b&gt;9&lt;/b&gt;&#160;&#160;semantic matcher (LLM) — &lt;i&gt;triage only&lt;/i&gt;, escalates, never approves" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=10;spacingTop=6;spacingRight=8;fontSize=11;fillColor=#E8F5E9;strokeColor=#2E7D32;fontColor=#14401B;" vertex="1" parent="1">
+          <mxGeometry x="390" y="480" width="530" height="250" as="geometry" />
+        </mxCell>
+        <mxCell id="b32" value="&lt;b&gt;semantic matcher&lt;/b&gt; (LLM)&lt;br&gt;&lt;i&gt;gate 9 — triage only&lt;/i&gt;&lt;br&gt;&lt;br&gt;resolvedItem vs intentConstraint&lt;br&gt;merchantDomain vs merchantAllowlist&lt;br&gt;&lt;br&gt;&lt;i&gt;its only power is to escalate to a human.&lt;br&gt;it can never turn a refusal into a signature.&lt;/i&gt;" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=10;spacingTop=6;spacingRight=8;fontSize=11;fillColor=#E8F5E9;strokeColor=#2E7D32;fontColor=#14401B;" vertex="1" parent="1">
+          <mxGeometry x="390" y="760" width="255" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="b33" value="&lt;b&gt;ledger-service&lt;/b&gt;&lt;br&gt;&lt;i&gt;append-only system of record&lt;/i&gt;&lt;br&gt;&lt;br&gt;createIntent · getIntent&lt;br&gt;attachChallenge&lt;br&gt;reserveNonce &lt;i&gt;(conditional write)&lt;/i&gt;&lt;br&gt;releaseNonce &lt;i&gt;(pre-signature only)&lt;/i&gt;&lt;br&gt;getWindowUsage → { spent, cardCount }&lt;br&gt;recordDecision · recordSpend&lt;br&gt;getPolicy · putPolicy&lt;br&gt;&lt;br&gt;&lt;i&gt;nothing else touches storage. no validation&lt;br&gt;logic here — writes and constraints only.&lt;/i&gt;" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=10;spacingTop=6;spacingRight=8;fontSize=11;fillColor=#E8F5E9;strokeColor=#2E7D32;fontColor=#14401B;" vertex="1" parent="1">
+          <mxGeometry x="665" y="760" width="255" height="250" as="geometry" />
+        </mxCell>
+        <mxCell id="b34" value="&lt;b&gt;policyHash comes from a shared package.&lt;/b&gt; The dashboard computes it at creation and you recompute it at check 2 — if the two serialisations ever diverge, every mandate fails. Nobody reimplements it." style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=10;spacingTop=6;spacingRight=8;fontSize=11;fillColor=#FFF8E1;strokeColor=#F9A825;fontColor=#7A5B00;" vertex="1" parent="1">
+          <mxGeometry x="390" y="930" width="255" height="80" as="geometry" />
+        </mxCell>
+
+        <mxCell id="b40" value="&lt;b&gt;chain-gateway&lt;/b&gt; &amp;nbsp;[A]&lt;br&gt;&lt;i&gt;stub against the published ABI&lt;/i&gt;&lt;br&gt;&lt;br&gt;getMandate(mandateId)&lt;br&gt;getTokenConstants()&lt;br&gt;&lt;br&gt;&lt;i&gt;never call an RPC node yourself.&lt;/i&gt;" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=10;spacingTop=6;spacingRight=8;fontSize=11;fillColor=#F5F5F5;strokeColor=#9E9E9E;fontColor=#616161;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="1010" y="200" width="230" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="b41" value="&lt;b&gt;signer-service&lt;/b&gt; &amp;nbsp;[A]&lt;br&gt;&lt;i&gt;stub&lt;/i&gt;&lt;br&gt;&lt;br&gt;sign(typedData, requestId)&lt;br&gt;&#160;&#160;→ { header, nonce }&lt;br&gt;&lt;br&gt;&lt;b&gt;you are its only permitted caller.&lt;/b&gt;&lt;br&gt;it may still refuse you — the rail is&lt;br&gt;a fixed invariant, not your policy." style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=10;spacingTop=6;spacingRight=8;fontSize=11;fillColor=#F5F5F5;strokeColor=#9E9E9E;fontColor=#616161;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="1010" y="380" width="230" height="170" as="geometry" />
+        </mxCell>
+
+        <mxCell id="be1" value="requestPayment { requestId, mandateId, intent, resolvedItem, challenge }" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#2E7D32;fontSize=10;fontColor=#14401B;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="b20" target="b30">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="be2" value="createIntent · attachChallenge · recordSpend" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeWidth=1.6;strokeColor=#546E7A;fontSize=10;fontColor=#37474F;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.4;entryDx=0;entryDy=0;" edge="1" parent="1" source="b20" target="b33">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="be3" value="receipts · window spend · approve / deny an escalation" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeWidth=1.6;strokeColor=#546E7A;fontSize=10;fontColor=#37474F;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.2;entryDx=0;entryDy=0;" edge="1" parent="1" source="b21" target="b33">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="be4" value="policy · window usage · reserveNonce · recordDecision" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#2E7D32;fontSize=10;fontColor=#14401B;labelBackgroundColor=#FFFFFF;exitX=1;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="b30" target="b33">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="be5" value="gate 9" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeWidth=1.6;strokeColor=#2E7D32;fontSize=10;fontColor=#14401B;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="b31" target="b32">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="be6" value="getMandate · getTokenConstants" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeWidth=1.6;strokeColor=#546E7A;fontSize=10;fontColor=#37474F;labelBackgroundColor=#FFFFFF;" edge="1" parent="1" source="b30" target="b40">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="be7" value="sign(typedData, requestId)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#2E7D32;fontSize=10;fontColor=#14401B;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.75;exitDx=0;exitDy=0;" edge="1" parent="1" source="b30" target="b41">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="be8" value="signed | refused | escalated" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeWidth=2;dashed=1;strokeColor=#2E7D32;fontSize=10;fontColor=#14401B;labelBackgroundColor=#FFFFFF;exitX=0;exitY=0.75;exitDx=0;exitDy=0;entryX=1;entryY=0.8;entryDx=0;entryDy=0;" edge="1" parent="1" source="b30" target="b20">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="b50" value="&lt;b&gt;INVARIANTS YOU MAY NOT SOFTEN&lt;/b&gt;&lt;br&gt;&lt;br&gt;&lt;b&gt;1.&lt;/b&gt; Checks 1–8 are deterministic pure functions. The LLM appears at gate 9 only, and its only power is to &lt;b&gt;escalate&lt;/b&gt;. It can never turn a refusal into a signature.&lt;br&gt;&lt;br&gt;&lt;b&gt;2.&lt;/b&gt; Every failure degrades toward &lt;b&gt;safety&lt;/b&gt;, never toward signing. An escalation with no answer in 5 minutes auto-denies — it never hangs and never defaults to yes.&lt;br&gt;&lt;br&gt;&lt;b&gt;3.&lt;/b&gt; reserveNonce is a conditional write. A second reservation for the same requestId &lt;b&gt;must fail&lt;/b&gt;.&lt;br&gt;&lt;br&gt;&lt;b&gt;4.&lt;/b&gt; &lt;b&gt;After a signature exists, the intent is terminal.&lt;/b&gt; There is no release. releaseNonce is permitted only before a signature exists.&lt;br&gt;&lt;br&gt;&lt;b&gt;5.&lt;/b&gt; Intents are append-only. Nothing edits an instruction after it is written — not even the agent that wrote it.&lt;br&gt;&lt;br&gt;&lt;b&gt;6.&lt;/b&gt; Structured data in, decisions out. You never accept instructions." style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=12;spacingTop=8;spacingRight=10;fontSize=11;fillColor=#FFEBEE;strokeColor=#C62828;fontColor=#7A1414;" vertex="1" parent="1">
+          <mxGeometry x="1290" y="150" width="410" height="420" as="geometry" />
+        </mxCell>
+
+        <mxCell id="b51" value="&lt;b&gt;YOUR SLICE OF THE PIPELINE&lt;/b&gt;&lt;br&gt;&lt;i&gt;step numbers match the Sequence page of Straitsx.drawio&lt;/i&gt;&lt;br&gt;&lt;br&gt;&lt;b&gt;5&lt;/b&gt;&#160;&#160;putPolicy — full body incl. intentConstraint + merchantAllowlist&lt;br&gt;&lt;b&gt;7&lt;/b&gt;&#160;&#160;createIntent — immutable, append-only&lt;br&gt;&lt;b&gt;14&lt;/b&gt;&#160;&#160;attachChallenge(requestId, challenge)&lt;br&gt;&lt;b&gt;15–20&lt;/b&gt;&#160;&#160;requestPayment → precondition → load → registry read → checks 1–8&lt;br&gt;&lt;b&gt;21–22&lt;/b&gt;&#160;&#160;refused { check, detail } + recordDecision&lt;br&gt;&lt;b&gt;23–25&lt;/b&gt;&#160;&#160;escalated { approvalUrl, ttl 5 min } → approve / deny&lt;br&gt;&lt;b&gt;26–27&lt;/b&gt;&#160;&#160;reserveNonce → sign&lt;br&gt;&lt;b&gt;30&lt;/b&gt;&#160;&#160;signed { header, nonce }&lt;br&gt;&lt;b&gt;37&lt;/b&gt;&#160;&#160;record tx hash + block&lt;br&gt;&lt;b&gt;42–44&lt;/b&gt;&#160;&#160;recordSpend → emit receipt: funding leg &lt;b&gt;proved&lt;/b&gt;, spend leg &lt;b&gt;observed&lt;/b&gt;" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=12;spacingTop=8;spacingRight=10;fontSize=11;fillColor=#FFFFFF;strokeColor=#2E7D32;fontColor=#14401B;" vertex="1" parent="1">
+          <mxGeometry x="1290" y="590" width="410" height="250" as="geometry" />
+        </mxCell>
+
+        <mxCell id="b52" value="&lt;b&gt;DEFINITION OF DONE&lt;/b&gt;&lt;br&gt;&lt;br&gt;☐ one test per check, each proving the &lt;i&gt;refusal&lt;/i&gt; fires&lt;br&gt;☐ check 4 test: a substituted payTo is refused (the headline demo)&lt;br&gt;☐ check 2 test: a tampered intentConstraint fails the hash&lt;br&gt;☐ check 8 test: a challenge that predates the intent is refused&lt;br&gt;☐ test: a second reserveNonce for one requestId fails&lt;br&gt;☐ test: an escalation with no answer auto-denies at 5 minutes&lt;br&gt;☐ test: refusals are recorded, not just returned&lt;br&gt;☐ test: gate 9 cannot produce a &quot;signed&quot; outcome on its own" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=12;spacingTop=8;spacingRight=10;fontSize=11;fillColor=#F1F8E9;strokeColor=#7CB342;fontColor=#33691E;" vertex="1" parent="1">
+          <mxGeometry x="1290" y="860" width="410" height="200" as="geometry" />
+        </mxCell>
+
+        <mxCell id="b53" value="&lt;b&gt;Freeze this interface first&lt;/b&gt; — C is blocked until it is stable: &lt;i&gt;POST /payment/request request + all three response shapes · the ledger method list&lt;/i&gt;" style="text;html=1;align=left;verticalAlign=middle;fontSize=11;fontColor=#6B7280;" vertex="1" parent="1">
+          <mxGeometry x="30" y="670" width="920" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="b54" value="&lt;b&gt;→ See the &quot;Decision flow&quot; page of this file for the full ladder: every check, every refusal, every escalation.&lt;/b&gt;" style="text;html=1;align=left;verticalAlign=middle;fontSize=12;fontStyle=1;fontColor=#2E7D32;" vertex="1" parent="1">
+          <mxGeometry x="30" y="700" width="920" height="22" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="decision-flow" name="Decision flow">
+    <mxGraphModel dx="1400" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1820" pageHeight="2546" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="v68" value="policy-service — decision flow" style="text;html=1;align=left;verticalAlign=middle;fontSize=12;fontSize=24;fontStyle=1;fontColor=#111827;" vertex="1" parent="1">
+          <mxGeometry x="40" y="26" width="1400" height="34" as="geometry" />
+        </mxCell>
+        <mxCell id="v69" value="The eight checks + gate 9 · every path either refuses, escalates, or signs — and every failure degrades toward safety, never toward money moving" style="text;html=1;align=left;verticalAlign=middle;fontSize=12;fontSize=12;fontColor=#6B7280;" vertex="1" parent="1">
+          <mxGeometry x="40" y="62" width="1500" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="v70" value="&lt;b&gt;agent-orchestrator&lt;/b&gt; → POST /payment/request&lt;br&gt;{ requestId, mandateId, intent, resolvedItem, challenge }" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontSize=12;fillColor=#E3F2FD;strokeColor=#1565C0;fontColor=#0D3C61;" vertex="1" parent="1">
+          <mxGeometry x="560" y="190" width="520" height="82" as="geometry" />
+        </mxCell>
+        <mxCell id="v71" value="&lt;b&gt;precondition&lt;/b&gt; — does an intent record exist for this requestId?" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontSize=12;fillColor=#E8F5E9;strokeColor=#2E7D32;fontColor=#14401B;" vertex="1" parent="1">
+          <mxGeometry x="560" y="312" width="520" height="82" as="geometry" />
+        </mxCell>
+        <mxCell id="e72" value="pass" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#2E7D32;fontColor=#2E7D32;fontSize=10;fontStyle=1;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="820.0" y="272" as="sourcePoint" />
+            <mxPoint x="820.0" y="312" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="v73" value="&lt;b&gt;REFUSED · check 8 (precondition)&lt;/b&gt;&lt;br&gt;orphan signature — short-circuits before any policy body or RPC read" style="rounded=1;arcSize=20;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontSize=11;fillColor=#FFEBEE;strokeColor=#C62828;fontColor=#7A1414;" vertex="1" parent="1">
+          <mxGeometry x="1220" y="312" width="540" height="82" as="geometry" />
+        </mxCell>
+        <mxCell id="e74" value="fail" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeWidth=1.6;strokeColor=#C62828;fontColor=#C62828;fontSize=10;fontStyle=1;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="v71" target="v73">
+          <mxGeometry relative="1" as="geometry"></mxGeometry>
+        </mxCell>
+        <mxCell id="v75" value="parse the x402 challenge into a structured X402Requirements" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontSize=12;fillColor=#FFFFFF;strokeColor=#9AA4B2;fontColor=#1F2937;" vertex="1" parent="1">
+          <mxGeometry x="560" y="434" width="520" height="82" as="geometry" />
+        </mxCell>
+        <mxCell id="e76" value="pass" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#2E7D32;fontColor=#2E7D32;fontSize=10;fontStyle=1;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="820.0" y="394" as="sourcePoint" />
+            <mxPoint x="820.0" y="434" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="v77" value="load policy body + intentConstraint + window usage — &lt;i&gt;ledger-service&lt;/i&gt;" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontSize=12;fillColor=#FFFFFF;strokeColor=#9AA4B2;fontColor=#1F2937;" vertex="1" parent="1">
+          <mxGeometry x="560" y="556" width="520" height="82" as="geometry" />
+        </mxCell>
+        <mxCell id="e78" value="pass" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#2E7D32;fontColor=#2E7D32;fontSize=10;fontStyle=1;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="820.0" y="516" as="sourcePoint" />
+            <mxPoint x="820.0" y="556" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="v79" value="read registry state — &lt;i&gt;chain-gateway → mandate-registry&lt;/i&gt;" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontSize=12;fillColor=#FFFFFF;strokeColor=#9AA4B2;fontColor=#1F2937;" vertex="1" parent="1">
+          <mxGeometry x="560" y="678" width="520" height="82" as="geometry" />
+        </mxCell>
+        <mxCell id="e80" value="pass" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#2E7D32;fontColor=#2E7D32;fontSize=10;fontStyle=1;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="820.0" y="638" as="sourcePoint" />
+            <mxPoint x="820.0" y="678" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="v81" value="&lt;b&gt;check 1&lt;/b&gt; — mandate live? revoked == false and now &amp;lt; expiresAt" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontSize=12;fillColor=#E8F5E9;strokeColor=#2E7D32;fontColor=#14401B;" vertex="1" parent="1">
+          <mxGeometry x="560" y="800" width="520" height="82" as="geometry" />
+        </mxCell>
+        <mxCell id="e82" value="pass" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#2E7D32;fontColor=#2E7D32;fontSize=10;fontStyle=1;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="820.0" y="760" as="sourcePoint" />
+            <mxPoint x="820.0" y="800" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="v83" value="&lt;b&gt;REFUSED · check 1&lt;/b&gt;&lt;br&gt;revoked on-chain (within a block) or expired" style="rounded=1;arcSize=20;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontSize=11;fillColor=#FFEBEE;strokeColor=#C62828;fontColor=#7A1414;" vertex="1" parent="1">
+          <mxGeometry x="1220" y="800" width="540" height="82" as="geometry" />
+        </mxCell>
+        <mxCell id="e84" value="fail" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeWidth=1.6;strokeColor=#C62828;fontColor=#C62828;fontSize=10;fontStyle=1;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="v81" target="v83">
+          <mxGeometry relative="1" as="geometry"></mxGeometry>
+        </mxCell>
+        <mxCell id="v85" value="&lt;b&gt;check 2&lt;/b&gt; — hashPolicy(loaded body) == registry policyHash?" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontSize=12;fillColor=#E8F5E9;strokeColor=#2E7D32;fontColor=#14401B;" vertex="1" parent="1">
+          <mxGeometry x="560" y="922" width="520" height="82" as="geometry" />
+        </mxCell>
+        <mxCell id="e86" value="pass" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#2E7D32;fontColor=#2E7D32;fontSize=10;fontStyle=1;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="820.0" y="882" as="sourcePoint" />
+            <mxPoint x="820.0" y="922" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="v87" value="&lt;b&gt;REFUSED · check 2&lt;/b&gt;&lt;br&gt;tampered local policy — including a tampered intentConstraint" style="rounded=1;arcSize=20;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontSize=11;fillColor=#FFEBEE;strokeColor=#C62828;fontColor=#7A1414;" vertex="1" parent="1">
+          <mxGeometry x="1220" y="922" width="540" height="82" as="geometry" />
+        </mxCell>
+        <mxCell id="e88" value="fail" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeWidth=1.6;strokeColor=#C62828;fontColor=#C62828;fontSize=10;fontStyle=1;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="v85" target="v87">
+          <mxGeometry relative="1" as="geometry"></mxGeometry>
+        </mxCell>
+        <mxCell id="v89" value="&lt;b&gt;check 3&lt;/b&gt; — chainId and asset address pinned exactly?" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontSize=12;fillColor=#E8F5E9;strokeColor=#2E7D32;fontColor=#14401B;" vertex="1" parent="1">
+          <mxGeometry x="560" y="1044" width="520" height="82" as="geometry" />
+        </mxCell>
+        <mxCell id="e90" value="pass" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#2E7D32;fontColor=#2E7D32;fontSize=10;fontStyle=1;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="820.0" y="1004" as="sourcePoint" />
+            <mxPoint x="820.0" y="1044" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="v91" value="&lt;b&gt;REFUSED · check 3&lt;/b&gt;&lt;br&gt;challenge names a different token or chain" style="rounded=1;arcSize=20;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontSize=11;fillColor=#FFEBEE;strokeColor=#C62828;fontColor=#7A1414;" vertex="1" parent="1">
+          <mxGeometry x="1220" y="1044" width="540" height="82" as="geometry" />
+        </mxCell>
+        <mxCell id="e92" value="fail" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeWidth=1.6;strokeColor=#C62828;fontColor=#C62828;fontSize=10;fontStyle=1;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="v89" target="v91">
+          <mxGeometry relative="1" as="geometry"></mxGeometry>
+        </mxCell>
+        <mxCell id="v93" value="&lt;b&gt;check 4&lt;/b&gt; — challenge.payTo == settlementRecipient? &amp;nbsp;★ &lt;b&gt;THE IMPORTANT ONE&lt;/b&gt;" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontSize=12;fillColor=#E8F5E9;strokeColor=#2E7D32;fontColor=#14401B;strokeWidth=3;" vertex="1" parent="1">
+          <mxGeometry x="560" y="1166" width="520" height="82" as="geometry" />
+        </mxCell>
+        <mxCell id="e94" value="pass" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#2E7D32;fontColor=#2E7D32;fontSize=10;fontStyle=1;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="820.0" y="1126" as="sourcePoint" />
+            <mxPoint x="820.0" y="1166" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="v95" value="&lt;b&gt;REFUSED · check 4&lt;/b&gt;&lt;br&gt;compromised agent substituted a challenge — spoofed cardapi URL or an attacker payTo. &lt;i&gt;This is demo run 2.&lt;/i&gt;" style="rounded=1;arcSize=20;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontSize=11;fillColor=#FFEBEE;strokeColor=#C62828;fontColor=#7A1414;" vertex="1" parent="1">
+          <mxGeometry x="1220" y="1166" width="540" height="82" as="geometry" />
+        </mxCell>
+        <mxCell id="e96" value="fail" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeWidth=1.6;strokeColor=#C62828;fontColor=#C62828;fontSize=10;fontStyle=1;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="v93" target="v95">
+          <mxGeometry relative="1" as="geometry"></mxGeometry>
+        </mxCell>
+        <mxCell id="v97" value="&lt;b&gt;check 5a&lt;/b&gt; — 5 ≤ amount ≤ min(maxPerCard, 30)? &amp;nbsp;&lt;i&gt;security boundary&lt;/i&gt;" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontSize=12;fillColor=#E8F5E9;strokeColor=#2E7D32;fontColor=#14401B;" vertex="1" parent="1">
+          <mxGeometry x="560" y="1288" width="520" height="82" as="geometry" />
+        </mxCell>
+        <mxCell id="e98" value="pass" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#2E7D32;fontColor=#2E7D32;fontSize=10;fontStyle=1;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="820.0" y="1248" as="sourcePoint" />
+            <mxPoint x="820.0" y="1288" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="v99" value="&lt;b&gt;REFUSED · check 5&lt;/b&gt;&lt;br&gt;amount outside the mandate envelope" style="rounded=1;arcSize=20;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontSize=11;fillColor=#FFEBEE;strokeColor=#C62828;fontColor=#7A1414;" vertex="1" parent="1">
+          <mxGeometry x="1220" y="1288" width="540" height="82" as="geometry" />
+        </mxCell>
+        <mxCell id="e100" value="fail" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeWidth=1.6;strokeColor=#C62828;fontColor=#C62828;fontSize=10;fontStyle=1;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="v97" target="v99">
+          <mxGeometry relative="1" as="geometry"></mxGeometry>
+        </mxCell>
+        <mxCell id="v101" value="&lt;b&gt;check 5b&lt;/b&gt; — challenge amount == the amount the agent requested? &amp;nbsp;&lt;i&gt;consistency, not security&lt;/i&gt;" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontSize=12;fillColor=#E8F5E9;strokeColor=#2E7D32;fontColor=#14401B;" vertex="1" parent="1">
+          <mxGeometry x="560" y="1410" width="520" height="82" as="geometry" />
+        </mxCell>
+        <mxCell id="e102" value="pass" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#2E7D32;fontColor=#2E7D32;fontSize=10;fontStyle=1;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="820.0" y="1370" as="sourcePoint" />
+            <mxPoint x="820.0" y="1410" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="v103" value="&lt;b&gt;REFUSED · check 5&lt;/b&gt;&lt;br&gt;mid-flight rewrite detected" style="rounded=1;arcSize=20;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontSize=11;fillColor=#FFEBEE;strokeColor=#C62828;fontColor=#7A1414;" vertex="1" parent="1">
+          <mxGeometry x="1220" y="1410" width="540" height="82" as="geometry" />
+        </mxCell>
+        <mxCell id="e104" value="fail" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeWidth=1.6;strokeColor=#C62828;fontColor=#C62828;fontSize=10;fontStyle=1;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="v101" target="v103">
+          <mxGeometry relative="1" as="geometry"></mxGeometry>
+        </mxCell>
+        <mxCell id="v105" value="&lt;b&gt;check 6&lt;/b&gt; — spentInWindow + amount ≤ maxPerWindow AND cardsInWindow &amp;lt; maxCardsPerWindow?" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontSize=12;fillColor=#E8F5E9;strokeColor=#2E7D32;fontColor=#14401B;" vertex="1" parent="1">
+          <mxGeometry x="560" y="1532" width="520" height="82" as="geometry" />
+        </mxCell>
+        <mxCell id="e106" value="pass" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#2E7D32;fontColor=#2E7D32;fontSize=10;fontStyle=1;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="820.0" y="1492" as="sourcePoint" />
+            <mxPoint x="820.0" y="1532" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="v107" value="&lt;b&gt;ESCALATED · budget&lt;/b&gt;&lt;br&gt;pushed to the human rather than hard-refused — approve once, or approve this merchant for the window" style="rounded=1;arcSize=20;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontSize=11;fillColor=#FFF8E1;strokeColor=#C8A415;fontColor=#5C4708;" vertex="1" parent="1">
+          <mxGeometry x="40" y="1532" width="480" height="82" as="geometry" />
+        </mxCell>
+        <mxCell id="e108" value="escalate" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeWidth=1.6;strokeColor=#B26A00;fontColor=#B26A00;fontSize=10;fontStyle=1;labelBackgroundColor=#FFFFFF;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="v105" target="v107">
+          <mxGeometry relative="1" as="geometry"></mxGeometry>
+        </mxCell>
+        <mxCell id="v109" value="&lt;b&gt;check 7&lt;/b&gt; — validBefore − validAfter ≤ maxAuthValiditySeconds? &lt;i&gt;(measured at checkpoint 2, not guessed)&lt;/i&gt;" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontSize=12;fillColor=#E8F5E9;strokeColor=#2E7D32;fontColor=#14401B;" vertex="1" parent="1">
+          <mxGeometry x="560" y="1654" width="520" height="82" as="geometry" />
+        </mxCell>
+        <mxCell id="e110" value="pass" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#2E7D32;fontColor=#2E7D32;fontSize=10;fontStyle=1;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="820.0" y="1614" as="sourcePoint" />
+            <mxPoint x="820.0" y="1654" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="v111" value="&lt;b&gt;REFUSED · check 7&lt;/b&gt;&lt;br&gt;a long window is a signed cheque left lying around" style="rounded=1;arcSize=20;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontSize=11;fillColor=#FFEBEE;strokeColor=#C62828;fontColor=#7A1414;" vertex="1" parent="1">
+          <mxGeometry x="1220" y="1654" width="540" height="82" as="geometry" />
+        </mxCell>
+        <mxCell id="e112" value="fail" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeWidth=1.6;strokeColor=#C62828;fontColor=#C62828;fontSize=10;fontStyle=1;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="v109" target="v111">
+          <mxGeometry relative="1" as="geometry"></mxGeometry>
+        </mxCell>
+        <mxCell id="v113" value="&lt;b&gt;check 8&lt;/b&gt; — was the intent record created BEFORE the challenge arrived?" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontSize=12;fillColor=#E8F5E9;strokeColor=#2E7D32;fontColor=#14401B;" vertex="1" parent="1">
+          <mxGeometry x="560" y="1776" width="520" height="82" as="geometry" />
+        </mxCell>
+        <mxCell id="e114" value="pass" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#2E7D32;fontColor=#2E7D32;fontSize=10;fontStyle=1;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="820.0" y="1736" as="sourcePoint" />
+            <mxPoint x="820.0" y="1776" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="v115" value="&lt;b&gt;REFUSED · check 8&lt;/b&gt;&lt;br&gt;ordering violation — no orphan signatures" style="rounded=1;arcSize=20;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontSize=11;fillColor=#FFEBEE;strokeColor=#C62828;fontColor=#7A1414;" vertex="1" parent="1">
+          <mxGeometry x="1220" y="1776" width="540" height="82" as="geometry" />
+        </mxCell>
+        <mxCell id="e116" value="fail" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeWidth=1.6;strokeColor=#C62828;fontColor=#C62828;fontSize=10;fontStyle=1;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="v113" target="v115">
+          <mxGeometry relative="1" as="geometry"></mxGeometry>
+        </mxCell>
+        <mxCell id="v117" value="&lt;b&gt;gate 9&lt;/b&gt; — semantic matcher: resolvedItem vs intentConstraint, merchantDomain vs merchantAllowlist" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontSize=12;fillColor=#FFF3E0;strokeColor=#EF6C00;fontColor=#5A2C00;" vertex="1" parent="1">
+          <mxGeometry x="560" y="1898" width="520" height="82" as="geometry" />
+        </mxCell>
+        <mxCell id="e118" value="pass" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#2E7D32;fontColor=#2E7D32;fontSize=10;fontStyle=1;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="820.0" y="1858" as="sourcePoint" />
+            <mxPoint x="820.0" y="1898" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="v119" value="&lt;b&gt;ESCALATED · intent mismatch&lt;/b&gt;&lt;br&gt;dashboard renders an &lt;b&gt;independent fetch&lt;/b&gt; of the checkout page beside the constraint. TTL 5 min → &lt;b&gt;auto-deny&lt;/b&gt;.&lt;br&gt;&lt;i&gt;Does not stop a lying agent — stated limitation.&lt;/i&gt;" style="rounded=1;arcSize=20;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontSize=11;fillColor=#FFF8E1;strokeColor=#C8A415;fontColor=#5C4708;" vertex="1" parent="1">
+          <mxGeometry x="40" y="1898" width="480" height="82" as="geometry" />
+        </mxCell>
+        <mxCell id="e120" value="escalate" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeWidth=1.6;strokeColor=#B26A00;fontColor=#B26A00;fontSize=10;fontStyle=1;labelBackgroundColor=#FFFFFF;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="v117" target="v119">
+          <mxGeometry relative="1" as="geometry"></mxGeometry>
+        </mxCell>
+        <mxCell id="v121" value="&lt;b&gt;reserveNonce(requestId, nonce)&lt;/b&gt; — conditional write; a second reservation MUST fail" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontSize=12;fillColor=#FFFFFF;strokeColor=#9AA4B2;fontColor=#1F2937;" vertex="1" parent="1">
+          <mxGeometry x="560" y="2020" width="520" height="82" as="geometry" />
+        </mxCell>
+        <mxCell id="e122" value="pass" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#2E7D32;fontColor=#2E7D32;fontSize=10;fontStyle=1;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="820.0" y="1980" as="sourcePoint" />
+            <mxPoint x="820.0" y="2020" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="v123" value="&lt;b&gt;releaseNonce → retry with a fresh nonce&lt;/b&gt;&lt;br&gt;permitted ONLY before a signature exists (signer error or write conflict)" style="rounded=1;arcSize=20;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontSize=11;fillColor=#FFF8E1;strokeColor=#C8A415;fontColor=#5C4708;" vertex="1" parent="1">
+          <mxGeometry x="40" y="2020" width="480" height="82" as="geometry" />
+        </mxCell>
+        <mxCell id="e124" value="escalate" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeWidth=1.6;strokeColor=#B26A00;fontColor=#B26A00;fontSize=10;fontStyle=1;labelBackgroundColor=#FFFFFF;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="v121" target="v123">
+          <mxGeometry relative="1" as="geometry"></mxGeometry>
+        </mxCell>
+        <mxCell id="v125" value="&lt;b&gt;signer-service.sign&lt;/b&gt; — hard-invariant rail: recipient pinned, value ≤ hardMaxTotal" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontSize=12;fillColor=#E8F5E9;strokeColor=#2E7D32;fontColor=#14401B;" vertex="1" parent="1">
+          <mxGeometry x="560" y="2142" width="520" height="82" as="geometry" />
+        </mxCell>
+        <mxCell id="e126" value="pass" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#2E7D32;fontColor=#2E7D32;fontSize=10;fontStyle=1;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="820.0" y="2102" as="sourcePoint" />
+            <mxPoint x="820.0" y="2142" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="v127" value="&lt;b&gt;REFUSED by the signer&lt;/b&gt;&lt;br&gt;a fixed invariant, not policy evaluation — even a compromised policy-service cannot push past the envelope" style="rounded=1;arcSize=20;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontSize=11;fillColor=#FFEBEE;strokeColor=#C62828;fontColor=#7A1414;" vertex="1" parent="1">
+          <mxGeometry x="1220" y="2142" width="540" height="82" as="geometry" />
+        </mxCell>
+        <mxCell id="e128" value="fail" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeWidth=1.6;strokeColor=#C62828;fontColor=#C62828;fontSize=10;fontStyle=1;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="v125" target="v127">
+          <mxGeometry relative="1" as="geometry"></mxGeometry>
+        </mxCell>
+        <mxCell id="v129" value="&lt;b&gt;signed&lt;/b&gt; { PAYMENT-SIGNATURE header, nonce } &amp;nbsp;+ recordDecision" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontSize=12;fillColor=#C8E6C9;strokeColor=#1B5E20;fontColor=#0B2E10;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="560" y="2264" width="520" height="82" as="geometry" />
+        </mxCell>
+        <mxCell id="e130" value="pass" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#2E7D32;fontColor=#2E7D32;fontSize=10;fontStyle=1;labelBackgroundColor=#FFFFFF;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="820.0" y="2224" as="sourcePoint" />
+            <mxPoint x="820.0" y="2264" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="v131" value="&lt;b&gt;After a signature exists, the intent is terminal.&lt;/b&gt; There is no release. If the cardapi retry fails or settlement times out after signing, rotate to a fresh intentId — never reuse the intent or the nonce, or two live authorizations for the same amount could both settle." style="rounded=1;arcSize=20;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=10;fontSize=11;fillColor=#FFEBEE;strokeColor=#C62828;fontColor=#7A1414;verticalAlign=top;spacingTop=8;" vertex="1" parent="1">
+          <mxGeometry x="560" y="2396" width="1180" height="96" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
