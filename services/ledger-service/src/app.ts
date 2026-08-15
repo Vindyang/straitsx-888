@@ -268,8 +268,12 @@ export function buildApp(
       check?: string;
       detail?: string;
       decidedAt?: string;
+      // Only meaningful (and only ever sent) alongside decision:"signed" — see IntentRecord.
+      policyHash?: string;
+      validAfter?: number;
+      validBefore?: number;
     };
-    const { requestId, decision, check, detail, decidedAt } = body;
+    const { requestId, decision, check, detail, decidedAt, policyHash, validAfter, validBefore } = body;
     if (!requestId || !decision || !decidedAt) {
       return sendError(reply, 400, "INVALID_BODY", "requestId, decision, decidedAt are required", requestId ?? "n/a");
     }
@@ -281,7 +285,12 @@ export function buildApp(
     decisionLog.push({ sequence, requestId, decision, check, detail, decidedAt });
     intent.decision = decision;
     intent.decidedAt = decidedAt;
-    if (decision === "signed") intent.state = "SIGNED";
+    if (decision === "signed") {
+      intent.state = "SIGNED";
+      intent.policyHash = policyHash;
+      intent.validAfter = validAfter;
+      intent.validBefore = validBefore;
+    }
     reply.send({ recorded: true, sequence });
   });
 
@@ -333,13 +342,10 @@ export function buildApp(
     if (!intent) {
       return sendError(reply, 404, "INTENT_NOT_FOUND", `no intent for ${requestId}`, requestId);
     }
-    // policyHash and the signed authorization window (validAfter/validBefore) are computed by
-    // policy-service and never sent to ledger-service via any documented write route — they are
-    // null here until that gap is closed (see B9 note). Everything else ledger genuinely holds.
     reply.send({
       requestId: intent.requestId,
       mandateId: intent.mandateId,
-      policyHash: null,
+      policyHash: intent.policyHash ?? null,
       intent: intent.instruction,
       challenge: intent.challenge
         ? {
@@ -350,7 +356,7 @@ export function buildApp(
           }
         : null,
       authorization: intent.nonce
-        ? { validAfter: null, validBefore: null, nonce: intent.nonce }
+        ? { validAfter: intent.validAfter ?? null, validBefore: intent.validBefore ?? null, nonce: intent.nonce }
         : null,
       settlementTx: intent.settlement?.settlementTx ?? null,
       blockNumber: intent.settlement?.blockNumber ?? null,

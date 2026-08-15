@@ -21,6 +21,12 @@ export type IntentRecord = {
   nonceReleased?: boolean;
   decision?: "signed" | "refused" | "escalated";
   decidedAt?: string;
+  // Only policy-service knows these at the moment it signs — carried in via POST /decision
+  // (a deliberate extension beyond api-contracts.md §5's documented body) so the receipt can
+  // report them instead of null.
+  policyHash?: string;
+  validAfter?: number;
+  validBefore?: number;
   settlement?: { settlementTx: string; blockNumber: number; cardOpaqueId: string };
   spend?: {
     merchantDomain: string;

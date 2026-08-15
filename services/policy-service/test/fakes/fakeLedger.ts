@@ -17,6 +17,9 @@ type IntentRecord = {
   nonceReleased?: boolean;
   decision?: string;
   decidedAt?: string;
+  policyHash?: string;
+  validAfter?: number;
+  validBefore?: number;
 };
 
 type PolicyRecord = { policy: Mandate; policyVersion: number };
@@ -44,6 +47,9 @@ type DecisionEntry = {
   check?: string;
   detail?: string;
   decidedAt: string;
+  policyHash?: string;
+  validAfter?: number;
+  validBefore?: number;
 };
 
 const intents = new Map<string, IntentRecord>();
@@ -142,6 +148,11 @@ export async function recordDecision(entry: DecisionEntry): Promise<void> {
   if (intent) {
     intent.decision = entry.decision;
     intent.decidedAt = entry.decidedAt;
+    if (entry.decision === "signed") {
+      intent.policyHash = entry.policyHash;
+      intent.validAfter = entry.validAfter;
+      intent.validBefore = entry.validBefore;
+    }
   }
 }
 

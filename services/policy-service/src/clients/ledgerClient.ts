@@ -74,6 +74,11 @@ export async function recordDecision(entry: {
   check?: string;
   detail?: string;
   decidedAt: string;
+  // Only meaningful alongside decision:"signed" — lets GET /receipt/:requestId on ledger-service
+  // report these instead of null (they're computed here, not stored anywhere else).
+  policyHash?: string;
+  validAfter?: number;
+  validBefore?: number;
 }): Promise<void> {
   const res = await call("/decision", { method: "POST", body: JSON.stringify(entry) });
   if (!res.ok) throw new Error(`ledger recordDecision ${res.status}`);

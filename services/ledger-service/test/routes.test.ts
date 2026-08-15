@@ -94,6 +94,21 @@ describe("nonce lifecycle", () => {
     expect(released.statusCode).toBe(409);
     expect(released.json().error.code).toBe("NONCE_BURNED");
   });
+
+  it("under real concurrency (fired via Promise.all, not sequentially), exactly one reservation wins", async () => {
+    const attempts = 20;
+    const responses = await Promise.all(
+      Array.from({ length: attempts }, (_, i) =>
+        app.inject({ method: "POST", url: "/intent/r1/nonce", headers: auth(), payload: { nonce: `0x${i.toString(16).padStart(4, "0")}` } }),
+      ),
+    );
+
+    const succeeded = responses.filter((r) => r.statusCode === 200);
+    const conflicted = responses.filter((r) => r.statusCode === 409);
+    expect(succeeded).toHaveLength(1);
+    expect(conflicted).toHaveLength(attempts - 1);
+    expect(conflicted.every((r) => r.json().error.code === "NONCE_ALREADY_RESERVED")).toBe(true);
+  });
 });
 
 describe("GET /window/:mandateId", () => {

@@ -118,6 +118,14 @@ describe("case 1 — clean purchase inside all limits", () => {
       "check7_validity_sane",
       "check8_intent_bound",
     ]);
+
+    // "receipt complete" — policyHash and the signed window are threaded through to the
+    // ledger via POST /decision, not left null (the gap flagged after B1-B23's first pass).
+    const intentRecord = fakeLedger.getIntentRecord("case1");
+    expect(intentRecord?.policyHash).toBe(hashPolicy(mandate));
+    expect(intentRecord?.validAfter).toEqual(expect.any(Number));
+    expect(intentRecord?.validBefore).toEqual(expect.any(Number));
+    expect(intentRecord!.validBefore!).toBeGreaterThan(intentRecord!.validAfter!);
   });
 });
 

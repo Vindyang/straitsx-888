@@ -163,7 +163,14 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
       return sendError(reply, signing.statusCode, signing.code, signing.message, requestId, signing.retryable);
     }
 
-    await ledger.recordDecision({ requestId, decision: "signed", decidedAt: nowIso() });
+    await ledger.recordDecision({
+      requestId,
+      decision: "signed",
+      decidedAt: nowIso(),
+      policyHash: hashPolicy(mandate),
+      validAfter: signing.validAfter,
+      validBefore: signing.validBefore,
+    });
     reply.code(200).send({
       status: "signed",
       requestId,
@@ -250,7 +257,14 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
     }
 
     await ledger.resolveEscalationStorage(requestId, "approve", approvedBy);
-    await ledger.recordDecision({ requestId, decision: "signed", decidedAt: nowIso() });
+    await ledger.recordDecision({
+      requestId,
+      decision: "signed",
+      decidedAt: nowIso(),
+      policyHash: hashPolicy(mandate),
+      validAfter: signing.validAfter,
+      validBefore: signing.validBefore,
+    });
 
     if (standingApproval?.scope === "merchant-window" && escalation.reason === "INTENT_MISMATCH" && escalation.merchantDomain) {
       await ledger.setStandingApproval(escalation.mandateId, escalation.merchantDomain, nowSec() + mandate.windowSeconds);
