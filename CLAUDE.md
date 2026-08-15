@@ -1,5 +1,10 @@
 # straitsx-888
 
+## Conventions
+
+Repo layout, service topology, and naming rules: `docs/conventions.md`. Read it before adding
+a file or an endpoint. Wire shapes are authoritative in `docs/api-contracts.md`.
+
 ## Agent skills
 
 ### Issue tracker
