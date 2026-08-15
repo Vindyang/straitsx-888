@@ -1004,9 +1004,20 @@ Run states include `AWAITING_CHECKOUT`; only `DONE`, `REFUSED`, and `FAILED` are
 { "decision": "approve", "approvedBy": "0x…", "signature": "0x…", "standingApproval": { "scope": "once" } }
 ```
 
-The dashboard signs the canonical EIP-191 message containing request ID, decision, and
-expiry, then calls this orchestrator route. The orchestrator resumes the same pending run
-with the returned header. Module B cryptographic verification of `signature` is an acceptance gate.
+The dashboard imports `buildEscalationMessage` from `@straitsx/contracts` and signs this
+canonical EIP-191 message:
+
+```text
+straitsx-888 escalation decision
+requestId: <requestId>
+mandateId: <mandateId>
+decision: approve|deny
+```
+
+The orchestrator forwards the proof unchanged and resumes the same pending run with the
+returned header. Policy-service rebuilds the message from stored escalation data and verifies
+the signer against `mandate.owner`. Expiry is enforced from the stored escalation and is not a
+dashboard-supplied or signed input.
 
 ### `POST /checkout/assert` — post-issuance control
 

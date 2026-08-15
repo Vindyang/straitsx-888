@@ -5,6 +5,8 @@
  * built. Client-side only; never imported by anything under app/api/.
  */
 
+import { buildEscalationMessage } from "@straitsx/contracts";
+
 export type UnsignedTx = {
   to: string;
   data: string;
@@ -18,7 +20,7 @@ type EthereumProvider = {
 };
 
 function getProvider(): EthereumProvider {
-  const eth = (window as unknown as { ethereum?: EthereumProvider }).ethereum;
+  const eth = (globalThis as typeof globalThis & { window?: { ethereum?: EthereumProvider } }).window?.ethereum;
   if (!eth) throw new Error("No wallet found — install MetaMask or another injected wallet.");
   return eth;
 }
@@ -31,21 +33,17 @@ export async function connectWallet(): Promise<string> {
   return account;
 }
 
-export function escalationApprovalMessage(requestId: string, decision: "approve" | "deny", expiresAt: number): string {
-  return ["StraitsX escalation decision", `requestId: ${requestId}`, `decision: ${decision}`, `expiresAt: ${expiresAt}`].join("\n");
-}
-
 /** EIP-191 approval proof. The signature is returned once and never rendered. */
 export async function signEscalationDecision(
   requestId: string,
+  mandateId: string,
   decision: "approve" | "deny",
-  expiresAt: number,
 ): Promise<{ approvedBy: string; signature: string }> {
   const eth = getProvider();
   const approvedBy = await connectWallet();
   const signature = (await eth.request({
     method: "personal_sign",
-    params: [escalationApprovalMessage(requestId, decision, expiresAt), approvedBy],
+    params: [buildEscalationMessage({ requestId, mandateId, decision }), approvedBy],
   })) as string;
   return { approvedBy, signature };
 }

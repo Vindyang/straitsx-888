@@ -57,7 +57,7 @@ export default function RunDetailPage() {
     setError(null);
     setBusy(true);
     try {
-      const { approvedBy, signature } = await signEscalationDecision(requestId, decision, run.outcome.expiresAt);
+      const { approvedBy, signature } = await signEscalationDecision(requestId, run.meta.mandateId, decision);
       const res = await fetch(`/api/run/${requestId}/escalation`, {
         method: "POST",
         body: JSON.stringify({ decision, approvedBy, signature, ...(standing ? { standingApproval: { scope: "merchant-window" } } : {}) }),

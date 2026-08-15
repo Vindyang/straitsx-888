@@ -89,6 +89,11 @@ describe("resumable run pipeline", () => {
     const { requestId } = startRun(input);
     await waitFor(requestId, "ESCALATED");
     await resolveRunEscalation(requestId, { decision: "approve", approvedBy: "0xowner", signature: "0xproof" });
+    expect(mocks.resolveEscalation).toHaveBeenCalledWith(requestId, {
+      decision: "approve",
+      approvedBy: "0xowner",
+      signature: "0xproof",
+    });
     expect(getRun(requestId)?.requestId).toBe(requestId);
     expect(getRun(requestId)?.state).toBe("DONE");
   });

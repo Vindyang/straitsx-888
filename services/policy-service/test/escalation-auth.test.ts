@@ -121,9 +121,9 @@ function resolve(requestId: string, payload: Record<string, unknown>) {
   });
 }
 
-async function sign(requestId: string, decision: "approve" | "deny", account = owner) {
+async function sign(requestId: string, decision: "approve" | "deny", account = owner, mandateId = "m1") {
   return account.signMessage({
-    message: buildEscalationMessage({ requestId, mandateId: "m1", decision }),
+    message: buildEscalationMessage({ requestId, mandateId, decision }),
   });
 }
 
@@ -182,6 +182,20 @@ describe("escalation resolve requires a valid owner signature", () => {
       signature,
     });
     expect(res.statusCode).toBe(403);
+  });
+
+  it("refuses an approval signed for a different mandate", async () => {
+    await escalate("e-mandate");
+    const signature = await sign("e-mandate", "approve", owner, "different-mandate");
+    const res = await resolve("e-mandate", {
+      decision: "approve",
+      approvedBy: owner.address,
+      signature,
+    });
+
+    expect(res.statusCode).toBe(403);
+    expect(res.json().error.code).toBe("ESCALATION_SIGNATURE_INVALID");
+    expect(fakeSigner.getCalls()).toHaveLength(0);
   });
 
   it("accepts a correct owner signature and proceeds to sign", async () => {

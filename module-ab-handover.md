@@ -29,7 +29,7 @@ on-chain evidence.
 | B checks 1–9 | Complete |
 | B escalation auth | Complete — EIP-191 signature verification, added this session |
 
-Verification at handover: `pnpm typecheck` exit 0 · `pnpm test` **199 passed, 6 skipped** ·
+Verification after A/B+C merge: `pnpm typecheck` exit 0 · `pnpm test` **243 passed, 6 skipped** ·
 `forge test` **16 passed**.
 
 ## 2. Identifiers
@@ -154,7 +154,8 @@ Full detail in [docs/deployment.md](docs/deployment.md).
   `0x0F6DdD6fC1Fb06B3E91a77Cb1597aCAc8A037CA7`.
 - **`rawToolResultHash`** is accepted on settlement and returned on the receipt. Optional,
   validated as 32-byte hex. Send the **hash**, never the body.
-- **Escalation approval is now a signature.** See §7 — this needs reconciling.
+- **Escalation approval uses one shared EIP-191 message.** Dashboard and policy-service both
+  import `buildEscalationMessage`; request, mandate, and decision are cryptographically bound.
 - **`resolvedItem.merchantDomain` is required for signing.** Policy refuses before nonce
   reservation when it is absent, and budget escalations preserve it for approval resume.
 - **Receipts expose `intentHash` and the signed `merchantDomain`.** Together with `requestId`,
@@ -162,34 +163,20 @@ Full detail in [docs/deployment.md](docs/deployment.md).
 
 ## 7. Open items, in priority order
 
-**1. Escalation message format is unreconciled — will break every approval.**
-`buildEscalationMessage` in `packages/contracts/src/escalation.ts` was defined without sight of
-C's dashboard:
-
-```
-straitsx-888 escalation decision
-requestId: <id>
-mandateId: <id>
-decision: approve|deny
-```
-
-If C signs a different string, every approval returns `403 ESCALATION_SIGNATURE_INVALID`. Both
-sides must import this function rather than hand-rolling. **Check this first at merge.**
-
-**2. A5 — deploy MandateRegistry to mainnet 43114.** The last definition-of-done item blocked
+**1. A5 — deploy MandateRegistry to mainnet 43114.** The last definition-of-done item blocked
 on nobody. Its own note calls leaving it late *"unrecoverable"*: if production card clearance
 never arrives, a mainnet registry plus a real mainnet XSGD movement is the fallback that keeps
 the submission compliant. 0.2 AVAX is already there.
 
-**3. No A/B Dockerfiles were building at handover.** `Dockerfile` + `.dockerignore` exist at
+**2. No A/B Dockerfiles were building at handover.** `Dockerfile` + `.dockerignore` exist at
 the repo root, parameterised by `SERVICE_ENTRY`/`SERVICE_PORT`, and every path they reference
 is verified present — but **the image has never been built**, because the Docker daemon was not
 running. Build all four before trusting it.
 
-**4. A15 screenshot** — needs A/B reachable in C's cluster. Use C's probe, not ours: ours
+**3. A15 screenshot** — needs A/B reachable in C's cluster. Use C's probe, not ours: ours
 checks one target and cannot prove the positive controls.
 
-**5. A18 production 402** — `scripts/probe-production-402.ts` refuses to run without an explicit
+**4. A18 production 402** — `scripts/probe-production-402.ts` refuses to run without an explicit
 `--url` and `--cleared`. Until it runs, `MAINNET.settlementRecipient` and `eip712Version` stay
 `null` and every mainnet path refuses. That refusal is the safety property.
 

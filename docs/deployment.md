@@ -189,9 +189,6 @@ signer, which is the compromised-policy-service scenario from
 - **A/B is not deployed.** Sections 3 and 6 are the plan, not a record.
 - **The isolation screenshot is outstanding.** Needs a task in the orchestrator SG — not
   blocked on Module C being finished, only on A/B being reachable.
-- **Escalation message format is unreconciled.** `buildEscalationMessage` in
-  `packages/contracts` was defined without sight of C's dashboard. If C signs a different
-  string, every approval returns `403 ESCALATION_SIGNATURE_INVALID`. Check at merge.
 - **Mainnet is untouched.** `registry.json` has no 43114 address (A5), the production 402 is
   unread (A18), and `MAINNET.settlementRecipient` / `eip712Version` are still `null`, so every
   mainnet path refuses. That refusal is the safety property, not a gap to paper over.

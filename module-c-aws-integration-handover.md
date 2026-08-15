@@ -357,7 +357,7 @@ The A/B owner must provide all of the following before Module C can be accepted 
   Fuji mandate is pinned;
 - policy-to-signer `4003` ingress from the policy SG only, with no dashboard/orchestrator
   route;
-- Module B approval-signature verification for the canonical EIP-191 escalation decision;
+- the shared `buildEscalationMessage` EIP-191 contract used by both dashboard and policy;
 - Module B receipt storage for the optional migration field `rawToolResultHash`;
 - Module B canonical intent commitment nonce, with `intentHash` and the signed
   `merchantDomain` exposed on the receipt;
@@ -946,7 +946,7 @@ Complete this table during integration. Link only redacted evidence.
 | Alarm destination confirmed and tested | Pending |  |  |
 | A/B DNS/health and SG handoff | Pending |  |  |
 | Signer isolation C10 | Pending |  |  |
-| Module B signature verification | Pending |  |  |
+| Module B signature verification | Pass locally 2026-08-16 | Dashboard canonical-message test plus policy owner/request/mandate/decision verification tests | A/B + C / 2026-08-16 |
 | Module B `rawToolResultHash` receipt | Pending |  |  |
 | Four fixture runs | Pending |  |  |
 | Settlement mismatch fail-closed tests | Pending |  |  |
