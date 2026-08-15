@@ -81,6 +81,10 @@ different things.
 
 ## Deployed
 
+Service topology, per-service env, the AWS setup order and the isolation proof are in
+[docs/deployment.md](docs/deployment.md). **Deploy A and B from the same commit** — `POST /sign`
+requires `accepted`, so version skew breaks in both directions.
+
 | What | Value |
 | --- | --- |
 | `MandateRegistry` **Fuji 43113** | [`0x47b9b484944d95bc04888e40ad585462a06e7c6d`](https://testnet.snowtrace.io/address/0x47b9b484944d95bc04888e40ad585462a06e7c6d) |

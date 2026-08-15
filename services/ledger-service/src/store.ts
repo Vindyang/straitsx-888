@@ -27,7 +27,17 @@ export type IntentRecord = {
   policyHash?: string | undefined;
   validAfter?: number | undefined;
   validBefore?: number | undefined;
-  settlement?: { settlementTx: string; blockNumber: number; cardOpaqueId: string } | undefined;
+  settlement?:
+    | {
+        settlementTx: string;
+        blockNumber: number;
+        cardOpaqueId: string;
+        /** keccak256 of the MCP tool result. The HASH only — never the body,
+         *  which carries a live prompt injection (execution_plan.md §19.6).
+         *  Optional: settlements predating card-gateway supplying it stay valid. */
+        rawToolResultHash?: string | undefined;
+      }
+    | undefined;
   spend?: {
     merchantDomain: string;
     orderTotal: string;

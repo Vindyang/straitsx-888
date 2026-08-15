@@ -107,6 +107,63 @@ const data =
 const chain = CHAINS[chainId];
 const xsgd = toChecksum(chain.xsgd);
 
+// --- preflight: can the source wallet actually cover this? ----------------------
+
+/**
+ * Read `balanceOf(FUNDING_ORIGIN_WALLET)` before building anything.
+ *
+ * Without this the script happily emits a transaction the wallet cannot cover:
+ * the ERC-20 transfer reverts on chain, gas is spent, and the failure reads as
+ * a wallet or network problem rather than "there is nothing to move". That is
+ * exactly what happened once the custody move had already been completed and
+ * the script was re-run out of habit.
+ *
+ * A direct read is used rather than chain-gateway because this is a standalone
+ * CLI that must work whether or not any service is running.
+ */
+const rpcUrl = process.env[`RPC_URL_${chainId}`] ?? chain.rpc;
+const balanceHex = await fetch(rpcUrl, {
+  method: "POST",
+  headers: { "content-type": "application/json" },
+  body: JSON.stringify({
+    jsonrpc: "2.0",
+    id: 1,
+    method: "eth_call",
+    params: [
+      {
+        to: chain.xsgd,
+        data: `0x70a08231${FUNDING_ORIGIN_WALLET.toLowerCase().replace(/^0x/, "").padStart(64, "0")}`,
+      },
+      "latest",
+    ],
+  }),
+})
+  .then((r) => r.json() as Promise<{ result?: string; error?: unknown }>)
+  .catch(() => ({ result: undefined, error: "rpc unreachable" }));
+
+if (typeof balanceHex.result !== "string") {
+  console.error(
+    `move-xsgd: WARNING could not read the source balance (${JSON.stringify(balanceHex.error)}).\n` +
+      `  Proceeding, but verify in your wallet that the balance covers the transfer.\n`,
+  );
+} else {
+  const balance = BigInt(balanceHex.result);
+  const fmt = (v: bigint) =>
+    `${v / 10n ** BigInt(XSGD_DECIMALS)}.${(v % 10n ** BigInt(XSGD_DECIMALS)).toString().padStart(XSGD_DECIMALS, "0")}`;
+
+  if (balance < amount) {
+    fail(
+      `the funding wallet cannot cover this transfer.\n\n` +
+        `    have  ${fmt(balance)} XSGD  at ${toChecksum(FUNDING_ORIGIN_WALLET)}\n` +
+        `    want  ${fmt(amount)} XSGD\n\n` +
+        `  Signing this would revert on chain and waste gas.\n\n` +
+        `  If the custody move is already done, this step is COMPLETE and there is nothing\n` +
+        `  to do — check the signer address instead. Re-run this only after new funds\n` +
+        `  arrive at the funding wallet, with --amount set to what actually arrived.`,
+    );
+  }
+}
+
 // An ERC-20 transfer into a non-zero balance is ~35k; 100k is generous and
 // bounded, and your wallet will re-estimate anyway.
 const GAS_LIMIT = "100000";

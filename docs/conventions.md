@@ -5,7 +5,8 @@ already does; §6 lists the places the three owners diverged and names the singl
 converge on. If you are adding a file, follow this doc. If this doc and the code disagree,
 the code is the bug — say so in review.
 
-Companion docs: [api-contracts.md](api-contracts.md) is authoritative for **wire shapes**;
+Companion docs: [deployment.md](deployment.md) is authoritative for **how services are
+deployed and configured**; [api-contracts.md](api-contracts.md) is authoritative for **wire shapes**;
 this doc is authoritative for **how the repo is arranged and named**. Facts are resolved in
 [execution_plan.md §19](execution_plan.md).
 

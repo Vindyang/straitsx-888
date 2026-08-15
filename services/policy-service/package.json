@@ -10,5 +10,8 @@
   "dependencies": {
     "@straitsx/contracts": "workspace:*",
     "fastify": "^5.2.0"
+  },
+  "devDependencies": {
+    "viem": "^2.21.55"
   }
 }

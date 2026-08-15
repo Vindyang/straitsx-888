@@ -99,26 +99,20 @@ export const FUNDING_ORIGIN_WALLET: Address =
   "0x9f6B4A5DE73CE365238F27236ea04A747E691bF7";
 
 /**
- * The x402 `network` identifier per chain, used in the `PAYMENT-SIGNATURE`
- * payload (`{ x402Version, scheme, network, payload }`).
+ * There is deliberately NO per-chain `network` constant here.
  *
- * **CAIP-2 form, observed live on 2026-08-15.** The sandbox 402 returns
- * `"eip155:43113"`, NOT a friendly name like `"avalanche-fuji"` — that guess was
- * wrong and the A16 probe caught it before a signature was ever sent. A payload
- * carrying the wrong network string is rejected by the facilitator, and the
- * symptom is a 402 that never clears.
+ * One existed briefly and was deleted: the x402 `network` value belongs to the
+ * live challenge (`accepts[0].network`), and the signer now takes the whole
+ * `accepted` block from the 402 rather than reconstructing any of it. A local
+ * map would be a second source of truth for a value we are always handed, and
+ * the first version of it guessed `"avalanche-fuji"` when the real value is the
+ * CAIP-2 form `"eip155:43113"` — a mistake that only surfaces as a 402 which
+ * never clears.
  *
- * Still prefer the challenge's own `network` when you have it: `accepts[0]`
- * carries it, that value is authoritative, and mainnet has never been observed.
- * This map is only the fallback for callers that omit it.
+ * The observed values are recorded in docs/execution_plan.md §19.3 and
+ * docs/api-contracts.md §4, which is where facts belong. Mainnet has still
+ * never been observed (A18).
  */
-export const X402_NETWORK_BY_CHAIN: Record<ChainId, string> = {
-  43113: "eip155:43113",
-  // Unverified — mainnet's 402 has not been fetched (A18, §19.7 clearance open).
-  // CAIP-2 is mechanical, so this is a safe inference rather than a guess, but
-  // the production probe should still confirm it.
-  43114: "eip155:43114",
-};
 
 /** The x402 protocol version we build payloads for. */
 export const X402_VERSION = 1;

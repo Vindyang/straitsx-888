@@ -59,6 +59,10 @@ importers:
       fastify:
         specifier: ^5.2.0
         version: 5.12.0
+    devDependencies:
+      viem:
+        specifier: ^2.21.55
+        version: 2.55.16(typescript@5.9.3)
 
   services/signer-service:
     dependencies:
@@ -1510,7 +1514,7 @@ snapshots:
 
   '@scure/bip32@1.7.0':
     dependencies:
-      '@noble/curves': 1.9.1
+      '@noble/curves': 1.9.7
       '@noble/hashes': 1.8.0
       '@scure/base': 1.2.6
 

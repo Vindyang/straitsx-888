@@ -80,8 +80,12 @@ set -e
 case "$CURL_EXIT" in
   0)  OBSERVED="open"
       DETAIL="HTTP $BODY — the connection completed" ;;
-  6)  OBSERVED="blocked"
-      DETAIL="could not resolve host — no DNS path to the signer" ;;
+  6)  # NOT a pass. An unresolvable name proves the NAME is wrong, not that the
+      # security group blocked anything — the packet never left the host. Calling
+      # this "isolated" is the classic false-positive that makes an isolation
+      # claim worthless, so it is reported separately and fails the run.
+      OBSERVED="inconclusive"
+      DETAIL="could not resolve '${TARGET%%:*}' — DNS failure proves nothing about the firewall" ;;
   7)  OBSERVED="blocked"
       DETAIL="connection refused or no route — rejected at the network layer" ;;
   28) OBSERVED="blocked"
@@ -92,6 +96,16 @@ esac
 
 printf '  %sobserved  %s%s\n' "$DIM" "$OBSERVED" "$RESET"
 printf '  %s%s%s\n\n' "$DIM" "$DETAIL" "$RESET"
+
+if [[ "$OBSERVED" == "inconclusive" ]]; then
+  printf '%s  INCONCLUSIVE — this is NOT evidence of isolation.%s\n' "$YELLOW" "$RESET"
+  printf '%s  The hostname did not resolve, so no packet was ever sent. A blocked\n' "$DIM"
+  printf '  firewall and a typo look identical from here. Fix the name, then re-run.\n'
+  printf '  A valid isolation proof also needs POSITIVE controls: from the same host,\n'
+  printf '  show that policy/ledger/chain-gateway ARE reachable. Otherwise you have\n'
+  printf '  only shown the network is broken, not that the signer is protected.%s\n\n' "$RESET"
+  exit 2
+fi
 
 if [[ "$OBSERVED" != "$EXPECT" ]]; then
   if [[ "$EXPECT" == "blocked" ]]; then

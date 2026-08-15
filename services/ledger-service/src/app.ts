@@ -297,10 +297,11 @@ export function buildApp(
   // B9 — settlement, spend (stretch), receipt
   app.post("/intent/:requestId/settlement", async (request, reply) => {
     const { requestId } = request.params as { requestId: string };
-    const { settlementTx, blockNumber, cardOpaqueId } = request.body as {
+    const { settlementTx, blockNumber, cardOpaqueId, rawToolResultHash } = request.body as {
       settlementTx?: string;
       blockNumber?: number;
       cardOpaqueId?: string;
+      rawToolResultHash?: string;
     };
     const intent = intents.get(requestId);
     if (!intent) {
@@ -309,7 +310,16 @@ export function buildApp(
     if (!settlementTx || blockNumber === undefined || !cardOpaqueId) {
       return sendError(reply, 400, "INVALID_BODY", "settlementTx, blockNumber, cardOpaqueId are required", requestId);
     }
-    intent.settlement = { settlementTx, blockNumber, cardOpaqueId };
+    // `rawToolResultHash` is a hash of the MCP tool result, NOT the result
+    // itself. The body carries a live prompt injection (execution_plan.md
+    // §19.6) and card-gateway drops every free-text key before forwarding, so
+    // the receipt records that a specific tool result was seen without ever
+    // storing its text. Optional: the field is a migration, and settlements
+    // recorded before card-gateway supplied it stay valid.
+    if (rawToolResultHash !== undefined && !/^0x[0-9a-fA-F]{64}$/.test(rawToolResultHash)) {
+      return sendError(reply, 400, "INVALID_BODY", "rawToolResultHash must be a 32-byte 0x hex hash when present", requestId);
+    }
+    intent.settlement = { settlementTx, blockNumber, cardOpaqueId, rawToolResultHash };
     intent.state = "SETTLED";
     reply.send({ requestId, state: "SETTLED", settlementTx });
   });
@@ -361,6 +371,9 @@ export function buildApp(
       settlementTx: intent.settlement?.settlementTx ?? null,
       blockNumber: intent.settlement?.blockNumber ?? null,
       cardOpaqueId: intent.settlement?.cardOpaqueId ?? null,
+      // The evidence that a specific MCP tool result produced this purchase,
+      // without carrying the injected text into anything that reads receipts.
+      rawToolResultHash: intent.settlement?.rawToolResultHash ?? null,
       decision: intent.decision ?? null,
       decidedAt: intent.decidedAt ?? null,
       spendLeg: intent.spend

@@ -2,6 +2,7 @@ import Fastify, { type FastifyInstance } from "fastify";
 import {
   CARDAPI_SANDBOX_ISSUE_CARD,
   hashPolicy,
+  verifyEscalationSignature,
   type Mandate,
   type ResolvedItem,
   type X402Requirements,
@@ -195,7 +196,7 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
   // decision/approvedBy/signature) to support "approve this merchant for this window".
   app.post("/escalation/:requestId/resolve", async (request, reply) => {
     const { requestId } = request.params as { requestId: string };
-    const { decision, approvedBy, standingApproval } = request.body as {
+    const { decision, approvedBy, signature, standingApproval } = request.body as {
       decision?: "approve" | "deny" | undefined;
       approvedBy?: string | undefined;
       signature?: string | undefined;
@@ -226,6 +227,44 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
       return sendError(reply, 410, "ESCALATION_EXPIRED", `escalation ${requestId} expired`, requestId);
     }
 
+    // AUTHORIZATION RUNS BEFORE THE approve/deny BRANCH, for both decisions.
+    //
+    // A denial used to return here with no check at all, which meant anyone who
+    // could reach this service could deny somebody else's escalation and have
+    // the ledger record "human denied the escalated request". No money moves on
+    // a denial, but an unauthenticated write that attributes a decision to the
+    // human is still a lie in the audit trail, and denying every escalation is a
+    // cheap denial of service against the whole flow.
+    const policyRecord = await ledger.getPolicy(escalation.mandateId);
+    if (!policyRecord) {
+      return sendError(reply, 404, "POLICY_NOT_FOUND", `no policy on file for mandate ${escalation.mandateId}`, requestId);
+    }
+    const { policy: mandate } = policyRecord;
+
+    // The claim: approvedBy says it is the mandate owner.
+    if (!approvedBy || approvedBy.toLowerCase() !== mandate.owner.toLowerCase()) {
+      return sendError(reply, 403, "NOT_MANDATE_OWNER", "approvedBy does not match mandate.owner", requestId);
+    }
+
+    // The proof. Without this, "the human approved it" is a field in a request
+    // body that anyone able to reach policy-service can set — the escalation
+    // gate would be decoration. The signature is EIP-191 over the canonical
+    // message, which binds requestId + mandateId + decision, so an approval
+    // cannot be replayed onto another request, another mandate, or flipped into
+    // a denial (packages/contracts/src/escalation.ts).
+    if (!signature) {
+      return sendError(reply, 403, "ESCALATION_SIGNATURE_REQUIRED", "signature is required to resolve an escalation", requestId);
+    }
+    const verified = await verifyEscalationSignature({
+      input: { requestId, mandateId: escalation.mandateId, decision },
+      signature,
+      expectedSigner: mandate.owner,
+    });
+    if (!verified.ok) {
+      return sendError(reply, 403, "ESCALATION_SIGNATURE_INVALID", verified.reason, requestId);
+    }
+
+    // Only now, with the decision cryptographically attributed to the owner.
     if (decision === "deny") {
       await ledger.resolveEscalationStorage(requestId, "deny", approvedBy);
       await ledger.recordDecision({
@@ -236,18 +275,6 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
         decidedAt: nowIso(),
       });
       return reply.code(200).send({ status: "refused", requestId, check: "escalation_denied", detail: "human denied the escalated request" });
-    }
-
-    const policyRecord = await ledger.getPolicy(escalation.mandateId);
-    if (!policyRecord) {
-      return sendError(reply, 404, "POLICY_NOT_FOUND", `no policy on file for mandate ${escalation.mandateId}`, requestId);
-    }
-    const { policy: mandate } = policyRecord;
-
-    // Minimal authorization: approvedBy must claim to be the mandate owner. No cryptographic
-    // signature verification against `signature` yet — a known gap, not a security guarantee.
-    if (!approvedBy || approvedBy.toLowerCase() !== mandate.owner.toLowerCase()) {
-      return sendError(reply, 403, "NOT_MANDATE_OWNER", "approvedBy does not match mandate.owner", requestId);
     }
 
     const intentRecord = await ledger.getIntent(requestId);
