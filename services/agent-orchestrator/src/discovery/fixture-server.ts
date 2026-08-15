@@ -22,6 +22,8 @@ const FIXTURE_FILES: Record<string, string> = {
 export function buildFixtureServer(): FastifyInstance {
   const app = Fastify({ logger: false });
 
+  app.get("/health", async () => ({ ok: true }));
+
   app.get("/fixtures/:name", async (request, reply) => {
     const { name } = request.params as { name: string };
     const file = FIXTURE_FILES[name];
@@ -34,8 +36,20 @@ export function buildFixtureServer(): FastifyInstance {
   // confirmation page is enough for the C9 spend-attestation capture.
   app.get("/checkout/xyz", async (_request, reply) => {
     reply.type("text/html").send(
+      '<!doctype html><html><body><h1>Checkout</h1>' +
+        '<form action="/confirmation/xyz" method="get">' +
+        '<input name="cardNumber" autocomplete="cc-number"><input name="cardExpiry" autocomplete="cc-exp">' +
+        '<input name="cardCvc" autocomplete="cc-csc"><button data-submit-order>Place order</button></form></body></html>',
+    );
+  });
+
+  app.get("/confirmation/xyz", async (_request, reply) => {
+    const now = new Date().toISOString();
+    reply.type("text/html").send(
       '<!doctype html><html><body><h1>Order confirmed</h1>' +
-        '<p data-order-id="SO-99213">Order SO-99213</p></body></html>',
+        '<span data-merchant-domain>localhost</span><span data-order-total>15000000</span>' +
+        '<span data-order-sku>BTL-500-SS</span><span data-order-id>SO-99213</span>' +
+        `<time data-order-timestamp>${now}</time></body></html>`,
     );
   });
 

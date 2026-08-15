@@ -33,8 +33,18 @@ export async function viewCard(params: ViewCardParams): Promise<ViewCardResult> 
     } catch {
       throw new AppError(502, ErrorCode.MCP_RESULT_MALFORMED, "view_card_sandbox result text is not valid JSON");
     }
+    let iframe: URL;
+    try {
+      iframe = new URL(parsed.iframe_url);
+    } catch {
+      throw new AppError(502, ErrorCode.MCP_RESULT_MALFORMED, "view_card_sandbox returned an invalid iframe URL");
+    }
+    if (iframe.protocol !== "https:" || iframe.hostname !== "card.straitsx.ai" ||
+        !/^\/(sandbox|production)\/view\//.test(iframe.pathname) || iframe.username || iframe.password) {
+      throw new AppError(502, ErrorCode.MCP_RESULT_MALFORMED, "view_card_sandbox returned a disallowed iframe URL");
+    }
     return {
-      iframeUrl: parsed.iframe_url,
+      iframeUrl: iframe.toString(),
       expiresInSeconds: parsed.expires_in_seconds ?? 60,
       singleUse: true,
     };

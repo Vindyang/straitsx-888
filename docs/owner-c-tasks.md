@@ -96,10 +96,12 @@ The MCP tool result **contains a live prompt injection**
 ### C4 `payAndIssue` and `viewCard`
 **Estimate:** 1.5 h · **Depends on:** C2
 
-- [ ] `payAndIssue({ cardapiUrl, header, … })` → `{ cardOpaqueId, settlementTx, cardHtml, issuedAt }`
+- [ ] `payAndIssue({ cardapiUrl, header, … })` → `{ cardOpaqueId, settlementTx, issuedAt }`
 - [ ] On `402`, return the **fresh challenge** for diagnosis
 - [ ] `viewCard({ cardOpaqueId, settlementTx, walletAddress })` → one-time `iframeUrl`
-- [ ] **Never log `cardHtml`. Never persist or screenshot the PAN. Iframe only.**
+- [ ] Never return `cardHtml` across the boundary. Use `viewCard()` only; PAN may exist
+      transiently in the isolated browser process but is never persisted, logged, traced,
+      screenshotted, or recorded.
 - [ ] Call `viewCard` at the **moment of checkout**, never earlier — the URL is one-time and
       the blast radius is the seconds it is alive
 
@@ -166,8 +168,10 @@ The MCP tool result **contains a live prompt injection**
 ### C10 Prove you cannot reach the signer
 **Estimate:** 15 min · **Coordinate with Owner A (A15)**
 
-- [ ] From the orchestrator host, `curl http://signer:4003/health` and **confirm it fails**
-- [ ] Screenshot the refusal for the deck
+- [ ] Run the one-off ECS probe from the orchestrator security group: signer DNS must resolve;
+      policy, ledger, and chain-gateway must respond; TCP/HTTP signer:4003 must fail.
+- [ ] Archive the CloudWatch probe output for the deck. Missing DNS is a failed probe, never
+      accepted as proof of isolation.
 
 ---
 

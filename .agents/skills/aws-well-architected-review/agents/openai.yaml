@@ -1,0 +1,4 @@
+interface:
+  display_name: "AWS Well-Architected Review"
+  short_description: "Review AWS workloads across all six pillars"
+  default_prompt: "Use $aws-well-architected-review to audit this AWS deployment and produce prioritized, evidence-backed remediations."

@@ -90,6 +90,7 @@ export async function getCard(params: GetCardParams): Promise<GetCardResult> {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ cardholder_name: params.cardholderName, amount_sgd: params.amountSgd }),
+    signal: AbortSignal.timeout(10_000),
   });
   if (primingRes.status !== 402) {
     throw new AppError(

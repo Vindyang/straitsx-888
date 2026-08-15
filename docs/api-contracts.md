@@ -465,13 +465,16 @@ signed authorization is live in the world and its nonce can never be reused.
 ### `POST /intent/:requestId/settlement`
 
 ```json
-{ "settlementTx": "0xdead…", "blockNumber": 41230044, "cardOpaqueId": "crd_…" }
+{ "settlementTx": "0xdead…", "blockNumber": 41230044, "cardOpaqueId": "crd_…", "rawToolResultHash": "0x7c…" }
 ```
+
+`rawToolResultHash` is optional during migration but must be stored in receipt evidence before
+live Module C acceptance. Module B support for that evidence field is an external acceptance gate.
 
 ### `POST /intent/:requestId/spend` *(stretch — checkpoint 6)*
 
 ```json
-{ "merchantDomain": "shop.example", "orderTotal": "15.00", "itemSku": "BTL-500-SS", "orderId": "SO-99213", "observedAt": "2026-08-15T06:05:00Z" }
+{ "merchantDomain": "shop.example", "orderTotal": "15.00", "itemSku": "BTL-500-SS", "orderId": "SO-99213", "observedAt": "2026-08-15T06:05:00Z", "proof": "none" }
 ```
 
 ```json
@@ -708,13 +711,12 @@ persistence.**
 {
   "cardOpaqueId": "crd_9f2a…",
   "settlementTx": "0xdead…",
-  "cardHtml": "<iframe …>",
   "issuedAt": "2026-08-15T06:02:30Z"
 }
 ```
 
 `402` if the header was rejected (returns the fresh challenge for diagnosis).
-**Never log `cardHtml`.**
+The card-gateway boundary never returns HTML or card data. Display always uses `viewCard()`.
 
 ### `viewCard({ cardOpaqueId, settlementTx, walletAddress })`
 
@@ -736,14 +738,16 @@ a `curl` from its host that fails.
 
 ```json
 {
-  "instruction": "Buy the 500ml stainless water bottle from shop.example, under S$20",
+  "instruction": "Buy the 500ml stainless water bottle from localhost, under S$20",
   "mandateId": "0x7f3a…",
   "agentId": "shopper-1",
-  "fixture": "clean"
+  "source": { "kind": "fixture", "name": "clean" }
 }
 ```
 
-`fixture`: `"clean"` · `"poisoned-recipient"` · `"poisoned-amount"` · `"wrong-item"`.
+`source` is `{ "kind": "fixture", "name": "clean" | "poisoned-recipient" |
+"poisoned-amount" | "wrong-item" }` or `{ "kind": "merchant", "profileId": "…" }`.
+The legacy top-level `fixture` field remains accepted during migration.
 
 ```json
 { "requestId": "3f6c8b2e-…", "state": "RUNNING", "streamUrl": "/run/3f6c8b2e-…/events" }
@@ -757,6 +761,18 @@ a `curl` from its host that fails.
 
 Stages: `INTENT_CREATED` → `DISCOVERY_DONE` → `CHALLENGE_RECEIVED` → `POLICY_DECISION` →
 `SETTLEMENT_CONFIRMED` → `CARD_ISSUED` → `CHECKOUT_ASSERTED` → `SPEND_RECORDED`.
+
+Run states include `AWAITING_CHECKOUT`; only `DONE`, `REFUSED`, and `FAILED` are terminal.
+
+### `POST /run/:requestId/escalation`
+
+```json
+{ "decision": "approve", "approvedBy": "0x…", "signature": "0x…", "standingApproval": { "scope": "once" } }
+```
+
+The dashboard signs the canonical EIP-191 message containing request ID, decision, and
+expiry, then calls this orchestrator route. The orchestrator resumes the same pending run
+with the returned header. Module B cryptographic verification of `signature` is an acceptance gate.
 
 ### `POST /checkout/assert` — post-issuance control
 

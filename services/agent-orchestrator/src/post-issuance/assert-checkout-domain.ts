@@ -11,6 +11,8 @@ export type AssertCheckoutDomainInput = {
   currentUrl: string;
   matchedCheckoutUrl: string;
   matchedDomain: string;
+  allowedHosts?: readonly string[];
+  checkoutUrlPattern?: string;
 };
 
 export type AssertCheckoutDomainResult = {
@@ -20,7 +22,15 @@ export type AssertCheckoutDomainResult = {
 };
 
 export function assertCheckoutDomain(input: AssertCheckoutDomainInput): AssertCheckoutDomainResult {
-  const currentDomain = new URL(input.currentUrl).hostname;
-  const allowed = currentDomain === input.matchedDomain && input.currentUrl === input.matchedCheckoutUrl;
+  const current = new URL(input.currentUrl);
+  const currentDomain = current.hostname;
+  const hostAllowed = (input.allowedHosts ?? [input.matchedDomain]).includes(currentDomain);
+  const profileAllowed = input.checkoutUrlPattern ? new RegExp(input.checkoutUrlPattern).test(input.currentUrl) : true;
+  const allowed =
+    current.protocol === new URL(input.matchedCheckoutUrl).protocol &&
+    currentDomain === input.matchedDomain &&
+    input.currentUrl === input.matchedCheckoutUrl &&
+    hostAllowed &&
+    profileAllowed;
   return { allowed, merchantDomain: input.matchedDomain, matchedAgainst: input.matchedCheckoutUrl };
 }

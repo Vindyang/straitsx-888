@@ -2,8 +2,8 @@
  * C4 — retry the cardapi with the signed PAYMENT-SIGNATURE header. Settlement
  * PRECEDES issuance: a 200 here means XSGD has already moved.
  *
- * Never logs `cardHtml` (docs/conventions.md "Never" list) — it is returned
- * to the caller and nowhere else.
+ * The upstream response may contain card_html, but it is discarded here and
+ * never crosses this boundary. Card display exclusively uses viewCard().
  */
 
 import { AppError, ErrorCode, parseX402Challenge } from "@straitsx/contracts";
@@ -12,7 +12,6 @@ import type { PayAndIssueParams, PayAndIssueResult } from "./types";
 type CardapiSuccessBody = {
   card_opaque_id: string;
   settlement_tx: string;
-  card_html: string;
   issued_at?: string;
 };
 
@@ -27,6 +26,7 @@ export async function payAndIssue(params: PayAndIssueParams): Promise<PayAndIssu
       cardholder_name: params.cardholderName,
       amount_sgd: params.amountSgd,
     }),
+    signal: AbortSignal.timeout(20_000),
   });
 
   // On 402, the header was rejected — return the fresh challenge for diagnosis
@@ -40,11 +40,13 @@ export async function payAndIssue(params: PayAndIssueParams): Promise<PayAndIssu
   }
 
   const body = (await res.json()) as CardapiSuccessBody;
+  if (typeof body.card_opaque_id !== "string" || typeof body.settlement_tx !== "string") {
+    throw new AppError(502, ErrorCode.CARDAPI_FAILED, "cardapi success response was malformed");
+  }
   return {
     ok: true,
     cardOpaqueId: body.card_opaque_id,
     settlementTx: body.settlement_tx,
-    cardHtml: body.card_html,
     issuedAt: body.issued_at ?? new Date().toISOString(),
   };
 }

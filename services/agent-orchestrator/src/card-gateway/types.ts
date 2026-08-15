@@ -23,7 +23,7 @@ export type PayAndIssueParams = {
 };
 
 export type PayAndIssueResult =
-  | { ok: true; cardOpaqueId: string; settlementTx: string; cardHtml: string; issuedAt: string }
+  | { ok: true; cardOpaqueId: string; settlementTx: string; issuedAt: string }
   | { ok: false; status: 402; challenge: X402Requirements };
 
 export type ViewCardParams = {

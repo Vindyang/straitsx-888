@@ -10,7 +10,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:isolation": "./scripts/test-isolation.sh",
+    "test:isolation": "tsx scripts/isolation-probe.ts",
     "dev:chain-gateway": "pnpm --filter @straitsx/chain-gateway dev",
     "dev:signer": "pnpm --filter @straitsx/signer-service dev",
     "dev:ledger": "pnpm --filter @straitsx/ledger-service dev",

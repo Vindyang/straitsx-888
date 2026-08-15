@@ -1,72 +1,103 @@
-/**
- * C2 — legacy HTTP+SSE MCP transport (execution_plan.md §5, owner-c-tasks.md C2).
- *
- * `GET /sandbox/sse` opens a stream and immediately emits an `endpoint` event
- * carrying the POST target. Every JSON-RPC call is a POST to that endpoint;
- * the POST returns `202 Accepted` — the body is NOT the answer. Responses
- * arrive asynchronously as `message` events on the still-open SSE stream,
- * correlated by JSON-RPC `id`. The stream never closes; a client that appears
- * to hang while reading it is behaving correctly.
- *
- * No auth header is needed on sandbox (verified: `initialize` + `tools/list`
- * succeed bare).
- */
+/** Legacy HTTP+SSE MCP transport with bounded, correlated calls. */
 
-import { MCP_SSE_SANDBOX } from "@straitsx/contracts";
-import { AppError, ErrorCode } from "@straitsx/contracts";
+import { AppError, ErrorCode, MCP_SSE_SANDBOX } from "@straitsx/contracts";
 
 type JsonRpcId = number;
+type Fetch = typeof fetch;
+type PendingCall = { resolve: (result: unknown) => void; reject: (err: Error) => void; timer: ReturnType<typeof setTimeout> };
+type JsonRpcMessage = { id?: JsonRpcId; result?: unknown; error?: { message?: string } };
 
-type PendingCall = {
-  resolve: (result: unknown) => void;
-  reject: (err: Error) => void;
+export type McpSseClientOptions = {
+  fetch?: Fetch;
+  endpointTimeoutMs?: number;
+  callTimeoutMs?: number;
 };
 
-type JsonRpcMessage = {
-  id?: JsonRpcId;
-  result?: unknown;
-  error?: { message: string };
-};
+function transportError(message: string): AppError {
+  return new AppError(502, ErrorCode.MCP_UNREACHABLE, message, true);
+}
+
+function parseMessagesEndpoint(value: string, sseUrl: string): URL {
+  const source = new URL(sseUrl);
+  const endpoint = new URL(value, source);
+  const expectedPath = source.pathname.replace(/\/sse$/, "/messages");
+  const sessionIds = endpoint.searchParams.getAll("sessionId");
+  const keys = [...endpoint.searchParams.keys()];
+  if (
+    source.protocol !== "https:" || endpoint.protocol !== "https:" || endpoint.origin !== source.origin ||
+    endpoint.username || endpoint.password || endpoint.hash || endpoint.pathname !== expectedPath ||
+    keys.length !== 1 || keys[0] !== "sessionId" || sessionIds.length !== 1 ||
+    !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(sessionIds[0] ?? "")
+  ) {
+    throw transportError("mcp endpoint event was outside the expected HTTPS messages route");
+  }
+  return endpoint;
+}
 
 export class McpSseClient {
   readonly #sseUrl: string;
+  readonly #fetch: Fetch;
+  readonly #endpointTimeoutMs: number;
+  readonly #callTimeoutMs: number;
   #messagesUrl: URL | null = null;
   #nextId = 1;
   readonly #pending = new Map<JsonRpcId, PendingCall>();
   readonly #ready: Promise<void>;
   readonly #abort = new AbortController();
+  #closed = false;
 
-  constructor(sseUrl: string = MCP_SSE_SANDBOX) {
+  constructor(sseUrl: string = MCP_SSE_SANDBOX, options: McpSseClientOptions = {}) {
     this.#sseUrl = sseUrl;
+    this.#fetch = options.fetch ?? fetch;
+    this.#endpointTimeoutMs = options.endpointTimeoutMs ?? 10_000;
+    this.#callTimeoutMs = options.callTimeoutMs ?? 20_000;
     this.#ready = this.#connect();
   }
 
   async #connect(): Promise<void> {
     let res: Response;
+    const timer = setTimeout(() => this.#abort.abort(), this.#endpointTimeoutMs);
     try {
-      res = await fetch(this.#sseUrl, {
+      res = await this.#fetch(this.#sseUrl, {
         headers: { accept: "text/event-stream" },
         signal: this.#abort.signal,
       });
     } catch (err) {
-      throw new AppError(502, ErrorCode.MCP_UNREACHABLE, `mcp sse connect failed: ${String(err)}`, true);
+      throw transportError(`mcp sse connect failed: ${String(err)}`);
+    } finally {
+      clearTimeout(timer);
     }
-    if (!res.ok || !res.body) {
-      throw new AppError(502, ErrorCode.MCP_UNREACHABLE, `mcp sse handshake failed: ${res.status}`, true);
-    }
+    if (!res.ok || !res.body) throw transportError(`mcp sse handshake failed: ${res.status}`);
 
-    let resolveEndpoint: () => void;
-    let rejectEndpoint: (err: Error) => void;
-    const endpointReady = new Promise<void>((resolve, reject) => {
-      resolveEndpoint = resolve;
-      rejectEndpoint = reject;
+    await new Promise<void>((resolve, reject) => {
+      let settled = false;
+      const endpointTimer = setTimeout(() => {
+        if (settled) return;
+        settled = true;
+        this.#abort.abort();
+        reject(transportError("mcp endpoint event timed out"));
+      }, this.#endpointTimeoutMs);
+      const ready = () => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(endpointTimer);
+        resolve();
+      };
+      void this.#readLoop(res.body!, ready).catch((err: unknown) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(endpointTimer);
+        reject(err);
+      });
     });
+  }
 
-    // The stream never closes — the read loop runs for the client's lifetime, not just
-    // until the endpoint event arrives. Started here, not awaited.
-    void this.#readLoop(res.body, () => resolveEndpoint()).catch((err) => rejectEndpoint(err as Error));
-
-    await endpointReady;
+  #rejectAll(error: Error): void {
+    for (const pending of this.#pending.values()) {
+      clearTimeout(pending.timer);
+      pending.reject(error);
+    }
+    this.#pending.clear();
   }
 
   async #readLoop(body: ReadableStream<Uint8Array>, onEndpoint: () => void): Promise<void> {
@@ -76,20 +107,25 @@ export class McpSseClient {
     try {
       for (;;) {
         const { done, value } = await reader.read();
-        if (done) return;
-        buffer += decoder.decode(value, { stream: true });
-        let sep: number;
-        while ((sep = buffer.indexOf("\n\n")) !== -1) {
-          const rawEvent = buffer.slice(0, sep);
-          buffer = buffer.slice(sep + 2);
+        if (done) {
+          if (this.#closed) return;
+          const failure = transportError("mcp sse stream closed unexpectedly");
+          this.#rejectAll(failure);
+          throw failure;
+        }
+        // Normalise CRLF so both wire formats use the same event separator.
+        buffer += decoder.decode(value, { stream: true }).replace(/\r\n/g, "\n");
+        let separator: number;
+        while ((separator = buffer.indexOf("\n\n")) !== -1) {
+          const rawEvent = buffer.slice(0, separator);
+          buffer = buffer.slice(separator + 2);
           this.#dispatchEvent(rawEvent, onEndpoint);
         }
       }
     } catch (err) {
-      if (this.#abort.signal.aborted) return; // close() — not a failure
-      const failure = new AppError(502, ErrorCode.MCP_UNREACHABLE, `mcp sse stream failed: ${String(err)}`, true);
-      for (const { reject } of this.#pending.values()) reject(failure);
-      this.#pending.clear();
+      if (this.#closed) return;
+      const failure = err instanceof AppError ? err : transportError(`mcp sse stream failed: ${String(err)}`);
+      this.#rejectAll(failure);
       throw failure;
     }
   }
@@ -99,65 +135,75 @@ export class McpSseClient {
     const dataLines: string[] = [];
     for (const line of rawEvent.split("\n")) {
       if (line.startsWith("event:")) eventName = line.slice(6).trim();
-      else if (line.startsWith("data:")) dataLines.push(line.slice(5).trim());
+      else if (line.startsWith("data:")) dataLines.push(line.slice(5).trimStart());
     }
     const data = dataLines.join("\n");
-
     if (eventName === "endpoint") {
-      this.#messagesUrl = new URL(data, this.#sseUrl);
+      try {
+        this.#messagesUrl = parseMessagesEndpoint(data, this.#sseUrl);
+      } catch (error) {
+        throw error instanceof AppError ? error : transportError("mcp endpoint event contained an invalid URL");
+      }
       onEndpoint();
       return;
     }
     if (eventName !== "message" || data.length === 0) return;
 
-    let msg: JsonRpcMessage;
+    let message: JsonRpcMessage;
     try {
-      msg = JSON.parse(data) as JsonRpcMessage;
+      message = JSON.parse(data) as JsonRpcMessage;
     } catch {
-      return; // not a JSON-RPC message we can correlate; ignore
+      return;
     }
-    if (msg.id === undefined) return; // notification, nothing pending on it
-    const pending = this.#pending.get(msg.id);
+    if (message.id === undefined) return;
+    const pending = this.#pending.get(message.id);
     if (!pending) return;
-    this.#pending.delete(msg.id);
-    if (msg.error) pending.reject(new Error(msg.error.message));
-    else pending.resolve(msg.result);
+    this.#pending.delete(message.id);
+    clearTimeout(pending.timer);
+    if (message.error) pending.reject(transportError(`mcp call failed: ${message.error.message ?? "unknown error"}`));
+    else if (!("result" in message)) pending.reject(transportError("mcp response omitted result"));
+    else pending.resolve(message.result);
   }
 
   async #post(body: unknown): Promise<void> {
     await this.#ready;
-    if (!this.#messagesUrl) {
-      throw new AppError(502, ErrorCode.MCP_UNREACHABLE, "mcp endpoint event never arrived");
-    }
-    let res: Response;
+    if (this.#closed || !this.#messagesUrl) throw transportError("mcp client is not connected");
+    const controller = new AbortController();
+    const abort = () => controller.abort();
+    this.#abort.signal.addEventListener("abort", abort, { once: true });
+    const timer = setTimeout(abort, this.#callTimeoutMs);
     try {
-      res = await fetch(this.#messagesUrl, {
+      const res = await this.#fetch(this.#messagesUrl, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify(body),
-        signal: this.#abort.signal,
+        signal: controller.signal,
       });
+      if (res.status !== 202) throw transportError(`mcp POST expected 202, got ${res.status}`);
     } catch (err) {
-      throw new AppError(502, ErrorCode.MCP_UNREACHABLE, `mcp post failed: ${String(err)}`, true);
-    }
-    // 202 Accepted — the body is not the answer (execution_plan.md §5.2). The reply arrives
-    // on the SSE stream and is matched by #dispatchEvent.
-    if (res.status !== 202) {
-      throw new AppError(502, ErrorCode.MCP_UNREACHABLE, `mcp POST expected 202, got ${res.status}`, true);
+      if (err instanceof AppError) throw err;
+      throw transportError(`mcp post failed: ${String(err)}`);
+    } finally {
+      clearTimeout(timer);
+      this.#abort.signal.removeEventListener("abort", abort);
     }
   }
 
   #call(method: string, params?: unknown): Promise<unknown> {
     const id = this.#nextId++;
     const reply = new Promise<unknown>((resolve, reject) => {
-      this.#pending.set(id, { resolve, reject });
-    });
-    void this.#post({ jsonrpc: "2.0", id, method, params }).catch((err) => {
-      const pending = this.#pending.get(id);
-      if (pending) {
+      const timer = setTimeout(() => {
         this.#pending.delete(id);
-        pending.reject(err as Error);
-      }
+        reject(transportError(`mcp ${method} response timed out`));
+      }, this.#callTimeoutMs);
+      this.#pending.set(id, { resolve, reject, timer });
+    });
+    void this.#post({ jsonrpc: "2.0", id, method, params }).catch((err: unknown) => {
+      const pending = this.#pending.get(id);
+      if (!pending) return;
+      this.#pending.delete(id);
+      clearTimeout(pending.timer);
+      pending.reject(err instanceof Error ? err : transportError(String(err)));
     });
     return reply;
   }
@@ -180,6 +226,9 @@ export class McpSseClient {
   }
 
   close(): void {
+    if (this.#closed) return;
+    this.#closed = true;
     this.#abort.abort();
+    this.#rejectAll(transportError("mcp client closed"));
   }
 }

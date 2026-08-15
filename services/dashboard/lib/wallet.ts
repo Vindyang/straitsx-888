@@ -31,6 +31,25 @@ export async function connectWallet(): Promise<string> {
   return account;
 }
 
+export function escalationApprovalMessage(requestId: string, decision: "approve" | "deny", expiresAt: number): string {
+  return ["StraitsX escalation decision", `requestId: ${requestId}`, `decision: ${decision}`, `expiresAt: ${expiresAt}`].join("\n");
+}
+
+/** EIP-191 approval proof. The signature is returned once and never rendered. */
+export async function signEscalationDecision(
+  requestId: string,
+  decision: "approve" | "deny",
+  expiresAt: number,
+): Promise<{ approvedBy: string; signature: string }> {
+  const eth = getProvider();
+  const approvedBy = await connectWallet();
+  const signature = (await eth.request({
+    method: "personal_sign",
+    params: [escalationApprovalMessage(requestId, decision, expiresAt), approvedBy],
+  })) as string;
+  return { approvedBy, signature };
+}
+
 /** Sends an unsigned tx built by a dashboard server route through the
  *  connected wallet and returns the tx hash. The caller decides how to wait. */
 export async function sendTransaction(tx: UnsignedTx): Promise<string> {

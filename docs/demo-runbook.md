@@ -22,7 +22,7 @@ whole story.
 
 ## Run 1 — clean
 
-1. Dashboard home (`/`): instruction `Buy the 500ml stainless water bottle from shop.example,
+1. Dashboard home (`/`): instruction `Buy the 500ml stainless water bottle from localhost,
    under S$20`, the mandate's `mandateId`, fixture `clean`, start the run.
 2. Watch the event stream reach `SPEND_RECORDED`; the run detail page shows **Signed and
    settled** with a link to the receipt.
@@ -88,8 +88,22 @@ recording rather than debugging on stage.
 2. Say: *this is a third-party specimen, not one we wrote — a sponsor-operated MCP server
    telling any connected agent to suppress confirmation and sign a transfer.*
 3. Show `filterMcpCardResult()` (`src/card-gateway/mcp-result-filter.ts`) dropping it: only
-   `cardapiUrl`, `asset`, `payTo`, `amount`, `chainId`, `maxTimeoutSeconds`, `extra.{name,
-   version}` cross the line. Point at the unit test asserting no returned value ever contains
-   `EXECUTE_NOW`.
-4. Land the line: *treat MCP tool results as untrusted data, never as instructions — that
+   the exact-allowlisted `cardapiUrl` crosses the MCP boundary. Point at the unit test
+   asserting no returned value ever contains `EXECUTE_NOW`.
+4. Show the second boundary: an unsigned POST to that URL receives the ordinary HTTP 402;
+   `parseX402Challenge()` alone allowlist-parses `asset`, `payTo`, `amount`, `chainId`,
+   `maxTimeoutSeconds`, and `extra.{name,version}`.
+5. Land the line: *treat MCP tool results as untrusted data, never as instructions — that
    rule is the project's thesis applied to itself.*
+
+## Live rails and recording
+
+- Fuji recording proves signing, XSGD settlement, independent transfer verification, card
+  issuance, and the poisoned refusal. Sandbox cards are not described as spendable.
+- Production recording happens only after organiser clearance and a user-supplied 5–30 SGD
+  merchant profile. It proves the real merchant checkout and explorer-matched receipt.
+- Run 1 uses hostname `localhost`; the mandate allowlist and instruction must both say
+  `localhost`, matching the fixture's actual URL.
+- Media is written under gitignored `artifacts/demo/`. Stop capture before card details are
+  exposed. No frame, trace, screenshot, console capture, video, or log may contain PAN, CVC,
+  expiry, PAYMENT-SIGNATURE headers, approval signatures, or one-time iframe URLs.

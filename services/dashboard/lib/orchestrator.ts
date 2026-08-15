@@ -14,14 +14,15 @@ async function call(path: string, init?: RequestInit): Promise<Response> {
 export type RunOutcome =
   | { status: "refused"; check: string; checkIndex: number | null; detail: string; humanExplanation: string }
   | { status: "escalated"; reason: string; approvalUrl: string; expiresAt: number; ttlSeconds: number }
+  | { status: "checkout-pending"; settlementTx: string; cardOpaqueId: string }
   | { status: "signed"; settlementTx: string | null; cardOpaqueId: string | null }
   | { status: "failed"; message: string };
 
 export type RunSummary = {
   requestId: string;
-  meta: { instruction: string; mandateId: string; agentId: string; fixture: string; productUrl: string };
+  meta: { instruction: string; mandateId: string; agentId: string; source: { kind: string; name?: string; profileId?: string }; fixture?: string; productUrl: string };
   createdAt: string;
-  state: "RUNNING" | "DONE" | "REFUSED" | "ESCALATED" | "FAILED";
+  state: "RUNNING" | "AWAITING_CHECKOUT" | "DONE" | "REFUSED" | "ESCALATED" | "FAILED";
   resolvedItem?: { title: string; sku: string; price: string; merchantDomain: string; checkoutUrl: string };
   outcome?: RunOutcome;
 };

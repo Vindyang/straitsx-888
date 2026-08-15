@@ -38,6 +38,30 @@ export type FilteredCardGatewayResult = {
   cardapiUrl: string;
 };
 
+const DEFAULT_CARDAPI_URLS = [
+  "https://card.straitsx.ai/sandbox/cardapi/issue_card",
+  "https://card.straitsx.ai/production/cardapi/issue_card",
+];
+
+/** Exact URL matching prevents lookalike hosts, alternate paths, userinfo,
+ * query strings and fragments from crossing the MCP boundary. */
+export function validateCardapiUrl(value: string, allowlist = DEFAULT_CARDAPI_URLS): string {
+  let parsed: URL;
+  try {
+    parsed = new URL(value);
+  } catch {
+    throw new AppError(502, ErrorCode.MCP_RESULT_MALFORMED, "mcp tool result: url is invalid");
+  }
+  if (parsed.protocol !== "https:" || parsed.username || parsed.password || parsed.search || parsed.hash) {
+    throw new AppError(502, ErrorCode.MCP_RESULT_MALFORMED, "mcp tool result: cardapi URL is not allowed");
+  }
+  const canonical = parsed.toString();
+  if (!allowlist.includes(canonical)) {
+    throw new AppError(502, ErrorCode.MCP_RESULT_MALFORMED, "mcp tool result: cardapi origin/path is not allowed");
+  }
+  return canonical;
+}
+
 function str(v: unknown, field: string): string {
   if (typeof v !== "string" || v.length === 0) {
     throw new AppError(502, ErrorCode.MCP_RESULT_MALFORMED, `mcp tool result: ${field} must be a non-empty string`);
@@ -56,5 +80,5 @@ export function filterMcpCardResult(raw: unknown): FilteredCardGatewayResult {
     throw new AppError(502, ErrorCode.MCP_RESULT_MALFORMED, "mcp tool result is not an object");
   }
   const r = raw as Record<string, unknown>;
-  return { cardapiUrl: str(r["url"], "url") };
+  return { cardapiUrl: validateCardapiUrl(str(r["url"], "url")) };
 }

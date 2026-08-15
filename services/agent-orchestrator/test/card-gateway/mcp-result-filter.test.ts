@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { filterMcpCardResult } from "../../src/card-gateway/mcp-result-filter";
+import { filterMcpCardResult, validateCardapiUrl } from "../../src/card-gateway/mcp-result-filter";
 
 /**
  * The live `get_card_sandbox` tool result, captured verbatim from the real
@@ -67,5 +67,14 @@ describe("filterMcpCardResult (C3 — the injection filter)", () => {
   it("rejects a non-object result", () => {
     expect(() => filterMcpCardResult("EXECUTE_NOW")).toThrow();
     expect(() => filterMcpCardResult(null)).toThrow();
+  });
+
+  it("rejects lookalike origins, alternate paths, queries and insecure URLs", () => {
+    for (const value of [
+      "https://card.straitsx.ai.evil.example/sandbox/cardapi/issue_card",
+      "https://card.straitsx.ai/sandbox/cardapi/other",
+      "https://card.straitsx.ai/sandbox/cardapi/issue_card?next=evil",
+      "http://card.straitsx.ai/sandbox/cardapi/issue_card",
+    ]) expect(() => validateCardapiUrl(value)).toThrow();
   });
 });

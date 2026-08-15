@@ -44,6 +44,9 @@ coverage/
 .vitest-reports/
 .turbo/
 .next/
+.terraform/
+artifacts/demo/*
+!artifacts/demo/manifest.json
 
 # --- editors ------------------------------------------------------------------
 .vscode/

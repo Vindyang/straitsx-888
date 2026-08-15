@@ -48,6 +48,7 @@ export async function recordSettlement(entry: {
   settlementTx: string;
   blockNumber: number;
   cardOpaqueId: string;
+  rawToolResultHash?: `0x${string}`;
 }): Promise<{ requestId: string; state: string; settlementTx: string }> {
   const { requestId, ...body } = entry;
   const res = await call(`/intent/${requestId}/settlement`, { method: "POST", body: JSON.stringify(body) });
@@ -62,6 +63,7 @@ export async function recordSpend(entry: {
   itemSku: string;
   orderId: string;
   observedAt: string;
+  proof?: "none";
 }): Promise<{ recorded: boolean; spendLeg: { status: string; proof: string } }> {
   const { requestId, ...body } = entry;
   const res = await call(`/intent/${requestId}/spend`, { method: "POST", body: JSON.stringify(body) });

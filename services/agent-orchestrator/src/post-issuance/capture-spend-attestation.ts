@@ -15,6 +15,7 @@ export type SpendAttestation = {
   itemSku: string;
   orderId: string;
   observedAt: string;
+  proof: "none";
 };
 
 export async function captureSpendAttestation(
@@ -35,6 +36,7 @@ export async function captureSpendAttestation(
       itemSku: resolvedItem.sku,
       orderId,
       observedAt: new Date().toISOString(),
+      proof: "none",
     };
   } finally {
     await browser.close();

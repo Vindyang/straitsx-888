@@ -1,0 +1,15 @@
+.git
+.agents
+.env
+.env.*
+**/node_modules
+**/.next
+**/coverage
+**/dist
+artifacts
+docs
+infra
+modules
+packages/contracts-sol
+**/test
+**/*.log
