@@ -1,142 +1,163 @@
-# Deployment — separate services, separate instances
+# Deployment — A/B into Module C's account
 
-**Status:** the topology and the per-service configuration are verified locally as independent
-processes (2026-08-15). **Nothing has been deployed to AWS yet** — the scripts are written and
-the IAM half is applied, but no instances exist. Treat the AWS sections as the plan, and the
-verification section as evidence that the plan is sound.
+**Status:** the topology and per-service configuration are verified locally as independent
+processes (2026-08-15). **A/B is not deployed to AWS.** Module C is deployed and running; this
+document is the plan for joining it. The verification section is evidence that the
+configuration is sound, not that the deployment exists.
 
-Companion docs: [conventions.md §2](conventions.md) for who may call whom ·
-[api-contracts.md §0](api-contracts.md) for wire shapes ·
-[owner-a-tasks.md A15](owner-a-tasks.md) for the isolation requirement.
-
----
-
-## 1. Why services deploy separately
-
-Not a preference. [A15](owner-a-tasks.md) requires that **only policy-service may reach
-signer-service on port 4003, enforced at the network layer**. A single deployment unit cannot
-satisfy that: processes on one host share a loopback interface, so the port is reachable by
-definition and the only way to "refuse" is a check in code — which A15 explicitly forbids,
-because a code check proves the port was reachable and we chose not to answer. The claim is
-that it is **not reachable**.
-
-The IAM roles already applied encode the same split: `straitsx-888-signer-service` may call
-`kms:Sign`, `straitsx-888-policy-service` is explicitly denied it, and
-`straitsx-888-agent-orchestrator` is denied all of KMS. Different roles mean different
-instance profiles, which means different instances.
+Companion docs: [conventions.md §2](conventions.md) who may call whom ·
+[api-contracts.md §0](api-contracts.md) wire shapes · [owner-a-tasks.md A15](owner-a-tasks.md)
+the isolation requirement · `module-c-aws-integration-handover.md` for the Module C side.
 
 ---
 
-## 2. Topology
+## 1. Two decisions, and why
 
-| Instance | Service | Port | Owner | Security group |
+### A/B deploys into Module C's account
+
+| | Account |
+| --- | --- |
+| Module C (deployed) | **`732031180826`** |
+| A/B tooling so far (IAM roles, KMS key) | `808198486011` |
+
+Module C's handover §6.2 asks A/B to allow ingress **from its security groups**
+(`sg-03f663099bc55d0a6`, `sg-0458716c037c17d08`). **Security-group references only resolve
+within one account and VPC.** Cross-account would need PrivateLink or peering plus Route 53
+Resolver, and the `*.internal` names could not simply register in C's namespace — C's own
+handover says exactly this.
+
+So A/B joins C's account and VPC (`vpc-0cfa8cb7a1dfe244f`). `scripts/setup-security-groups.sh`
+pre-flights this and fails with the real reason if run in the wrong account.
+
+### The KMS key stays in `808198486011`
+
+Creating a fresh key inside C's account is the obvious move and the wrong one. **A new key
+derives a new address**, which would invalidate the A11 custody proof, strand the 20 XSGD at
+`0x0F6DdD…7CA7`, and orphan both settled transactions.
+
+Instead the existing key grants access to the signer role in C's account. Cross-account KMS
+needs **both halves**, and missing either produces an `AccessDenied` that looks like the other:
+
+```
+scripts/grant-kms-cross-account.sh --account 732031180826 --apply   # in 808198486011
+scripts/setup-iam-roles.sh --apply --kms-key-arn <arn>              # in 732031180826
+```
+
+---
+
+## 2. CORRECTION: ECS/Fargate, not EC2
+
+An earlier version of this document recommended EC2 with plain node, on the reasoning that
+A15 only needs two network positions and that the repo is source-first with no build step.
+**That was right for a standalone A/B and is wrong now.**
+
+Module C reaches A/B at `ledger.internal`, `policy.internal`, `chain-gateway.internal`. Those
+names come from **AWS Cloud Map** (namespace `ns-vmmsgsfyqtdfae6k`, name `internal`), and ECS
+service discovery registers and de-registers them automatically as tasks come and go. On EC2
+you would have to call the Cloud Map API by hand and keep it correct through every restart —
+service discovery that silently goes stale is worse than none.
+
+Since C already runs ECS/Fargate in this cluster, A/B joins it.
+
+**Consequence: A/B needs Dockerfiles and none exist.** `services/{ledger,policy,signer,chain-gateway}`
+have no container build today. C's `services/dashboard/Dockerfile` and
+`services/agent-orchestrator/Dockerfile` are the reference for the house style (non-root,
+read-only, digest-pinned).
+
+---
+
+## 3. Topology
+
+| Service | Port | Owner | Cloud Map name | Security group |
 | --- | --- | --- | --- | --- |
-| 1 | signer-service | 4003 | A | signer SG — **ingress from policy SG only** |
-| 2 | chain-gateway | 4004 | A | the only service that opens an RPC connection |
-| 3 | ledger-service | 4001 | B | — |
-| 4 | policy-service | 4002 | B | policy SG — the only SG allowed to reach 4003 |
-| 5 | agent-orchestrator | 4005 | C | orchestrator SG — **no path to 4003** |
-| 6 | dashboard | 3000 | C | public |
+| ledger-service | 4001 | B | `ledger.internal` | from orchestrator + dashboard |
+| policy-service | 4002 | B | `policy.internal` | from orchestrator + dashboard |
+| **signer-service** | **4003** | A | `signer.internal` | **from policy ONLY** |
+| chain-gateway | 4004 | A | `chain-gateway.internal` | from orchestrator + dashboard |
+| agent-orchestrator | 4005 | C | — | **no path to 4003** |
+| dashboard | 3000 | C | — | public via CloudFront |
 
 Ports come from `SERVICE_PORTS` in `packages/contracts/src/constants.ts`. Never hardcode one.
 
 ---
 
-## 3. Per-service configuration
+## 4. Per-service configuration
 
 Each service needs only its own variables. This table is the decoupling made visible.
 
 | Service | Required env |
 | --- | --- |
 | ledger-service | `INTERNAL_TOKEN` |
-| chain-gateway | `INTERNAL_TOKEN`, `CHAIN_IDS`, `RPC_URL_43113` (`RPC_TIMEOUT_MS` optional) |
+| chain-gateway | `INTERNAL_TOKEN`, `CHAIN_IDS`, `RPC_URL_43113` |
 | signer-service | `INTERNAL_TOKEN`, `KMS_KEY_ID`, `AWS_REGION`, `EXPECTED_SIGNER_ADDRESS`, `SIGNER_CHAIN_ID`, `PINNED_MANDATES`, `SIGNER_KEY_SOURCE=kms` |
 | policy-service | `INTERNAL_TOKEN`, `SIGNER_URL`, `LEDGER_URL`, `CHAIN_GATEWAY_URL` |
 
 Two asymmetries worth noticing, because they are the architecture:
 
-- **signer-service names no other service.** It calls nobody; it only answers. There is no
-  outbound URL in its configuration at all.
-- **policy-service needs no chain or KMS configuration.** It reaches both only through URLs.
+- **signer-service names no other service.** It calls nobody; it only answers.
+- **policy-service needs no chain or KMS configuration.** It reaches both through URLs only.
 
 ### The URL trap
 
-`SIGNER_URL`, `LEDGER_URL` and `CHAIN_GATEWAY_URL` **default to `localhost`**. That is correct
-on one machine and wrong the moment services are on separate hosts. Leave them unset in a real
-deployment and policy-service quietly dials its own loopback, fails to connect, and the error
-looks exactly like signer-service being down.
+`SIGNER_URL`, `LEDGER_URL` and `CHAIN_GATEWAY_URL` **default to `localhost`** — correct on one
+machine, wrong the moment services are separate tasks. In C's cluster they become
+`http://signer.internal:4003` and so on. Leave them unset and policy-service quietly dials its
+own loopback, fails, and the error looks exactly like signer-service being down.
 
-Set them to **private** addresses. None of these should ever be publicly routable.
+Module C's `paying_wallet_address` tfvars value is currently the zero address, a placeholder
+for the fail-closed deployment. Before integration it becomes
+`0x0F6DdD6fC1Fb06B3E91a77Cb1597aCAc8A037CA7`.
 
 ---
 
-## 4. Deploy from ONE commit
+## 5. Deploy A and B from ONE commit
 
-`POST /sign` requires `accepted` and `resource` (the x402 v2 payload — see
-[api-contracts.md §4](api-contracts.md)). That makes version skew break in both directions:
+`POST /sign` requires `accepted` and `resource` (x402 v2 — [api-contracts.md §4](api-contracts.md)),
+so version skew breaks in both directions:
 
 | Combination | Failure |
 | --- | --- |
-| new signer + old policy-service | `400` — `accepted` missing |
-| old signer + new policy-service | signer ignores the extra fields and emits the pre-v2 header → a 402 that never clears |
+| new signer + old policy-service | `400`, `accepted` missing |
+| old signer + new policy-service | pre-v2 header → a 402 that never clears |
 
-The second is worse because it looks like a domain bug rather than a version mismatch. Deploy
-both sides from the same git SHA and neither can happen. A rolling deploy would require making
-`accepted` optional first; not worth it at this scale.
-
-The monorepo is not an obstacle. The workspace is source-first with no build step
-([conventions.md §1](conventions.md)), so each instance does:
-
-```
-git clone <repo> && cd straitsx-888
-pnpm install
-pnpm dev:<service>
-```
-
-Every instance clones the whole repo and runs one service. There is no artifact to publish.
+The second is worse because it looks like a domain bug. Same git SHA and neither can happen.
 
 ---
 
-## 5. AWS setup order
-
-The scripts have a real dependency chain. Run them in this order.
+## 6. Setup order
 
 ```
-1. scripts/setup-iam-roles.sh --apply
-      creates 3 roles + instance profiles, prints the signer role ARN
-
-2. bash scripts/setup-kms.sh
-      creates the ECC_SECG_P256K1 key, derives the address, writes .env
-
-3. scripts/setup-iam-roles.sh --apply --kms-key-arn <arn>
-      narrows kms:Sign from "*" to that one key -- easy to skip, do not skip
-
-4. scripts/setup-security-groups.sh --vpc <vpc-id> --apply
-      one ingress rule: signer:4003 from the policy SG, sourced by GROUP not CIDR
-
-5. attach instance profiles + SGs, deploy, set the URLs
-
-6. scripts/test-isolation.sh --target <signer-private-ip>:4003 --expect blocked
-      run FROM the orchestrator instance -- this is the A15 deliverable
+1. scripts/setup-iam-roles.sh --apply                       (in 732031180826)
+2. scripts/grant-kms-cross-account.sh --account 732031180826 --apply   (in 808198486011)
+3. scripts/setup-iam-roles.sh --apply --kms-key-arn <arn>   (in 732031180826)
+4. build + push A/B images, register ECS services with Cloud Map names
+5. scripts/setup-security-groups.sh --vpc vpc-0cfa8cb7a1dfe244f \
+     --orchestrator-sg sg-03f663099bc55d0a6 \
+     --dashboard-sg    sg-0458716c037c17d08 --apply
+6. Module C's isolation probe (handover §6.4) from the orchestrator SG
 ```
 
-Steps 1 and 3 are applied already. Steps 4–6 need instances.
+Steps 1 and 3 are already applied in `808198486011` and must be repeated in C's account.
 
 ### Reading the isolation result
 
 AWS security groups **drop** unauthorized packets rather than rejecting them, so a blocked
-connection **times out**; it never returns a TCP RST. A15 says "refused", but the observable
-evidence on AWS is a hang. `test-isolation.sh` treats a timeout, a refusal and a DNS failure
-all as passes, and treats **a completed HTTP exchange as the only failure**. It targets
-`/health` deliberately: that path is exempt from the internal-token check, so a `401` cannot
-masquerade as a refusal while the port is wide open.
+connection **times out** and never returns a TCP RST. A15 says "refused" but the observable
+evidence on AWS is a hang.
+
+**Use Module C's `scripts/isolation-probe.ts` as the C10 evidence.** It requires five facts in
+one run: signer DNS resolves, policy/ledger/chain-gateway health all succeed, and signer 4003
+fails. Our `scripts/test-isolation.sh` checks one target at a time and cannot prove the
+positive controls; it is a quick local check, not the deliverable. It now reports a DNS
+failure as **INCONCLUSIVE (exit 2)** rather than a pass, because an unresolvable name proves
+the name is wrong, not that a firewall blocked anything.
 
 ---
 
-## 6. Verification — how this was checked
+## 7. Verification — how the configuration was checked
 
-Run locally, all four services as independent processes with **explicit** URLs rather than
-relying on the localhost defaults:
+All four services booted locally as independent processes with **explicit** URLs rather than
+the localhost defaults:
 
 ```
 health          4001 4002 4003 4004 -> all ok
@@ -145,8 +166,7 @@ B -> chain-gateway /token/constants -> 200, decimals 6, version null
 unauthenticated /sign -> 401
 ```
 
-The hard-invariant rail was exercised **over the same HTTP boundary policy-service uses**, not
-just as pure functions:
+The hard-invariant rail was exercised **over the same HTTP boundary policy-service uses**:
 
 ```
 403 SIGNER_WRONG_RECIPIENT     wrong recipient
@@ -161,17 +181,17 @@ That is the claim that matters: the rail holds against a caller that has already
 signer, which is the compromised-policy-service scenario from
 [execution_plan.md §12b 2.2](execution_plan.md).
 
-To re-run: boot the four services with `PINNED_MANDATES` set for a test mandate, then POST a
-`/sign` body with `from` = `EXPECTED_SIGNER_ADDRESS`, `to` = the pinned `settlementRecipient`,
-and vary one field per request.
-
 ---
 
-## 7. What is not yet proven
+## 8. Not yet done
 
-- **No AWS deployment exists.** Sections 2, 4 and 5 are the plan, not a record.
-- **The isolation screenshot is outstanding** — it needs a host in the orchestrator SG, though
-  not the orchestrator service itself, so it is not blocked on Owner C.
-- **Mainnet is untouched.** `registry.json` has no 43114 address (A5), the production 402 has
-  not been read (A18), and `MAINNET.settlementRecipient` / `eip712Version` are still `null`,
-  so every mainnet path refuses. That refusal is the safety property, not a gap to paper over.
+- **No A/B Dockerfiles.** Blocks step 4 entirely.
+- **A/B is not deployed.** Sections 3 and 6 are the plan, not a record.
+- **The isolation screenshot is outstanding.** Needs a task in the orchestrator SG — not
+  blocked on Module C being finished, only on A/B being reachable.
+- **Escalation message format is unreconciled.** `buildEscalationMessage` in
+  `packages/contracts` was defined without sight of C's dashboard. If C signs a different
+  string, every approval returns `403 ESCALATION_SIGNATURE_INVALID`. Check at merge.
+- **Mainnet is untouched.** `registry.json` has no 43114 address (A5), the production 402 is
+  unread (A18), and `MAINNET.settlementRecipient` / `eip712Version` are still `null`, so every
+  mainnet path refuses. That refusal is the safety property, not a gap to paper over.

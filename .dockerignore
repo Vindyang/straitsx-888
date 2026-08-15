@@ -1,0 +1,34 @@
+# Keep the build context small and keep secrets out of image layers.
+
+# NEVER ship these. .env holds KMS_KEY_ID and EXPECTED_SIGNER_ADDRESS, and a
+# COPY . . would otherwise bake them into a layer that survives deletion.
+.env
+.env.*
+!.env.example
+
+node_modules
+**/node_modules
+.git
+.github
+
+# Foundry: built and tested with forge, never shipped in a service image
+# (conventions.md §1 — contracts-sol is outside the pnpm workspace).
+packages/contracts-sol/out
+packages/contracts-sol/cache
+packages/contracts-sol/broadcast
+
+# Test and doc material has no place in a runtime image.
+**/*.test.ts
+**/test/
+docs
+modules
+*.md
+*.drawio
+*.png
+
+# Local scratch
+.DS_Store
+*.log
+*.tfvars
+*.tfplan
+.terraform
