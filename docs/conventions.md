@@ -111,7 +111,7 @@ and thrown as `AppError`:
 
 Status ladder: `400` validation · `401` bad token · `403` caller not allowed · `404` unknown
 id · `409` idempotency/conditional-write conflict · `422` policy refusal · `502` upstream
-failed · `504` upstream timeout.
+failed · `503` required dependency unavailable · `504` upstream timeout.
 
 > Never put a PAN, private key, KMS key id, raw signature, or card iframe URL in an error
 > body or a log line.
@@ -199,7 +199,8 @@ Request/response pairs are `<Thing>Request` / `<Thing>Response`. Stored records 
 ### Error codes
 
 `SCREAMING_SNAKE_CASE`, named for the condition, not the status: `MANDATE_NOT_FOUND`,
-`NONCE_ALREADY_RESERVED`, `POLICY_HASH_DRIFT`, `SIGNER_WRONG_RECIPIENT`. Signer-rail refusals
+`NONCE_ALREADY_RESERVED`, `POLICY_HASH_DRIFT`, `SIGNER_WRONG_RECIPIENT`,
+`DEPENDENCY_UNAVAILABLE`. Signer-rail refusals
 are prefixed `SIGNER_` because they are structural invariants, distinct from policy refusals.
 
 ### Environment variables

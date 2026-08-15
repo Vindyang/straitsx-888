@@ -45,6 +45,11 @@ coverage/
 .turbo/
 .next/
 .terraform/
+*.tfvars
+!*.tfvars.example
+*.tfplan
+*.tfstate
+*.tfstate.*
 artifacts/demo/*
 !artifacts/demo/manifest.json
 

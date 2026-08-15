@@ -66,6 +66,14 @@ LIVE_RPC=1 corepack pnpm test               # includes real Fuji checks
 (cd packages/contracts-sol && forge test)   # 16/16
 ```
 
+## Module C AWS deployment
+
+Module C deploys independently of A/B. Its process health stays green while authenticated
+readiness and payment runs fail closed until the A/B owner connects the stable service
+contracts. Use `scripts/publish-module-c-images.sh`, `scripts/deploy-module-c.sh`, and the
+two-phase runbook in [docs/module-c-deployment.md](docs/module-c-deployment.md). Module C
+does not create or modify A/B security-group rules.
+
 Live-RPC tests are opt-in so CI stays green when Fuji is having a bad day. Run them before
 every checkpoint — they are the only thing that re-proves the on-chain facts in
 [§19.2](docs/execution_plan.md), and the Fuji XSGD contract is an upgradeable proxy whose

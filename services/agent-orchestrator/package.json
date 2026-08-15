@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/main.ts",
-    "start": "tsx src/main.ts",
-    "fixtures": "tsx src/discovery/fixture-server.ts"
+    "start": "TSX_DISABLE_CACHE=1 node --import tsx src/main.ts",
+    "fixtures": "TSX_DISABLE_CACHE=1 node --import tsx src/discovery/fixture-server.ts"
   },
   "dependencies": {
     "@straitsx/contracts": "workspace:*",

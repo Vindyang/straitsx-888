@@ -25,7 +25,7 @@ resource "aws_iam_role_policy" "secrets" {
     Statement = [{
       Effect   = "Allow"
       Action   = ["secretsmanager:GetSecretValue", "ssm:GetParameters"]
-      Resource = [var.internal_token_secret_arn, var.paying_wallet_ssm_arn]
+      Resource = [local.effective_internal_token_arn, local.effective_paying_wallet_ssm_arn]
     }]
   })
 }
@@ -38,54 +38,102 @@ resource "aws_iam_role" "task" {
 resource "aws_cloudwatch_log_group" "module_c" {
   name              = "/ecs/${var.name}"
   retention_in_days = 30
-  kms_key_id        = var.cloudwatch_kms_key_arn
+  kms_key_id        = local.effective_cloudwatch_kms_key_arn
 }
 
 resource "aws_security_group" "orchestrator" {
   name   = "${var.name}-orchestrator"
-  vpc_id = var.vpc_id
+  vpc_id = local.effective_vpc_id
   egress = []
+  lifecycle { ignore_changes = [ingress, egress] }
 }
 resource "aws_security_group" "dashboard" {
   name   = "${var.name}-dashboard"
-  vpc_id = var.vpc_id
+  vpc_id = local.effective_vpc_id
   egress = []
+  lifecycle { ignore_changes = [ingress, egress] }
 }
 resource "aws_security_group" "fixture" {
   name   = "${var.name}-fixture"
-  vpc_id = var.vpc_id
+  vpc_id = local.effective_vpc_id
   egress = []
+  lifecycle { ignore_changes = [ingress, egress] }
 }
 resource "aws_security_group" "alb" {
   name   = "${var.name}-alb"
-  vpc_id = var.vpc_id
+  vpc_id = local.effective_vpc_id
   egress = []
+  lifecycle { ignore_changes = [ingress, egress] }
 }
 
-resource "aws_vpc_security_group_egress_rule" "orch_service" {
-  for_each = {
-    ledger  = { sg = var.ledger_security_group_id, port = 4001 }
-    policy  = { sg = var.policy_security_group_id, port = 4002 }
-    chain   = { sg = var.chain_gateway_security_group_id, port = 4004 }
-    fixture = { sg = aws_security_group.fixture.id, port = 4010 }
+data "aws_prefix_list" "s3" {
+  name = "com.amazonaws.${var.aws_region}.s3"
+}
+
+locals {
+  task_security_groups = {
+    dashboard    = aws_security_group.dashboard.id
+    fixture      = aws_security_group.fixture.id
+    orchestrator = aws_security_group.orchestrator.id
   }
+}
+
+# Private Fargate startup traffic. The platform stack supplies interface
+# endpoints for ECR, Logs, Secrets Manager and SSM plus an S3 gateway endpoint.
+resource "aws_vpc_security_group_egress_rule" "task_to_interface_endpoints" {
+  for_each          = local.task_security_groups
+  security_group_id = each.value
+  cidr_ipv4         = local.effective_vpc_cidr
+  ip_protocol       = "tcp"
+  from_port         = 443
+  to_port           = 443
+  description       = "HTTPS to private AWS interface endpoints"
+}
+
+resource "aws_vpc_security_group_egress_rule" "task_to_s3_endpoint" {
+  for_each          = local.task_security_groups
+  security_group_id = each.value
+  prefix_list_id    = data.aws_prefix_list.s3.id
+  ip_protocol       = "tcp"
+  from_port         = 443
+  to_port           = 443
+  description       = "ECR image layers through the S3 gateway endpoint"
+}
+
+resource "aws_vpc_security_group_egress_rule" "orch_fixture" {
   security_group_id            = aws_security_group.orchestrator.id
-  referenced_security_group_id = each.value.sg
+  referenced_security_group_id = aws_security_group.fixture.id
   ip_protocol                  = "tcp"
-  from_port                    = each.value.port
-  to_port                      = each.value.port
+  from_port                    = 4010
+  to_port                      = 4010
+}
+
+# Stable same-VPC service contracts decouple this stack from A/B resource IDs.
+# A/B (or infra/module-c-integration) owns the matching ingress rules. Port
+# 4003 is deliberately absent, so the orchestrator cannot reach the signer.
+resource "aws_vpc_security_group_egress_rule" "orch_dependency_contracts" {
+  for_each = {
+    ledger = 4001
+    policy = 4002
+    chain  = 4004
+  }
+  security_group_id = aws_security_group.orchestrator.id
+  cidr_ipv4         = local.effective_vpc_cidr
+  ip_protocol       = "tcp"
+  from_port         = each.value
+  to_port           = each.value
 }
 
 resource "aws_vpc_security_group_egress_rule" "orch_dns_udp" {
   security_group_id = aws_security_group.orchestrator.id
-  cidr_ipv4         = var.vpc_cidr
+  cidr_ipv4         = local.effective_vpc_cidr
   ip_protocol       = "udp"
   from_port         = 53
   to_port           = 53
 }
 resource "aws_vpc_security_group_egress_rule" "orch_dns_tcp" {
   security_group_id = aws_security_group.orchestrator.id
-  cidr_ipv4         = var.vpc_cidr
+  cidr_ipv4         = local.effective_vpc_cidr
   ip_protocol       = "tcp"
   from_port         = 53
   to_port           = 53
@@ -99,14 +147,6 @@ resource "aws_vpc_security_group_egress_rule" "orch_https" {
   to_port           = 443
 }
 
-# Signer port 4003 is intentionally absent from orchestrator egress.
-resource "aws_vpc_security_group_ingress_rule" "signer_from_policy_only" {
-  security_group_id            = var.signer_security_group_id
-  referenced_security_group_id = var.policy_security_group_id
-  ip_protocol                  = "tcp"
-  from_port                    = 4003
-  to_port                      = 4003
-}
 resource "aws_vpc_security_group_ingress_rule" "fixture_from_orchestrator" {
   security_group_id            = aws_security_group.fixture.id
   referenced_security_group_id = aws_security_group.orchestrator.id
@@ -115,34 +155,25 @@ resource "aws_vpc_security_group_ingress_rule" "fixture_from_orchestrator" {
   to_port                      = 4010
 }
 
-resource "aws_vpc_security_group_ingress_rule" "module_c_to_dependencies" {
-  for_each = {
-    orchestrator_ledger = { target = var.ledger_security_group_id, source = aws_security_group.orchestrator.id, port = 4001 }
-    orchestrator_policy = { target = var.policy_security_group_id, source = aws_security_group.orchestrator.id, port = 4002 }
-    orchestrator_chain  = { target = var.chain_gateway_security_group_id, source = aws_security_group.orchestrator.id, port = 4004 }
-    dashboard_ledger    = { target = var.ledger_security_group_id, source = aws_security_group.dashboard.id, port = 4001 }
-    dashboard_policy    = { target = var.policy_security_group_id, source = aws_security_group.dashboard.id, port = 4002 }
-    dashboard_chain     = { target = var.chain_gateway_security_group_id, source = aws_security_group.dashboard.id, port = 4004 }
-  }
-  security_group_id            = each.value.target
-  referenced_security_group_id = each.value.source
+resource "aws_vpc_security_group_egress_rule" "dashboard_service" {
+  security_group_id            = aws_security_group.dashboard.id
+  referenced_security_group_id = aws_security_group.orchestrator.id
   ip_protocol                  = "tcp"
-  from_port                    = each.value.port
-  to_port                      = each.value.port
+  from_port                    = 4005
+  to_port                      = 4005
 }
 
-resource "aws_vpc_security_group_egress_rule" "dashboard_service" {
+resource "aws_vpc_security_group_egress_rule" "dashboard_dependency_contracts" {
   for_each = {
-    ledger       = { sg = var.ledger_security_group_id, port = 4001 }
-    policy       = { sg = var.policy_security_group_id, port = 4002 }
-    chain        = { sg = var.chain_gateway_security_group_id, port = 4004 }
-    orchestrator = { sg = aws_security_group.orchestrator.id, port = 4005 }
+    ledger = 4001
+    policy = 4002
+    chain  = 4004
   }
-  security_group_id            = aws_security_group.dashboard.id
-  referenced_security_group_id = each.value.sg
-  ip_protocol                  = "tcp"
-  from_port                    = each.value.port
-  to_port                      = each.value.port
+  security_group_id = aws_security_group.dashboard.id
+  cidr_ipv4         = local.effective_vpc_cidr
+  ip_protocol       = "tcp"
+  from_port         = each.value
+  to_port           = each.value
 }
 
 locals {
@@ -154,19 +185,19 @@ locals {
       awslogs-stream-prefix = "service"
     }
   }
-  secrets = [{ name = "INTERNAL_TOKEN", valueFrom = var.internal_token_secret_arn }]
+  secrets = [{ name = "INTERNAL_TOKEN", valueFrom = local.effective_internal_token_arn }]
   orchestrator_environment = [
     { name = "LEDGER_URL", value = "http://${var.ledger_service_name}:4001" },
     { name = "POLICY_URL", value = "http://${var.policy_service_name}:4002" },
     { name = "CHAIN_GATEWAY_URL", value = "http://${var.chain_gateway_service_name}:4004" },
-    { name = "FIXTURE_BASE_URL", value = "http://${var.name}-fixture.${var.cloudmap_namespace_name}:4010" }
+    { name = "FIXTURE_BASE_URL", value = "http://${var.name}-fixture.${local.effective_cloudmap_namespace}:4010" }
   ]
 }
 
 resource "aws_service_discovery_service" "orchestrator" {
   name = "${var.name}-orchestrator"
   dns_config {
-    namespace_id   = var.cloudmap_namespace_id
+    namespace_id   = local.effective_cloudmap_namespace_id
     routing_policy = "MULTIVALUE"
     dns_records {
       ttl  = 10
@@ -177,7 +208,7 @@ resource "aws_service_discovery_service" "orchestrator" {
 resource "aws_service_discovery_service" "fixture" {
   name = "${var.name}-fixture"
   dns_config {
-    namespace_id   = var.cloudmap_namespace_id
+    namespace_id   = local.effective_cloudmap_namespace_id
     routing_policy = "MULTIVALUE"
     dns_records {
       ttl  = 10
@@ -201,10 +232,9 @@ resource "aws_ecs_task_definition" "orchestrator" {
     essential              = true
     portMappings           = [{ containerPort = 4005 }]
     environment            = local.orchestrator_environment
-    secrets                = concat(local.secrets, [{ name = "PAYING_WALLET_ADDRESS", valueFrom = var.paying_wallet_ssm_arn }])
+    secrets                = concat(local.secrets, [{ name = "PAYING_WALLET_ADDRESS", valueFrom = local.effective_paying_wallet_ssm_arn }])
     logConfiguration       = local.logs
     readonlyRootFilesystem = true
-    user                   = "1001"
     linuxParameters        = { initProcessEnabled = true }
     mountPoints            = [{ sourceVolume = "checkout-tmp", containerPath = "/tmp", readOnly = false }]
     healthCheck = {
@@ -225,6 +255,7 @@ resource "aws_ecs_task_definition" "fixture" {
   memory                   = 512
   execution_role_arn       = aws_iam_role.execution.arn
   task_role_arn            = aws_iam_role.task.arn
+  volume { name = "fixture-tmp" }
   container_definitions = jsonencode([{
     name                   = "fixture"
     image                  = var.fixture_image
@@ -233,8 +264,8 @@ resource "aws_ecs_task_definition" "fixture" {
     portMappings           = [{ containerPort = 4010 }]
     logConfiguration       = local.logs
     readonlyRootFilesystem = true
-    user                   = "1000"
     linuxParameters        = { initProcessEnabled = true }
+    mountPoints            = [{ sourceVolume = "fixture-tmp", containerPath = "/tmp", readOnly = false }]
     healthCheck = {
       command     = ["CMD-SHELL", "node -e 'fetch(\"http://127.0.0.1:4010/health\").then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))'"]
       interval    = 30
@@ -245,30 +276,9 @@ resource "aws_ecs_task_definition" "fixture" {
   }])
 }
 
-resource "aws_ecs_task_definition" "isolation_probe" {
-  family                   = "${var.name}-isolation-probe"
-  requires_compatibilities = ["FARGATE"]
-  network_mode             = "awsvpc"
-  cpu                      = 256
-  memory                   = 512
-  execution_role_arn       = aws_iam_role.execution.arn
-  task_role_arn            = aws_iam_role.task.arn
-  container_definitions = jsonencode([{
-    name      = "probe"
-    image     = var.orchestrator_image
-    essential = true
-    command   = ["pnpm", "test:isolation"]
-    environment = concat(local.orchestrator_environment, [
-      { name = "SIGNER_HOST", value = var.signer_service_name },
-      { name = "SIGNER_PORT", value = "4003" }
-    ])
-    logConfiguration = local.logs
-  }])
-}
-
 resource "aws_ecs_service" "orchestrator" {
   name            = "${var.name}-orchestrator"
-  cluster         = var.ecs_cluster_arn
+  cluster         = local.effective_ecs_cluster_arn
   task_definition = aws_ecs_task_definition.orchestrator.arn
   # Non-secret resumable context is process-local. Keep one task until a
   # durable run-store adapter lands; scaling this service would split runs.
@@ -279,7 +289,7 @@ resource "aws_ecs_service" "orchestrator" {
     rollback = true
   }
   network_configuration {
-    subnets          = var.private_subnet_ids
+    subnets          = local.effective_private_subnet_ids
     security_groups  = [aws_security_group.orchestrator.id]
     assign_public_ip = false
   }
@@ -289,12 +299,12 @@ resource "aws_ecs_service" "orchestrator" {
 }
 resource "aws_ecs_service" "fixture" {
   name            = "${var.name}-fixture"
-  cluster         = var.ecs_cluster_arn
+  cluster         = local.effective_ecs_cluster_arn
   task_definition = aws_ecs_task_definition.fixture.arn
   desired_count   = 1
   launch_type     = "FARGATE"
   network_configuration {
-    subnets          = var.private_subnet_ids
+    subnets          = local.effective_private_subnet_ids
     security_groups  = [aws_security_group.fixture.id]
     assign_public_ip = false
   }
@@ -317,7 +327,7 @@ resource "aws_ecs_task_definition" "dashboard" {
     essential    = true
     portMappings = [{ containerPort = 3000 }]
     environment = [
-      { name = "AGENT_ORCHESTRATOR_URL", value = "http://${var.name}-orchestrator.${var.cloudmap_namespace_name}:4005" },
+      { name = "AGENT_ORCHESTRATOR_URL", value = "http://${var.name}-orchestrator.${local.effective_cloudmap_namespace}:4005" },
       { name = "LEDGER_URL", value = "http://${var.ledger_service_name}:4001" },
       { name = "POLICY_URL", value = "http://${var.policy_service_name}:4002" },
       { name = "CHAIN_GATEWAY_URL", value = "http://${var.chain_gateway_service_name}:4004" }
@@ -354,17 +364,33 @@ resource "aws_vpc_security_group_ingress_rule" "orchestrator_from_dashboard" {
 resource "aws_vpc_security_group_egress_rule" "dashboard_dns" {
   for_each          = toset(["tcp", "udp"])
   security_group_id = aws_security_group.dashboard.id
-  cidr_ipv4         = var.vpc_cidr
+  cidr_ipv4         = local.effective_vpc_cidr
   ip_protocol       = each.value
   from_port         = 53
   to_port           = 53
 }
 resource "aws_vpc_security_group_ingress_rule" "alb_https" {
+  count             = var.enable_cloudfront ? 0 : 1
   security_group_id = aws_security_group.alb.id
   cidr_ipv4         = "0.0.0.0/0"
   ip_protocol       = "tcp"
   from_port         = 443
   to_port           = 443
+}
+
+data "aws_ec2_managed_prefix_list" "cloudfront_origin" {
+  count = var.enable_cloudfront ? 1 : 0
+  name  = "com.amazonaws.global.cloudfront.origin-facing"
+}
+
+resource "aws_vpc_security_group_ingress_rule" "alb_http_from_cloudfront" {
+  count             = var.enable_cloudfront ? 1 : 0
+  security_group_id = aws_security_group.alb.id
+  prefix_list_id    = data.aws_ec2_managed_prefix_list.cloudfront_origin[0].id
+  ip_protocol       = "tcp"
+  from_port         = 80
+  to_port           = 80
+  description       = "HTTP origin traffic from AWS CloudFront only"
 }
 resource "aws_vpc_security_group_egress_rule" "alb_to_dashboard" {
   security_group_id            = aws_security_group.alb.id
@@ -379,25 +405,28 @@ resource "aws_lb" "dashboard" {
   internal                   = false
   load_balancer_type         = "application"
   security_groups            = [aws_security_group.alb.id]
-  subnets                    = var.public_subnet_ids
-  enable_deletion_protection = true
+  subnets                    = local.effective_public_subnet_ids
+  enable_deletion_protection = var.alb_deletion_protection
   access_logs {
-    bucket  = var.alb_access_logs_bucket
+    bucket  = local.effective_alb_logs_bucket
     prefix  = var.name
     enabled = true
   }
+
+  depends_on = [aws_s3_bucket_policy.alb_logs]
 }
 resource "aws_lb_target_group" "dashboard" {
   name        = substr("${replace(var.name, "_", "-")}-dash", 0, 32)
   port        = 3000
   protocol    = "HTTP"
   target_type = "ip"
-  vpc_id      = var.vpc_id
+  vpc_id      = local.effective_vpc_id
   health_check {
     path = "/api/health"
   }
 }
 resource "aws_lb_listener" "https" {
+  count             = var.enable_cloudfront ? 0 : 1
   load_balancer_arn = aws_lb.dashboard.arn
   port              = 443
   protocol          = "HTTPS"
@@ -407,9 +436,71 @@ resource "aws_lb_listener" "https" {
     target_group_arn = aws_lb_target_group.dashboard.arn
   }
 }
+
+
+resource "aws_lb_listener" "http" {
+  count             = var.enable_cloudfront ? 1 : 0
+  load_balancer_arn = aws_lb.dashboard.arn
+  port              = 80
+  protocol          = "HTTP"
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.dashboard.arn
+  }
+}
+
+data "aws_cloudfront_cache_policy" "disabled" {
+  count = var.enable_cloudfront ? 1 : 0
+  name  = "Managed-CachingDisabled"
+}
+
+data "aws_cloudfront_origin_request_policy" "all_viewer_except_host" {
+  count = var.enable_cloudfront ? 1 : 0
+  name  = "Managed-AllViewerExceptHostHeader"
+}
+
+resource "aws_cloudfront_distribution" "dashboard" {
+  count               = var.enable_cloudfront ? 1 : 0
+  enabled             = true
+  is_ipv6_enabled     = true
+  comment             = "${var.name} dashboard"
+  price_class         = "PriceClass_100"
+  wait_for_deployment = true
+
+  origin {
+    domain_name = aws_lb.dashboard.dns_name
+    origin_id   = "module-c-alb"
+    custom_origin_config {
+      http_port              = 80
+      https_port             = 443
+      origin_protocol_policy = "http-only"
+      origin_ssl_protocols   = ["TLSv1.2"]
+    }
+  }
+
+  default_cache_behavior {
+    target_origin_id         = "module-c-alb"
+    viewer_protocol_policy   = "redirect-to-https"
+    allowed_methods          = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
+    cached_methods           = ["GET", "HEAD"]
+    cache_policy_id          = data.aws_cloudfront_cache_policy.disabled[0].id
+    origin_request_policy_id = data.aws_cloudfront_origin_request_policy.all_viewer_except_host[0].id
+    compress                 = true
+  }
+
+  restrictions {
+    geo_restriction { restriction_type = "none" }
+  }
+
+  viewer_certificate {
+    cloudfront_default_certificate = true
+  }
+
+  depends_on = [aws_lb_listener.http]
+}
 resource "aws_ecs_service" "dashboard" {
   name            = "${var.name}-dashboard"
-  cluster         = var.ecs_cluster_arn
+  cluster         = local.effective_ecs_cluster_arn
   task_definition = aws_ecs_task_definition.dashboard.arn
   desired_count   = var.dashboard_desired_count
   launch_type     = "FARGATE"
@@ -418,7 +509,7 @@ resource "aws_ecs_service" "dashboard" {
     rollback = true
   }
   network_configuration {
-    subnets          = var.private_subnet_ids
+    subnets          = local.effective_private_subnet_ids
     security_groups  = [aws_security_group.dashboard.id]
     assign_public_ip = false
   }
@@ -428,14 +519,14 @@ resource "aws_ecs_service" "dashboard" {
     container_port   = 3000
   }
   lifecycle { ignore_changes = [desired_count] }
-  depends_on = [aws_lb_listener.https]
+  depends_on = [aws_lb_listener.https, aws_lb_listener.http]
 }
 
 resource "aws_appautoscaling_target" "service" {
   for_each           = { dashboard = aws_ecs_service.dashboard.name }
   max_capacity       = var.service_max_count
   min_capacity       = var.dashboard_desired_count
-  resource_id        = "service/${element(reverse(split("/", var.ecs_cluster_arn)), 0)}/${each.value}"
+  resource_id        = "service/${element(reverse(split("/", local.effective_ecs_cluster_arn)), 0)}/${each.value}"
   scalable_dimension = "ecs:service:DesiredCount"
   service_namespace  = "ecs"
 }
@@ -468,7 +559,7 @@ resource "aws_cloudwatch_metric_alarm" "alb_5xx" {
   threshold           = 5
   treat_missing_data  = "notBreaching"
   dimensions          = { LoadBalancer = aws_lb.dashboard.arn_suffix }
-  alarm_actions       = [var.alarm_topic_arn]
+  alarm_actions       = [local.effective_alarm_topic_arn]
 }
 
 resource "aws_cloudwatch_metric_alarm" "unhealthy_targets" {
@@ -485,5 +576,5 @@ resource "aws_cloudwatch_metric_alarm" "unhealthy_targets" {
     LoadBalancer = aws_lb.dashboard.arn_suffix
     TargetGroup  = aws_lb_target_group.dashboard.arn_suffix
   }
-  alarm_actions = [var.alarm_topic_arn]
+  alarm_actions = [local.effective_alarm_topic_arn]
 }

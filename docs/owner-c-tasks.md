@@ -168,6 +168,10 @@ The MCP tool result **contains a live prompt injection**
 ### C10 Prove you cannot reach the signer
 **Estimate:** 15 min · **Coordinate with Owner A (A15)**
 
+- [ ] Deploy Module C independently first. Give `dependency_ingress_handoff` to the A/B
+      owner; Module C must not create or change an A/B security-group rule.
+- [ ] After A/B is ready, apply `infra/module-c-integration`. It registers only the Module C
+      evidence task and does not own A/B resources.
 - [ ] Run the one-off ECS probe from the orchestrator security group: signer DNS must resolve;
       policy, ledger, and chain-gateway must respond; TCP/HTTP signer:4003 must fail.
 - [ ] Archive the CloudWatch probe output for the deck. Missing DNS is a failed probe, never

@@ -10,10 +10,15 @@ import { registerErrorHandler, registerInternalAuth } from "@straitsx/contracts"
 import { registerCheckoutRoutes } from "./routes/checkout";
 import { registerHealthRoute } from "./routes/health";
 import { registerRunRoutes } from "./routes/run";
+import {
+  dependencyReadinessFromEnvironment,
+  type DependencyReadinessCheck,
+} from "./dependency-readiness";
 
 export type BuildAppOptions = {
   internalToken: string | undefined;
   logger?: boolean;
+  dependencyReadiness?: DependencyReadinessCheck | undefined;
 };
 
 export function buildApp(opts: BuildAppOptions): FastifyInstance {
@@ -25,8 +30,9 @@ export function buildApp(opts: BuildAppOptions): FastifyInstance {
   registerErrorHandler(app);
   registerInternalAuth(app, opts.internalToken);
 
-  registerHealthRoute(app);
-  registerRunRoutes(app);
+  const dependencyReadiness = opts.dependencyReadiness ?? dependencyReadinessFromEnvironment(opts.internalToken);
+  registerHealthRoute(app, dependencyReadiness);
+  registerRunRoutes(app, dependencyReadiness);
   registerCheckoutRoutes(app);
 
   return app;

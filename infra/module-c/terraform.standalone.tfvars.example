@@ -1,0 +1,35 @@
+name              = "straitsx-module-c"
+aws_region        = "ap-southeast-1"
+create_foundation = true
+enable_cloudfront = true
+
+# CloudFront supplies an AWS-managed HTTPS hostname, so no domain or ACM
+# certificate is required for the standalone deployment.
+certificate_arn         = null
+alb_deletion_protection = false
+
+dashboard_image    = "111122223333.dkr.ecr.ap-southeast-1.amazonaws.com/straitsx/module-c-dashboard@sha256:replace-me"
+orchestrator_image = "111122223333.dkr.ecr.ap-southeast-1.amazonaws.com/straitsx/module-c-orchestrator@sha256:replace-me"
+fixture_image      = "111122223333.dkr.ecr.ap-southeast-1.amazonaws.com/straitsx/module-c-orchestrator@sha256:replace-me"
+
+# These are stable interface contracts. They can have no registered tasks
+# while the separately owned Module A/B services are not deployed.
+ledger_service_name        = "ledger.internal"
+policy_service_name        = "policy.internal"
+chain_gateway_service_name = "chain-gateway.internal"
+
+# No external card/merchant access is needed while A/B is absent. Add only
+# currently resolved /32 values immediately before live integration.
+https_egress_cidrs = []
+
+# Replace this before any live signing or settlement integration.
+paying_wallet_address = "0x0000000000000000000000000000000000000000"
+
+dashboard_desired_count = 2
+service_max_count        = 4
+
+tags = {
+  Environment = "demo"
+  Owner       = "module-c"
+  Application = "straitsx-888"
+}

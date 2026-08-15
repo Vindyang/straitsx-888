@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 type RunEvent = { seq: number; stage: string; status?: string; check?: string; at: string };
 
@@ -24,6 +24,26 @@ export default function Page() {
   const [requestId, setRequestId] = useState<string | null>(null);
   const [events, setEvents] = useState<RunEvent[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [dependenciesReady, setDependenciesReady] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    const refresh = async () => {
+      try {
+        const response = await fetch("/api/ready", { cache: "no-store" });
+        const body = (await response.json()) as { ready?: boolean };
+        if (active) setDependenciesReady(response.ok && body.ready === true);
+      } catch {
+        if (active) setDependenciesReady(false);
+      }
+    };
+    void refresh();
+    const timer = window.setInterval(() => void refresh(), 10_000);
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+    };
+  }, []);
 
   async function startRun() {
     setError(null);
@@ -56,6 +76,13 @@ export default function Page() {
       <p style={{ color: "#666" }}>
         Start a deterministic security fixture or a checked-in merchant checkout profile.
       </p>
+      <p role="status" style={{ color: dependenciesReady === true ? "green" : "darkorange" }}>
+        {dependenciesReady === true
+          ? "Payment dependencies ready"
+          : dependenciesReady === false
+            ? "Waiting for ledger, policy, and chain gateway"
+            : "Checking payment dependencies…"}
+      </p>
 
       <fieldset style={{ marginTop: "1.5rem" }}>
         <legend>Run</legend>
@@ -85,7 +112,7 @@ export default function Page() {
         </label> : <label style={{ display: "block", marginBottom: 8 }}>
           profileId <input value={profileId} onChange={(e) => setProfileId(e.target.value)} />
         </label>}
-        <button onClick={startRun}>Start run</button>
+        <button onClick={startRun} disabled={dependenciesReady !== true}>Start run</button>
       </fieldset>
 
       {error && <p style={{ color: "crimson" }}>{error}</p>}

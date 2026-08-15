@@ -9,6 +9,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import type { FastifyInstance } from "fastify";
 import { buildApp } from "../src/app";
+import type { DependencyReadiness } from "../src/dependency-readiness";
 
 const TOKEN = "test-internal-token";
 
@@ -16,11 +17,21 @@ function auth(extra: Record<string, string> = {}) {
   return { "x-internal-token": TOKEN, ...extra };
 }
 
+const READY: DependencyReadiness = {
+  ready: true,
+  dependencies: { ledger: "ready", policy: "ready", chainGateway: "ready" },
+};
+
+const NOT_READY: DependencyReadiness = {
+  ready: false,
+  dependencies: { ledger: "unavailable", policy: "ready", chainGateway: "ready" },
+};
+
 describe("agent-orchestrator app", () => {
   let app: FastifyInstance;
 
   beforeEach(() => {
-    app = buildApp({ internalToken: TOKEN });
+    app = buildApp({ internalToken: TOKEN, dependencyReadiness: async () => READY });
   });
 
   describe("GET /health", () => {
@@ -28,6 +39,16 @@ describe("agent-orchestrator app", () => {
       const res = await app.inject({ method: "GET", url: "/health" });
       expect(res.statusCode).toBe(200);
       expect(res.json()).toEqual({ ok: true });
+    });
+
+    it("reports dependency readiness separately from process liveness", async () => {
+      const unavailableApp = buildApp({ internalToken: TOKEN, dependencyReadiness: async () => NOT_READY });
+      const health = await unavailableApp.inject({ method: "GET", url: "/health" });
+      const readiness = await unavailableApp.inject({ method: "GET", url: "/ready", headers: auth() });
+      expect(health.statusCode).toBe(200);
+      expect(readiness.statusCode).toBe(503);
+      expect(readiness.json()).toEqual(NOT_READY);
+      await unavailableApp.close();
     });
   });
 
@@ -59,6 +80,24 @@ describe("agent-orchestrator app", () => {
         payload: { instruction: "buy a bottle", mandateId: "0x7f3a", agentId: "shopper-1", fixture: "nope" },
       });
       expect(res.statusCode).toBe(400);
+    });
+
+    it("fails closed before creating a run when A/B dependencies are unavailable", async () => {
+      const unavailableApp = buildApp({ internalToken: TOKEN, dependencyReadiness: async () => NOT_READY });
+      const before = await unavailableApp.inject({ method: "GET", url: "/runs", headers: auth() });
+      const runCountBefore = (before.json() as unknown[]).length;
+      const res = await unavailableApp.inject({
+        method: "POST",
+        url: "/run",
+        headers: auth(),
+        payload: { instruction: "buy a bottle", mandateId: "0x7f3a", agentId: "shopper-1", fixture: "clean" },
+      });
+      expect(res.statusCode).toBe(503);
+      expect(res.json().error).toMatchObject({ code: "DEPENDENCY_UNAVAILABLE", retryable: true });
+
+      const list = await unavailableApp.inject({ method: "GET", url: "/runs", headers: auth() });
+      expect((list.json() as unknown[]).length).toBe(runCountBefore);
+      await unavailableApp.close();
     });
   });
 

@@ -76,7 +76,8 @@ Companion docs: [owner-a-tasks.md](owner-a-tasks.md), [owner-b-tasks.md](owner-b
 
 `400` validation · `401` bad internal token · `403` caller not allowed · `404` unknown id ·
 `409` idempotency/conditional-write conflict · `422` policy refusal expressed as an error ·
-`502` upstream (RPC, MCP, cardapi) failed · `504` upstream timeout.
+`502` upstream (RPC, MCP, cardapi) failed · `503` required dependency unavailable · `504`
+upstream timeout.
 
 **Never** put a PAN, a private key, a KMS key id, a raw signature, or a card iframe URL in an
 error body or a log line.
@@ -734,6 +735,27 @@ is the seconds it is alive.
 Holds no key. Makes no decisions. **Must not be able to reach signer-service** — verify with
 a `curl` from its host that fails.
 
+### `GET /health` and `GET /ready`
+
+`GET /health` is unauthenticated process liveness and returns `{ "ok": true }` even while
+A/B is absent. `GET /ready` requires `X-Internal-Token`; it probes only the three remote
+contracts and returns redacted status:
+
+```json
+{
+  "ready": false,
+  "dependencies": {
+    "ledger": "unavailable",
+    "policy": "unavailable",
+    "chainGateway": "unavailable"
+  }
+}
+```
+
+Readiness is `200` only when every dependency is `ready`; otherwise it is `503`. DNS names,
+response bodies, and transport errors are never returned. This split lets Module C deploy
+before A/B without claiming that payment execution is available.
+
 ### `POST /run`
 
 ```json
@@ -752,6 +774,10 @@ The legacy top-level `fixture` field remains accepted during migration.
 ```json
 { "requestId": "3f6c8b2e-…", "state": "RUNNING", "streamUrl": "/run/3f6c8b2e-…/events" }
 ```
+
+Before creating the run, the orchestrator checks dependency readiness. If A/B is absent it
+returns `503 DEPENDENCY_UNAVAILABLE` with `retryable: true`; no run, signature request,
+settlement request, card request, or checkout is created.
 
 ### `GET /run/:requestId/events` (SSE)
 

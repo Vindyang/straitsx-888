@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { AppError, ErrorCode } from "@straitsx/contracts";
 import { MERCHANT_PROFILES } from "../checkout/merchant-profiles";
+import type { DependencyReadinessCheck } from "../dependency-readiness";
 import { RUN_FIXTURES, resolveRunEscalation, startRun, type RunFixture, type RunSource } from "../run/pipeline";
 import { getRun, isTerminalRunState, listRuns, subscribe } from "../run/store";
 
@@ -13,13 +14,27 @@ function parseSource(body: RunRequestBody): RunSource {
   throw AppError.badRequest("source must be {kind:'fixture',name} or {kind:'merchant',profileId}; fixture remains supported during migration");
 }
 
-export function registerRunRoutes(app: FastifyInstance): void {
+export function registerRunRoutes(app: FastifyInstance, checkReadiness: DependencyReadinessCheck): void {
   app.post("/run", async (request, reply) => {
     const body = request.body as RunRequestBody;
     if (!body.instruction || !body.mandateId || !body.agentId) throw AppError.badRequest("instruction, mandateId and agentId are required");
     const source = parseSource(body);
     if (source.kind === "fixture" && !RUN_FIXTURES.includes(source.name)) throw AppError.badRequest(`fixture must be one of ${RUN_FIXTURES.join(", ")}`);
     if (source.kind === "merchant" && !MERCHANT_PROFILES[source.profileId]) throw AppError.badRequest("unknown merchant profileId");
+    let dependenciesReady = false;
+    try {
+      dependenciesReady = (await checkReadiness()).ready;
+    } catch {
+      dependenciesReady = false;
+    }
+    if (!dependenciesReady) {
+      throw new AppError(
+        503,
+        ErrorCode.DEPENDENCY_UNAVAILABLE,
+        "payment dependencies are not ready",
+        true,
+      );
+    }
     reply.code(202).send(startRun({ instruction: body.instruction, mandateId: body.mandateId, agentId: body.agentId, source, ...(body.cardholderName ? { cardholderName: body.cardholderName } : {}) }));
   });
 

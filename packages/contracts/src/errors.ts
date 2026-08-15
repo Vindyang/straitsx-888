@@ -64,6 +64,9 @@ export const ErrorCode = {
 
   // agent-orchestrator / card-gateway (Owner C, api-contracts.md §7-8)
   RUN_NOT_FOUND: "RUN_NOT_FOUND", // 404
+  /** A required remote service contract is not currently reachable. Module C
+   *  is live but not ready to accept a payment run. */
+  DEPENDENCY_UNAVAILABLE: "DEPENDENCY_UNAVAILABLE", // 503, retryable
   /** C9 post-issuance control: current page doesn't match the discovered, intent-matched URL. */
   DOMAIN_MISMATCH: "DOMAIN_MISMATCH", // 403
   /** MCP SSE handshake or JSON-RPC call failed (transport, not payload shape). */
