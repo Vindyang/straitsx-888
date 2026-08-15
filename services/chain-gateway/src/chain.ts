@@ -11,11 +11,15 @@ import {
   ERC20_READ_ABI,
   ErrorCode,
   XSGD_DECIMALS,
+  envNumber,
   isSupportedChainId,
   type ChainId,
 } from "@straitsx/contracts";
 
-const RPC_TIMEOUT_MS = Number(process.env["RPC_TIMEOUT_MS"] ?? 10_000);
+// envNumber throws on a non-numeric value. `Number(process.env[...] ?? 10_000)`
+// silently yielded NaN, which viem treats as "no timeout" — a misconfigured
+// env var would have removed the timeout rather than failing loudly.
+const RPC_TIMEOUT_MS = envNumber("RPC_TIMEOUT_MS", 10_000);
 
 const clients = new Map<ChainId, PublicClient>();
 
@@ -34,24 +38,6 @@ export function getPublicClient(chainId: ChainId): PublicClient {
 
   clients.set(chainId, client);
   return client;
-}
-
-/** Parses `?chainId=` and rejects anything we do not serve. */
-export function parseChainId(raw: unknown): ChainId {
-  if (raw === undefined || raw === null || raw === "") {
-    throw AppError.badRequest(
-      "chainId query parameter is required",
-      ErrorCode.BAD_REQUEST,
-    );
-  }
-  const n = Number(raw);
-  if (!isSupportedChainId(n)) {
-    throw AppError.badRequest(
-      `unsupported chainId ${String(raw)} — expected 43113 or 43114`,
-      ErrorCode.UNSUPPORTED_CHAIN,
-    );
-  }
-  return n;
 }
 
 function isTimeout(err: unknown): boolean {
@@ -112,50 +98,83 @@ export async function readTokenFacts(chainId: ChainId): Promise<TokenFacts> {
   });
 }
 
-export class DecimalsAssertionError extends Error {
+/**
+ * A6: "Assert `decimals === 6` at boot; refuse to serve if not."
+ *
+ * Extends AppError (500, NOT retryable) so the same assertion serves both the
+ * boot check and the per-cold-read re-check in routes/token-constants.ts. It
+ * was previously two types with near-identical messages, and the read path
+ * mis-reported it as `RPC_FAILED` with `retryable: true` — retrying a wrong
+ * `decimals` never fixes it, and a retryable flag invites Owner B to loop.
+ */
+export class DecimalsAssertionError extends AppError {
   constructor(chainId: ChainId, actual: number) {
     super(
+      500,
+      ErrorCode.TOKEN_DECIMALS_INVALID,
       `XSGD on chain ${chainId} reports decimals=${actual}, expected ${XSGD_DECIMALS}. ` +
         `Refusing to serve: every amount would be mis-encoded by 10^${Math.abs(actual - XSGD_DECIMALS)} ` +
         `and signatures would verify against the wrong value.`,
+      false,
     );
     this.name = "DecimalsAssertionError";
   }
 }
 
-/**
- * A6 boot assertion. Runs before `listen()`. If XSGD is not 6 decimals on a
- * chain we are configured to serve, the service refuses to start rather than
- * serving a wrong answer.
- *
- * Chains whose RPC is unreachable at boot are logged and skipped — an outage
- * must not permanently wedge startup, and every later request through that
- * chain still fails closed via `withRpc`.
- */
-export async function assertTokenDecimalsAtBoot(log: {
-  info: (msg: string) => void;
-  warn: (msg: string) => void;
-}): Promise<void> {
-  const chainIds = (process.env["CHAIN_IDS"] ?? "43113")
+/** The one place the invariant is enforced. Callers pass what they read. */
+export function assertDecimals(chainId: ChainId, actual: number): void {
+  if (actual !== XSGD_DECIMALS) throw new DecimalsAssertionError(chainId, actual);
+}
+
+export function configuredChainIds(): ChainId[] {
+  return (process.env["CHAIN_IDS"] ?? "43113")
     .split(",")
     .map((s) => Number(s.trim()))
     .filter(isSupportedChainId);
+}
 
-  for (const chainId of chainIds) {
-    let facts: TokenFacts;
-    try {
-      facts = await readTokenFacts(chainId);
-    } catch (err) {
-      log.warn(
-        `boot: could not read XSGD decimals on ${chainId} (${
-          err instanceof Error ? err.message : String(err)
-        }) — continuing; requests on this chain will fail closed`,
+/**
+ * A6 boot assertion. Runs before `listen()` and REFUSES TO START on failure.
+ *
+ * An earlier version logged a warning and continued when the RPC read failed,
+ * which meant the assertion could be skipped entirely by a network blip — the
+ * service would then serve `/token/constants` from a chain it had never
+ * verified. A6 says refuse, so it refuses.
+ *
+ * The read is retried first, because a single transient failure is not evidence
+ * that the token is wrong. Only a persistent failure — or a real mismatch —
+ * stops the boot.
+ */
+export async function assertTokenDecimalsAtBoot(
+  log: { info: (msg: string) => void; warn: (msg: string) => void },
+  attempts = 3,
+): Promise<void> {
+  for (const chainId of configuredChainIds()) {
+    let facts: TokenFacts | undefined;
+    let lastError: unknown;
+
+    for (let attempt = 1; attempt <= attempts; attempt++) {
+      try {
+        facts = await readTokenFacts(chainId);
+        break;
+      } catch (err) {
+        lastError = err;
+        log.warn(
+          `boot: XSGD read on ${chainId} failed (attempt ${attempt}/${attempts}): ` +
+            `${err instanceof Error ? err.message : String(err)}`,
+        );
+      }
+    }
+
+    if (!facts) {
+      throw new Error(
+        `boot: could not verify XSGD decimals on chain ${chainId} after ${attempts} attempts — ` +
+          `refusing to start rather than serving an unverified chain. ` +
+          `Last error: ${lastError instanceof Error ? lastError.message : String(lastError)}`,
       );
-      continue;
     }
-    if (facts.decimals !== XSGD_DECIMALS) {
-      throw new DecimalsAssertionError(chainId, facts.decimals);
-    }
+
+    assertDecimals(chainId, facts.decimals);
     log.info(
       `boot: XSGD on ${chainId} verified name="${facts.name}" decimals=${facts.decimals}`,
     );

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { formatUnits as viemFormatUnits } from "viem";
 import { formatUnits } from "../src/routes/balance";
 
 /**
@@ -33,5 +34,17 @@ describe("formatUnits", () => {
 
   it("supports 0 decimals", () => {
     expect(formatUnits(42n, 0)).toBe("42");
+  });
+
+  /**
+   * Why this is not viem's formatUnits, which a reviewer flagged as duplication.
+   * viem TRIMS trailing zeros; §3 pins xsgdFormatted to a fixed 6dp
+   * ("30.000000"). Fixed width is the point — a money column should not jitter
+   * between "30" and "29.999999". This test fails the day viem changes, which
+   * is exactly when we would want to know.
+   */
+  it("differs from viem formatUnits, deliberately: fixed width vs trimmed", () => {
+    expect(viemFormatUnits(30_000_000n, 6)).toBe("30");
+    expect(formatUnits(30_000_000n, 6)).toBe("30.000000");
   });
 });

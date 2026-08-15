@@ -26,6 +26,7 @@ export const ErrorCode = {
   BAD_REQUEST: "BAD_REQUEST", // 400
   UNAUTHORIZED: "UNAUTHORIZED", // 401 bad X-Internal-Token
   FORBIDDEN: "FORBIDDEN", // 403 caller not allowed
+  NOT_FOUND: "NOT_FOUND", // 404 unknown route
   INTERNAL: "INTERNAL", // 500
 
   // chain-gateway
@@ -35,6 +36,11 @@ export const ErrorCode = {
   RPC_FAILED: "RPC_FAILED", // 502, retryable
   RPC_TIMEOUT: "RPC_TIMEOUT", // 504, retryable
   CHAIN_NOT_CONFIGURED: "CHAIN_NOT_CONFIGURED", // 400 — a null constant, refuse never default
+  /** XSGD did not report 6 decimals. NOT an RPC failure: retrying never fixes
+   *  it, so it must not carry `retryable: true`. */
+  TOKEN_DECIMALS_INVALID: "TOKEN_DECIMALS_INVALID", // 500
+  /** The 402 challenge could not be parsed into X402Requirements. */
+  X402_MALFORMED: "X402_MALFORMED", // 400
 
   // signer-service hard-invariant rail (api-contracts.md §4, task A14)
   SIGNER_UNPINNED_MANDATE: "SIGNER_UNPINNED_MANDATE", // 403
@@ -44,7 +50,16 @@ export const ErrorCode = {
   SIGNER_WRONG_CHAIN: "SIGNER_WRONG_CHAIN", // 403
   SIGNER_WINDOW: "SIGNER_WINDOW", // 403
   SIGNER_REPLAY: "SIGNER_REPLAY", // 409
-  SIGNER_DOMAIN_MISMATCH: "SIGNER_DOMAIN_MISMATCH", // 403 — live challenge != expected constants
+  /**
+   * NOT an eighth rail condition. §4 says the seven refusals above are "the
+   * only conditions it evaluates", and this does not contradict that: A12
+   * separately requires "Assert the live challenge matches the expected
+   * constants; refuse on mismatch", and §19.4 says a live 402 that disagrees
+   * with the pinned constants is "either a chain misconfiguration or an
+   * attack". It is a fixed assertion, not a judgement — same category as
+   * "never hardcode the domain". Announced to Owner B alongside the rail.
+   */
+  SIGNER_DOMAIN_MISMATCH: "SIGNER_DOMAIN_MISMATCH", // 403
   SIGNER_KMS_FAILED: "SIGNER_KMS_FAILED", // 502
 } as const;
 

@@ -13,6 +13,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { parseAddress } from "../packages/contracts/src/validation";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const SOL_ROOT = resolve(ROOT, "packages/contracts-sol");
@@ -75,9 +76,19 @@ if (createIndex === -1) {
   fail("broadcast record contains no MandateRegistry CREATE transaction");
 }
 
-const address = broadcast.transactions?.[createIndex]?.contractAddress;
-if (!address || !/^0x[0-9a-fA-F]{40}$/.test(address)) {
-  fail(`broadcast record has no valid contractAddress (got ${String(address)})`);
+// Shared validator, not a fourth copy of the address regex. This is a CLI, so
+// the AppError is translated into a clean exit rather than surfaced as HTTP.
+let address: string;
+try {
+  address = parseAddress(
+    broadcast.transactions?.[createIndex]?.contractAddress,
+    "contractAddress",
+  );
+} catch {
+  fail(
+    `broadcast record has no valid contractAddress ` +
+      `(got ${String(broadcast.transactions?.[createIndex]?.contractAddress)})`,
+  );
 }
 
 const rawBlock = broadcast.receipts?.[createIndex]?.blockNumber;

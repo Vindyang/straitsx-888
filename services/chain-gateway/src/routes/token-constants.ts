@@ -12,14 +12,14 @@
 
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import {
-  AppError,
   CHAINS,
-  ErrorCode,
-  XSGD_DECIMALS,
+  isoSeconds,
+  parseChainId,
+  toChecksum,
   type ChainId,
   type TokenConstants,
 } from "@straitsx/contracts";
-import { parseChainId, readTokenFacts } from "../chain";
+import { assertDecimals, readTokenFacts } from "../chain";
 
 const CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutes, per A6
 
@@ -43,22 +43,20 @@ export async function getTokenConstants(
   // Same assertion as boot, re-checked on every cold read: the Fuji contract is
   // an upgradeable proxy, so the implementation can change under us mid-event
   // (§19.2). Do not trust a value cached before an upgrade.
-  if (facts.decimals !== XSGD_DECIMALS) {
-    throw new AppError(
-      502,
-      ErrorCode.RPC_FAILED,
-      `XSGD on chain ${chainId} reports decimals=${facts.decimals}, expected ${XSGD_DECIMALS}`,
-    );
-  }
+  assertDecimals(chainId, facts.decimals);
 
   const value: TokenConstants = {
     chainId,
-    address: CHAINS[chainId].xsgd,
+    // §0: EIP-55 checksummed in JSON. The raw constants are mixed — Fuji's is
+    // lowercase (as it came off the 402), mainnet's is checksummed — so the
+    // same field would otherwise change casing with the chain.
+    address: toChecksum(CHAINS[chainId].xsgd),
     name: facts.name,
     decimals: facts.decimals,
     version: null,
     versionSource: "x402-challenge-only",
-    readAt: new Date(now).toISOString(),
+    // Whole seconds, matching the §3 sample "2026-08-15T05:46:23Z".
+    readAt: isoSeconds(now),
   };
 
   cache.set(chainId, { value, expiresAt: now + CACHE_TTL_MS });

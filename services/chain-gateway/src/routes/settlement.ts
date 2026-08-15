@@ -13,52 +13,32 @@
  */
 
 import type { FastifyInstance, FastifyRequest } from "fastify";
-import { decodeEventLog, getAddress } from "viem";
+import { decodeEventLog } from "viem";
 import {
   AppError,
   ERC20_TRANSFER_EVENT_ABI,
   ErrorCode,
+  parseAddress,
+  parseChainId,
+  parseTxHash,
+  parseUint,
+  requireObject,
   type SettlementConfirmRequest,
   type SettlementConfirmResponse,
 } from "@straitsx/contracts";
-import { getPublicClient, parseChainId, withRpc } from "../chain";
+import { getPublicClient, withRpc } from "../chain";
 
 function parseBody(body: unknown): SettlementConfirmRequest {
-  if (typeof body !== "object" || body === null) {
-    throw AppError.badRequest("body must be a JSON object");
-  }
-  const b = body as Record<string, unknown>;
-
-  const txHash = b["txHash"];
-  if (typeof txHash !== "string" || !/^0x[0-9a-fA-F]{64}$/.test(txHash)) {
-    throw AppError.badRequest("txHash must be 0x-prefixed 32-byte hex");
-  }
-
-  const expectRaw = b["expect"];
-  if (typeof expectRaw !== "object" || expectRaw === null) {
-    throw AppError.badRequest("expect is required");
-  }
-  const e = expectRaw as Record<string, unknown>;
-
-  for (const field of ["asset", "to"] as const) {
-    if (typeof e[field] !== "string" || !/^0x[0-9a-fA-F]{40}$/.test(e[field] as string)) {
-      throw AppError.badRequest(`expect.${field} must be a 20-byte hex address`);
-    }
-  }
-  // Money is a base-unit decimal string, never a JSON number (§0).
-  if (typeof e["amount"] !== "string" || !/^[0-9]+$/.test(e["amount"])) {
-    throw AppError.badRequest(
-      "expect.amount must be a base-unit decimal string, e.g. \"5000000\"",
-    );
-  }
+  const b = requireObject(body);
+  const e = requireObject(b["expect"], "expect");
 
   return {
-    txHash,
+    txHash: parseTxHash(b["txHash"]),
     chainId: Number(b["chainId"]),
     expect: {
-      asset: e["asset"] as string,
-      to: e["to"] as string,
-      amount: e["amount"],
+      asset: parseAddress(e["asset"], "expect.asset"),
+      to: parseAddress(e["to"], "expect.to"),
+      amount: parseUint(e["amount"], "expect.amount"),
     },
   };
 }
@@ -165,9 +145,4 @@ export function findMatchingTransfer(
   }
 
   return null;
-}
-
-/** Exported for the dashboard link in the receipt. */
-export function checksum(address: string): string {
-  return getAddress(address);
 }

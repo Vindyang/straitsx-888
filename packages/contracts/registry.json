@@ -1,11 +1,11 @@
 {
   "_comment": "A4 deliverable. `addresses` and `deployBlock` are null until deployed; regenerate with `pnpm tsx scripts/sync-registry.ts <chainId>` after a forge deploy. A null address must make the caller REFUSE, never default.",
   "addresses": {
-    "43113": null,
+    "43113": "0x47b9b484944d95bc04888e40ad585462a06e7c6d",
     "43114": null
   },
   "deployBlock": {
-    "43113": null,
+    "43113": 57773961,
     "43114": null
   },
   "abi": [

@@ -93,14 +93,18 @@ describe("chain-gateway app", () => {
       expect(res.json().error.requestId).toBe("3f6c8b2e-echo-me");
     });
 
-    it("404s an unknown route in the same envelope", async () => {
+    /**
+     * A 404 that self-describes as BAD_REQUEST is a contract lie: §0 pins 400
+     * to validation and 404 to an unknown id, and Owner B branches on `code`.
+     */
+    it("404s an unknown route with code NOT_FOUND, not BAD_REQUEST", async () => {
       const res = await app.inject({
         method: "GET",
         url: "/nope",
         headers: auth(),
       });
       expect(res.statusCode).toBe(404);
-      expect(res.json()).toHaveProperty("error.code");
+      expect(res.json().error.code).toBe("NOT_FOUND");
     });
   });
 
@@ -137,18 +141,22 @@ describe("chain-gateway app", () => {
     });
 
     /**
-     * The registry is not deployed yet, so registry.json holds null. A null must
-     * make the caller REFUSE, never default to some address — the same rule as
-     * `mainnet.settlementRecipient`.
+     * The refuse-on-null rule is asserted in packages/contracts/test/registry.test.ts,
+     * against `requireRegistryAddress` directly. It used to be tested through
+     * this route and broke the moment the contract was deployed — it was really
+     * asserting deployment state rather than behaviour.
+     *
+     * The live read (unknown id -> 404 MANDATE_NOT_FOUND) is in live-rpc.test.ts,
+     * because it needs a real chain. Everything in this file stays offline so CI
+     * is green when Fuji is not.
      */
-    it("refuses rather than defaulting when the registry address is null", async () => {
+    it("rejects a mandateId with the wrong length before opening any connection", async () => {
       const res = await app.inject({
         method: "GET",
-        url: `/mandate/${MANDATE_ID}?chainId=43113`,
+        url: `/mandate/0x${"a".repeat(63)}?chainId=43113`,
         headers: auth(),
       });
       expect(res.statusCode).toBe(400);
-      expect(res.json().error.code).toBe("CHAIN_NOT_CONFIGURED");
     });
   });
 

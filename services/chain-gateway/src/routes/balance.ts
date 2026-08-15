@@ -6,27 +6,23 @@
  */
 
 import type { FastifyInstance, FastifyRequest } from "fastify";
-import { getAddress } from "viem";
 import {
-  AppError,
   CHAINS,
   ERC20_READ_ABI,
   XSGD_DECIMALS,
+  parseAddress,
+  parseChainId,
+  toChecksum,
   type BalanceResponse,
 } from "@straitsx/contracts";
-import { getPublicClient, parseChainId, withRpc } from "../chain";
-
-export function parseAddress(raw: unknown): `0x${string}` {
-  if (typeof raw !== "string" || !/^0x[0-9a-fA-F]{40}$/.test(raw)) {
-    throw AppError.badRequest(
-      `address must be 0x-prefixed 20-byte hex, got "${String(raw)}"`,
-    );
-  }
-  return raw as `0x${string}`;
-}
+import { getPublicClient, withRpc } from "../chain";
 
 /**
  * Base units -> a fixed-point decimal string, exactly `decimals` places.
+ *
+ * NOT viem's `formatUnits`, which trims trailing zeros: it renders 30 XSGD as
+ * "30", but §3 pins `xsgdFormatted` to "30.000000". Fixed width is the point —
+ * a dashboard column of money should not jitter between "30" and "29.999999".
  *
  * Deliberately integer-only: routing this through Number would lose precision
  * above 2^53 and is the same class of bug as putting money in a JSON number.
@@ -47,7 +43,7 @@ export function registerBalanceRoute(app: FastifyInstance): void {
       req: FastifyRequest<{ Querystring: { address?: string; chainId?: string } }>,
     ): Promise<BalanceResponse> => {
       const chainId = parseChainId(req.query.chainId);
-      const address = parseAddress(req.query.address);
+      const address = parseAddress(req.query.address, "address");
       const client = getPublicClient(chainId);
       const xsgdAddress = CHAINS[chainId].xsgd as `0x${string}`;
 
@@ -66,7 +62,7 @@ export function registerBalanceRoute(app: FastifyInstance): void {
       );
 
       return {
-        address: getAddress(address),
+        address: toChecksum(address),
         xsgd: xsgd.toString(),
         xsgdFormatted: formatUnits(xsgd, XSGD_DECIMALS),
         avaxWei: avaxWei.toString(),

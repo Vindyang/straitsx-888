@@ -65,12 +65,25 @@ export const XSGD_DECIMALS = 6;
  */
 export const MAX_AUTH_WINDOW_SECONDS = 600;
 
+// Verified in api-contracts.md §0. Sandbox only.
 export const CARDAPI_SANDBOX_ISSUE_CARD =
   "https://card.straitsx.ai/sandbox/cardapi/issue_card";
-export const CARDAPI_PRODUCTION_ISSUE_CARD =
-  "https://card.straitsx.ai/production/cardapi/issue_card";
 export const MCP_SSE_SANDBOX = "https://card.straitsx.ai/sandbox/sse";
-export const MCP_SSE_PRODUCTION = "https://card.straitsx.ai/production/sse";
+
+/**
+ * The production endpoints are NOT constants here, deliberately.
+ *
+ * §0 lists only the sandbox URLs as verified. Deriving the production ones by
+ * substituting "sandbox" -> "production" is exactly the defaulting §0 forbids:
+ * "Any code path that reads a null here must refuse, never default." Production
+ * reachability is also an open PERMISSION question (§19.7), not just a URL.
+ *
+ * A18 resolves this: confirm clearance with the organisers, fetch the real
+ * production 402, and record the observed values in execution_plan.md §19.7.
+ * Until then any production path must refuse.
+ */
+export const CARDAPI_PRODUCTION_ISSUE_CARD: string | null = null;
+export const MCP_SSE_PRODUCTION: string | null = null;
 
 /**
  * The wallet the organisers funded with 30 XSGD on both chains

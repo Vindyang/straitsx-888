@@ -11,6 +11,7 @@
  * that can reach the signer, so every key not named below is DROPPED here.
  */
 
+import { AppError, ErrorCode } from "./errors";
 import type { X402Requirements } from "./types";
 
 export type Raw402Body = {
@@ -18,9 +19,11 @@ export type Raw402Body = {
   accepts?: unknown;
 };
 
-export class X402ParseError extends Error {
+/** Extends AppError so a malformed challenge surfaces as a 400 in the standard
+ *  envelope rather than escaping the Fastify handler as a 500. */
+export class X402ParseError extends AppError {
   constructor(message: string) {
-    super(message);
+    super(400, ErrorCode.X402_MALFORMED, message);
     this.name = "X402ParseError";
   }
 }

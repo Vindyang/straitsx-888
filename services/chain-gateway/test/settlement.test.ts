@@ -10,18 +10,20 @@ import { describe, expect, it } from "vitest";
 import { encodeAbiParameters, keccak256, toHex, pad } from "viem";
 import { findMatchingTransfer } from "../src/routes/settlement";
 
-const XSGD = "0xd769410dc8772695a7f55a304d2125320a65c2a5";
-const OTHER_TOKEN = "0xb2F85b7AB3c2b6f62DF06dE6aE7D09c010a5096E";
-const PAY_TO = "0x99a2B2962a6AC463FBe04664027Fdb3F68bd4Cc8";
-const ATTACKER = "0x000000000000000000000000000000000000dEaD";
-const PAYER = "0x9f6B4A5DE73CE365238F27236ea04A747E691bF7";
+type Hex20 = `0x${string}`;
+
+const XSGD: Hex20 = "0xd769410dc8772695a7f55a304d2125320a65c2a5";
+const OTHER_TOKEN: Hex20 = "0xb2F85b7AB3c2b6f62DF06dE6aE7D09c010a5096E";
+const PAY_TO: Hex20 = "0x99a2B2962a6AC463FBe04664027Fdb3F68bd4Cc8";
+const ATTACKER: Hex20 = "0x000000000000000000000000000000000000dEaD";
+const PAYER: Hex20 = "0x9f6B4A5DE73CE365238F27236ea04A747E691bF7";
 
 const TRANSFER_TOPIC = keccak256(toHex("Transfer(address,address,uint256)"));
 
 function transferLog(opts: {
   token: string;
-  from?: string;
-  to: string;
+  from?: Hex20;
+  to: Hex20;
   value: bigint;
   logIndex?: number;
 }) {
@@ -29,8 +31,8 @@ function transferLog(opts: {
     address: opts.token,
     topics: [
       TRANSFER_TOPIC,
-      pad(opts.from ?? (PAYER as `0x${string}`), { size: 32 }),
-      pad(opts.to as `0x${string}`, { size: 32 }),
+      pad(opts.from ?? PAYER, { size: 32 }),
+      pad(opts.to, { size: 32 }),
     ] as readonly string[],
     data: encodeAbiParameters([{ type: "uint256" }], [opts.value]),
     logIndex: opts.logIndex ?? 0,
@@ -89,7 +91,11 @@ describe("findMatchingTransfer", () => {
 
   it("compares addresses case-insensitively (§0: compare lowercased)", () => {
     const logs = [
-      transferLog({ token: XSGD.toUpperCase().replace("0X", "0x"), to: PAY_TO.toLowerCase(), value: 5_000_000n }),
+      transferLog({
+        token: XSGD.toUpperCase().replace("0X", "0x"),
+        to: PAY_TO.toLowerCase() as Hex20,
+        value: 5_000_000n,
+      }),
     ];
     expect(findMatchingTransfer(logs, EXPECT)).toEqual({ logIndex: 0 });
   });

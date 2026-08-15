@@ -11,40 +11,19 @@
  */
 
 import type { FastifyInstance, FastifyRequest } from "fastify";
-import { getAddress } from "viem";
 import {
   AppError,
   ErrorCode,
   MANDATE_REGISTRY_ABI,
-  RegistryNotDeployedError,
+  parseChainId,
+  parseMandateId,
   requireRegistryAddress,
+  toChecksum,
   type MandateReadResponse,
 } from "@straitsx/contracts";
-import { getPublicClient, parseChainId, withRpc } from "../chain";
+import { getPublicClient, withRpc } from "../chain";
 
 const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
-
-/** bytes32: `0x` + 64 hex. */
-export function parseMandateId(raw: string): `0x${string}` {
-  if (!/^0x[0-9a-fA-F]{64}$/.test(raw)) {
-    throw AppError.badRequest(
-      `mandateId must be 0x-prefixed 32-byte hex, got "${raw}"`,
-    );
-  }
-  return raw.toLowerCase() as `0x${string}`;
-}
-
-/** A null address in registry.json must REFUSE, never default to something. */
-export function resolveRegistryAddress(chainId: 43113 | 43114): `0x${string}` {
-  try {
-    return requireRegistryAddress(chainId) as `0x${string}`;
-  } catch (err) {
-    if (err instanceof RegistryNotDeployedError) {
-      throw AppError.badRequest(err.message, ErrorCode.CHAIN_NOT_CONFIGURED);
-    }
-    throw err;
-  }
-}
 
 export function registerMandateRoute(app: FastifyInstance): void {
   app.get(
@@ -57,7 +36,9 @@ export function registerMandateRoute(app: FastifyInstance): void {
     ): Promise<MandateReadResponse> => {
       const chainId = parseChainId(req.query.chainId);
       const mandateId = parseMandateId(req.params.mandateId);
-      const registryAddress = resolveRegistryAddress(chainId);
+      // Throws RegistryNotDeployedError (an AppError -> 400
+      // CHAIN_NOT_CONFIGURED) when the address is null. Refuse, never default.
+      const registryAddress = requireRegistryAddress(chainId) as `0x${string}`;
       const client = getPublicClient(chainId);
 
       const [result, blockNumber] = await withRpc(
@@ -85,7 +66,7 @@ export function registerMandateRoute(app: FastifyInstance): void {
 
       return {
         mandateId,
-        owner: getAddress(owner), // EIP-55 checksummed in JSON (§0)
+        owner: toChecksum(owner), // EIP-55 checksummed in JSON (§0)
         policyHash: policyHash.toLowerCase(),
         expiresAt: Number(expiresAt),
         revoked,

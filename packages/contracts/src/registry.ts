@@ -9,6 +9,7 @@
 
 import type { Abi } from "viem";
 import registryJson from "../registry.json" with { type: "json" };
+import { AppError, ErrorCode } from "./errors";
 import type { Address, ChainId } from "./types";
 
 export type RegistryFile = {
@@ -32,9 +33,16 @@ export function getRegistryDeployBlock(chainId: ChainId): number | null {
   return registry.deployBlock[String(chainId)] ?? null;
 }
 
-export class RegistryNotDeployedError extends Error {
+/**
+ * Extends AppError so it lands in the standard error envelope. As a plain
+ * Error it fell through the Fastify handler and became a 500 INTERNAL, which
+ * forced every caller to hand-wrap it — the wrapping was the smell.
+ */
+export class RegistryNotDeployedError extends AppError {
   constructor(chainId: ChainId) {
     super(
+      400,
+      ErrorCode.CHAIN_NOT_CONFIGURED,
       `mandate-registry is not deployed on chain ${chainId} — ` +
         `packages/contracts/registry.json has a null address. ` +
         `Deploy it and run scripts/sync-registry.ts.`,
@@ -43,6 +51,8 @@ export class RegistryNotDeployedError extends Error {
   }
 }
 
+/** A null address must REFUSE, never default — §0, same rule as
+ *  `mainnet.settlementRecipient`. */
 export function requireRegistryAddress(chainId: ChainId): Address {
   const address = getRegistryAddress(chainId);
   if (address === null) throw new RegistryNotDeployedError(chainId);

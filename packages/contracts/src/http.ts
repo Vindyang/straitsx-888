@@ -97,7 +97,9 @@ export function registerErrorHandler(app: FastifyInstance): void {
   app.setNotFoundHandler((req: FastifyRequest, reply: FastifyReply) => {
     reply.status(404).send({
       error: {
-        code: ErrorCode.BAD_REQUEST,
+        // 404 with code BAD_REQUEST would be a contract lie: §0 pins 400 to
+        // validation and 404 to an unknown id, and Owner B parses `code`.
+        code: ErrorCode.NOT_FOUND,
         message: `no route for ${req.method} ${req.url}`,
         requestId: resolveRequestId(req),
         retryable: false,
