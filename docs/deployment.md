@@ -214,6 +214,7 @@ were removed, local images were retained, and no image was pushed.
   verified, but sections 3 and 6 remain the deployment plan rather than a deployment record.
 - **The isolation screenshot is outstanding.** Needs a task in the orchestrator SG — not
   blocked on Module C being finished, only on A/B being reachable.
-- **Mainnet is untouched.** `registry.json` has no 43114 address (A5), the production 402 is
-  unread (A18), and `MAINNET.settlementRecipient` / `eip712Version` are still `null`, so every
-  mainnet path refuses. That refusal is the safety property, not a gap to paper over.
+- **The mainnet registry is deployed, but the payment path remains closed.** A5 is recorded in
+  `registry.json` at block `92883345`. The production 402 is still unread (A18), and
+  `MAINNET.settlementRecipient` / `eip712Version` remain `null`, so every mainnet payment path
+  refuses. That refusal is the safety property, not a gap to paper over.

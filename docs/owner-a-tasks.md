@@ -79,8 +79,8 @@ A12 network isolation ⛔ ─────► the security claim + the deck
 
 **Estimate:** 30 min · **Depends on:** A2 · **Do this Saturday, not Sunday**
 
-- [ ] Deploy to 43114 (you have 0.2 AVAX there; a deploy is a fraction of it)
-- [ ] Add the address to `registry.json`
+- [x] Deploy to 43114 — tx `0x91c61dba0afad108049f7fea4ba518d3a11598af9082eada348aebb0fa361e01`, block `92883345`
+- [x] Add `0x47b9b484944d95bc04888e40ad585462a06e7c6d` to `registry.json`
 
 > **Why this is not optional.** The hard event requirement is XSGD on **mainnet 43114**
 > ([project_outline.md:12](project_outline.md)). If production card clearance never arrives,

@@ -25,13 +25,14 @@ on-chain evidence.
 | **A16 CHECKPOINT 2** | **PASSED** — two real settlements on Fuji |
 | A17 nonce decision | **Complete** — canonical intent hash and fixed-width commitment nonce are active |
 | A18 production 402 | Script written; blocked on organiser clearance |
-| A5 mainnet registry | **Not done.** Last item blocked on nobody |
+| A5 mainnet registry | **Complete** — deployed and independently verified at block 92883345 |
 | A/B containers | **Locally verified** — four images build and pass read-only health smoke tests; not pushed or deployed |
 | B checks 1–9 | Complete |
 | B escalation auth | Complete — EIP-191 signature verification, added this session |
 
-Verification after A/B+C merge: `pnpm typecheck` exit 0 · `pnpm test` **243 passed, 6 skipped** ·
-`forge test` **16 passed**.
+Latest verification after A5: `pnpm typecheck` exit 0 · `pnpm test` **242 passed, 7 skipped** ·
+`forge test` **16 passed**. The additional Vitest skip is the conditional undeployed-chain
+case: both supported registry addresses are now populated, while the deployed-chain case passes.
 
 ## 2. Identifiers
 
@@ -43,14 +44,14 @@ Verification after A/B+C merge: `pnpm typecheck` exit 0 · `pnpm test` **243 pas
 | Funding-origin wallet | `0x9f6B4A5DE73CE365238F27236ea04A747E691bF7` |
 | IAM roles | `straitsx-888-signer-service` (Sign), `-policy-service` (DENY Sign), `-agent-orchestrator` (DENY kms:*) |
 | MandateRegistry Fuji | `0x47b9b484944d95bc04888e40ad585462a06e7c6d` @ block 57773961 |
-| MandateRegistry mainnet | **not deployed** |
+| MandateRegistry mainnet | `0x47b9b484944d95bc04888e40ad585462a06e7c6d` @ block 92883345 |
 
 ### Balances at handover
 
 | | Fuji 43113 | Mainnet 43114 |
 | --- | --- | --- |
 | Paying wallet | **20 XSGD**, 0 AVAX | 0 |
-| Funding origin | 0 XSGD, 0.001 AVAX | **30 XSGD**, 0.2 AVAX |
+| Funding origin | 0 XSGD, 0.001 AVAX | **30 XSGD**, 0.198967 AVAX |
 
 **20 XSGD is 4 cards** at the 5 XSGD minimum, and there is no faucet. Demo runs consume them.
 Use `scripts/probe-checkpoint2.ts` with no flags (free, creates nothing) for anything that
@@ -75,6 +76,21 @@ has never sent a transaction and holds no gas, yet 5 XSGD moved under its author
 
 **Hand the latency to Owner B** — it sets `maxAuthValiditySeconds` (check 7) from data. The
 challenge allows 300 s, roughly 25× observed, so round up generously.
+
+### Mainnet registry evidence
+
+| | |
+| --- | --- |
+| Deployment tx | [`0x91c61dba…`](https://snowtrace.io/tx/0x91c61dba0afad108049f7fea4ba518d3a11598af9082eada348aebb0fa361e01) |
+| Block | 92883345 |
+| Contract | [`0x47b9b484…`](https://snowtrace.io/address/0x47b9b484944d95bc04888e40ad585462a06e7c6d) |
+| Deployer | `0xAF0ce676d477a834F8e205C9C57496b6Bc8d085c`, nonce advanced 0 → 1 |
+| Runtime bytecode hash | `0xc7d4fba44073741b1ec91f9d021fbdcd6a7245f98067dd0804c96c818597423d` — exact local-artifact match |
+
+RPC receipt status was `1`, `get(0x00…00)` returned the expected zero-value tuple, and
+`scripts/sync-registry.ts 43114` generated the mainnet entry in `registry.json` from the
+successful Foundry broadcast record. The deployer has no contract privilege or required
+follow-up transaction.
 
 ## 4. What cost the most time, so nobody repeats it
 
@@ -187,15 +203,10 @@ the four local images were retained and **not pushed**.
 
 ## 7. Open items, in priority order
 
-**1. A5 — deploy MandateRegistry to mainnet 43114.** The last definition-of-done item blocked
-on nobody. Its own note calls leaving it late *"unrecoverable"*: if production card clearance
-never arrives, a mainnet registry plus a real mainnet XSGD movement is the fallback that keeps
-the submission compliant. 0.2 AVAX is already there.
-
-**2. A15 screenshot** — needs A/B reachable in C's cluster. Use C's probe, not ours: ours
+**1. A15 screenshot** — needs A/B reachable in C's cluster. Use C's probe, not ours: ours
 checks one target and cannot prove the positive controls.
 
-**3. A18 production 402** — `scripts/probe-production-402.ts` refuses to run without an explicit
+**2. A18 production 402** — `scripts/probe-production-402.ts` refuses to run without an explicit
 `--url` and `--cleared`. Until it runs, `MAINNET.settlementRecipient` and `eip712Version` stay
 `null` and every mainnet path refuses. That refusal is the safety property.
 
