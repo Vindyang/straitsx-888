@@ -1,0 +1,28 @@
+# Module A/B variables for the account-808 unified demo deployment.
+# Copy to /tmp/module-ab.tfvars, set mode 0600, then fill digest-pinned image
+# values printed by scripts/publish-aws-images.sh and the private signer facts.
+name       = "straitsx-module-ab"
+aws_region = "ap-southeast-1"
+
+ledger_image         = "ACCOUNT.dkr.ecr.ap-southeast-1.amazonaws.com/straitsx/ledger-service@sha256:replace-me"
+policy_image         = "ACCOUNT.dkr.ecr.ap-southeast-1.amazonaws.com/straitsx/policy-service@sha256:replace-me"
+signer_image         = "ACCOUNT.dkr.ecr.ap-southeast-1.amazonaws.com/straitsx/signer-service@sha256:replace-me"
+chain_gateway_image  = "ACCOUNT.dkr.ecr.ap-southeast-1.amazonaws.com/straitsx/chain-gateway@sha256:replace-me"
+
+# Private: the existing signing key and its derived address. Supplied only from
+# a mode-0600 file.
+signing_kms_key_arn      = "arn:aws:kms:ap-southeast-1:808198486011:key/replace-me"
+expected_signer_address  = "0x0000000000000000000000000000000000000000"
+
+# Fail-closed by default: the signer refuses every mandate that is not pinned.
+pinned_mandates = "{}"
+
+signer_chain_id = 43113
+chain_ids       = "43113,43114"
+rpc_url_43113   = "https://api.avax-test.network/ext/bc/C/rpc"
+rpc_url_43114   = "https://api.avax.network/ext/bc/C/rpc"
+rpc_timeout_ms  = 10000
+
+tags = {
+  Module = "A/B"
+}

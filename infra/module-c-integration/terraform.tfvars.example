@@ -1,0 +1,12 @@
+name       = "straitsx-module-c"
+aws_region = "ap-southeast-1"
+
+# Nothing else is required: the stack consumes foundation, module-c and
+# module-ab remote state from the shared state bucket. Set tags for
+# cost-allocation tracing of the probe task.
+
+tags = {
+  Environment = "demo"
+  Owner       = "integration"
+  Application = "straitsx-888"
+}

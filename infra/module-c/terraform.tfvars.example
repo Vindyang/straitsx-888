@@ -1,0 +1,25 @@
+# Module C workload variables for the account-808 unified demo deployment.
+# Copy to /tmp/module-c.tfvars, set mode 0600, then fill digest-pinned image
+# values printed by scripts/publish-aws-images.sh.
+name              = "straitsx-module-c"
+aws_region        = "ap-southeast-1"
+enable_cloudfront = true
+# certificate_arn   = null   # CloudFront route: leave null
+
+dashboard_image    = "ACCOUNT.dkr.ecr.ap-southeast-1.amazonaws.com/straitsx/module-c-dashboard@sha256:replace-me"
+orchestrator_image = "ACCOUNT.dkr.ecr.ap-southeast-1.amazonaws.com/straitsx/module-c-orchestrator@sha256:replace-me"
+fixture_image      = "ACCOUNT.dkr.ecr.ap-southeast-1.amazonaws.com/straitsx/module-c-orchestrator@sha256:replace-me"
+
+ledger_service_name        = "ledger.internal"
+policy_service_name        = "policy.internal"
+chain_gateway_service_name = "chain-gateway.internal"
+
+# Resolved StraitsX/merchant HTTPS destinations only. 0.0.0.0/0 is rejected.
+https_egress_cidrs = []
+
+dashboard_desired_count = 2
+service_max_count        = 4
+
+tags = {
+  Module = "C"
+}

@@ -6,11 +6,20 @@ import {
   escalations,
   instructionHashOf,
   intents,
+  intentViewOf,
+  ledgerEvents,
+  nextLedgerEventSeq,
   policies,
   standingApprovals,
   type EscalationReason,
   type IntentRecord,
+  type LedgerEventKind,
 } from "./store.js";
+
+function appendEvent(kind: LedgerEventKind, payload: Record<string, unknown> = {}): void {
+  const at = new Date().toISOString();
+  ledgerEvents.emit("append", { seq: nextLedgerEventSeq(), kind, at, ...payload });
+}
 
 export function buildApp(
   internalToken = process.env.INTERNAL_TOKEN ?? "dev-secret",
@@ -52,6 +61,7 @@ export function buildApp(
       createdAt,
       state: "INTENT_CREATED",
     });
+    appendEvent("intent.created", { requestId, mandateId, agentId, state: "INTENT_CREATED", intent: intentViewOf(intents.get(requestId)!) });
     reply.code(201).send({ requestId, state: "INTENT_CREATED", instructionHash, immutable: true });
   });
 
@@ -62,6 +72,36 @@ export function buildApp(
       return sendError(reply, 404, "INTENT_NOT_FOUND", `no intent for ${requestId}`, requestId);
     }
     reply.send(intent);
+  });
+
+  // Transparency: full append-only ledger, newest first, view-shaped.
+  app.get("/intents", async (_request, reply) => {
+    const views = [...intents.values()]
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+      .map(intentViewOf);
+    reply.send({ intents: views });
+  });
+
+  // Transparency: live append-only feed. Every mutation emits an "append" event;
+  // a fresh "snapshot" of the whole ledger is sent first so clients can rebuild state.
+  app.get("/ledger/events", async (_request, reply) => {
+    reply.hijack();
+    reply.raw.writeHead(200, {
+      "content-type": "text/event-stream",
+      "cache-control": "no-cache",
+      connection: "keep-alive",
+    });
+    const send = (event: string, data: unknown): void => {
+      reply.raw.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+    };
+    send("snapshot", { intents: [...intents.values()].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).map(intentViewOf) });
+    const onAppend = (event: unknown): void => send("append", event);
+    ledgerEvents.on("append", onAppend);
+    const heartbeat = setInterval(() => reply.raw.write(": hb\n\n"), 15_000);
+    reply.raw.on("close", () => {
+      ledgerEvents.off("append", onAppend);
+      clearInterval(heartbeat);
+    });
   });
 
   // B4 — a challenge may only attach to an intent that already exists (makes check 8 enforceable)
@@ -82,6 +122,7 @@ export function buildApp(
     intent.challenge = challenge;
     intent.challengeAttachedAt = attachedAt;
     intent.state = "CHALLENGE_ATTACHED";
+    appendEvent("challenge.attached", { requestId, mandateId: intent.mandateId, state: "CHALLENGE_ATTACHED", intent: intentViewOf(intent) });
     reply.send({ requestId, state: "CHALLENGE_ATTACHED", attachedAt });
   });
 
@@ -104,6 +145,7 @@ export function buildApp(
     intent.nonceReservedAt = reservedAt;
     intent.nonceReleased = false;
     intent.state = "NONCE_RESERVED";
+    appendEvent("nonce.reserved", { requestId, mandateId: intent.mandateId, state: "NONCE_RESERVED", intent: intentViewOf(intent) });
     reply.send({ requestId, nonce, reserved: true, reservedAt });
   });
 
@@ -124,6 +166,7 @@ export function buildApp(
     intent.nonce = undefined;
     intent.nonceReservedAt = undefined;
     intent.state = "CHALLENGE_ATTACHED";
+    appendEvent("nonce.released", { requestId, mandateId: intent.mandateId, state: "CHALLENGE_ATTACHED", intent: intentViewOf(intent) });
     reply.send({ requestId, released: true });
   });
 
@@ -180,6 +223,7 @@ export function buildApp(
     const existing = policies.get(mandateId);
     const policyVersion = (existing?.policyVersion ?? 0) + 1;
     policies.set(mandateId, { policy, policyVersion });
+    appendEvent("policy.put", { mandateId, policyVersion: Number(policyVersion) });
     reply.send({ mandateId, policyVersion });
   });
 
@@ -206,6 +250,7 @@ export function buildApp(
     const expiresAt = Math.floor(Date.now() / 1000) + ttlSeconds;
     const record = { requestId, mandateId, reason, approvalUrl, createdAt, expiresAt, ttlSeconds, resolved: false, merchantDomain };
     escalations.set(requestId, record);
+    appendEvent("escalation.created", { requestId, mandateId, reason, expiresAt, detail: { approvalUrl, ttlSeconds } });
     reply.code(201).send(record);
   });
 
@@ -232,6 +277,7 @@ export function buildApp(
     record.decision = decision;
     record.approvedBy = approvedBy;
     record.resolvedAt = new Date().toISOString();
+    appendEvent("escalation.resolved", { requestId, mandateId: record.mandateId, decision, resolvedAt: record.resolvedAt });
     reply.send(record);
   });
 
@@ -247,6 +293,7 @@ export function buildApp(
       return sendError(reply, 400, "INVALID_BODY", "mandateId, merchantDomain, expiresAt are required", mandateId ?? "n/a");
     }
     standingApprovals.set(`${mandateId}::${merchantDomain.toLowerCase()}`, expiresAt);
+    appendEvent("standing_approval.set", { mandateId, merchantDomain, expiresAt });
     reply.send({ mandateId, merchantDomain, expiresAt });
   });
 
@@ -270,10 +317,11 @@ export function buildApp(
       decidedAt?: string;
       // Only meaningful (and only ever sent) alongside decision:"signed" — see IntentRecord.
       policyHash?: string;
+      merchantDomain?: string;
       validAfter?: number;
       validBefore?: number;
     };
-    const { requestId, decision, check, detail, decidedAt, policyHash, validAfter, validBefore } = body;
+    const { requestId, decision, check, detail, decidedAt, policyHash, merchantDomain, validAfter, validBefore } = body;
     if (!requestId || !decision || !decidedAt) {
       return sendError(reply, 400, "INVALID_BODY", "requestId, decision, decidedAt are required", requestId ?? "n/a");
     }
@@ -288,19 +336,22 @@ export function buildApp(
     if (decision === "signed") {
       intent.state = "SIGNED";
       intent.policyHash = policyHash;
+      intent.merchantDomain = merchantDomain;
       intent.validAfter = validAfter;
       intent.validBefore = validBefore;
     }
+    appendEvent("decision.recorded", { requestId, mandateId: intent.mandateId, decision, check, detail, state: intent.state, intent: intentViewOf(intent) });
     reply.send({ recorded: true, sequence });
   });
 
   // B9 — settlement, spend (stretch), receipt
   app.post("/intent/:requestId/settlement", async (request, reply) => {
     const { requestId } = request.params as { requestId: string };
-    const { settlementTx, blockNumber, cardOpaqueId } = request.body as {
+    const { settlementTx, blockNumber, cardOpaqueId, rawToolResultHash } = request.body as {
       settlementTx?: string;
       blockNumber?: number;
       cardOpaqueId?: string;
+      rawToolResultHash?: string;
     };
     const intent = intents.get(requestId);
     if (!intent) {
@@ -309,9 +360,57 @@ export function buildApp(
     if (!settlementTx || blockNumber === undefined || !cardOpaqueId) {
       return sendError(reply, 400, "INVALID_BODY", "settlementTx, blockNumber, cardOpaqueId are required", requestId);
     }
-    intent.settlement = { settlementTx, blockNumber, cardOpaqueId };
+    // `rawToolResultHash` is a hash of the MCP tool result, NOT the result
+    // itself. The body carries a live prompt injection (execution_plan.md
+    // §19.6) and card-gateway drops every free-text key before forwarding, so
+    // the receipt records that a specific tool result was seen without ever
+    // storing its text. Optional: the field is a migration, and settlements
+    // recorded before card-gateway supplied it stay valid.
+    if (rawToolResultHash !== undefined && !/^0x[0-9a-fA-F]{64}$/.test(rawToolResultHash)) {
+      return sendError(reply, 400, "INVALID_BODY", "rawToolResultHash must be a 32-byte 0x hex hash when present", requestId);
+    }
+    intent.settlement = { settlementTx, blockNumber, cardOpaqueId, rawToolResultHash };
     intent.state = "SETTLED";
+    appendEvent("settlement.recorded", { requestId, mandateId: intent.mandateId, state: "SETTLED", settlementTx, blockNumber, intent: intentViewOf(intent) });
     reply.send({ requestId, state: "SETTLED", settlementTx });
+  });
+
+  // B9b — capture-time settlement finalization (seamless issuer settlement). The
+  // merchant captures the card payment at checkout; the orchestrator then verifies
+  // the on-chain transfer independently and only after that records the capture.
+  app.post("/intent/:requestId/capture", async (request, reply) => {
+    const { requestId } = request.params as { requestId: string };
+    const { orderId, capturedAt, settlementTx, blockNumber } = request.body as {
+      orderId?: string;
+      capturedAt?: string;
+      settlementTx?: string;
+      blockNumber?: number;
+    };
+    const intent = intents.get(requestId);
+    if (!intent) {
+      return sendError(reply, 404, "INTENT_NOT_FOUND", `no intent for ${requestId}`, requestId);
+    }
+    if (!orderId || !capturedAt) {
+      return sendError(reply, 400, "INVALID_BODY", "orderId, capturedAt are required", requestId);
+    }
+    if (intent.capture) {
+      return sendError(reply, 409, "CAPTURE_EXISTS", `capture already recorded for ${requestId}`, requestId);
+    }
+    if (!intent.settlement) {
+      return sendError(reply, 409, "SETTLEMENT_NOT_RECORDED", `settlement must precede capture for ${requestId}`, requestId);
+    }
+    if (settlementTx && intent.settlement.settlementTx !== settlementTx) {
+      return sendError(reply, 409, "SETTLEMENT_MISMATCH", "capture settlementTx does not match the recorded settlement", requestId);
+    }
+    intent.capture = {
+      orderId,
+      capturedAt,
+      settlementTx: intent.settlement.settlementTx,
+      blockNumber: blockNumber ?? intent.settlement.blockNumber,
+    };
+    intent.state = "CAPTURED";
+    appendEvent("capture.recorded", { requestId, mandateId: intent.mandateId, state: "CAPTURED", orderId, settlementTx: intent.settlement.settlementTx, intent: intentViewOf(intent) });
+    reply.send({ requestId, state: "CAPTURED", orderId, settlementTx: intent.settlement.settlementTx });
   });
 
   app.post("/intent/:requestId/spend", async (request, reply) => {
@@ -333,6 +432,7 @@ export function buildApp(
     intent.spend = { merchantDomain, orderTotal, itemSku, orderId, observedAt };
     // proof is always "none" until a merchant-signed attestation exists — never label an
     // observation as proof.
+    appendEvent("spend.recorded", { requestId, mandateId: intent.mandateId, orderId, orderTotal, merchantDomain, intent: intentViewOf(intent) });
     reply.send({ recorded: true, spendLeg: { status: "observed", proof: "none" } });
   });
 
@@ -347,6 +447,8 @@ export function buildApp(
       mandateId: intent.mandateId,
       policyHash: intent.policyHash ?? null,
       intent: intent.instruction,
+      intentHash: intent.instructionHash,
+      merchantDomain: intent.merchantDomain ?? null,
       challenge: intent.challenge
         ? {
             payTo: intent.challenge.payTo,
@@ -361,6 +463,9 @@ export function buildApp(
       settlementTx: intent.settlement?.settlementTx ?? null,
       blockNumber: intent.settlement?.blockNumber ?? null,
       cardOpaqueId: intent.settlement?.cardOpaqueId ?? null,
+      // The evidence that a specific MCP tool result produced this purchase,
+      // without carrying the injected text into anything that reads receipts.
+      rawToolResultHash: intent.settlement?.rawToolResultHash ?? null,
       decision: intent.decision ?? null,
       decidedAt: intent.decidedAt ?? null,
       spendLeg: intent.spend

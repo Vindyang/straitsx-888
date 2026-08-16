@@ -26,6 +26,7 @@ A12 network isolation ⛔ ─────► the security claim + the deck
 # Phase 0 — Hour 0–1 (do not skip, everything waits on this)
 
 ### A1 ⛔ Stub signer-service and chain-gateway
+
 **Estimate:** 45 min · **Blocks:** all of Owner B, all of Owner C
 
 - [ ] `signer-service` on **4003**: `POST /sign` → fixed dummy `header`, random `nonce`,
@@ -34,7 +35,7 @@ A12 network isolation ⛔ ─────► the security claim + the deck
       `GET /token/constants` → Fuji constants with `version: null`
 - [ ] Both `GET /health` → `{ "ok": true }`
 - [ ] Commit shared types to `packages/contracts/`
-- [ ] Post in team channel: *"stubs up — 4003 signer, 4004 chain-gateway"*
+- [ ] Post in team channel: _"stubs up — 4003 signer, 4004 chain-gateway"_
 
 **Done when:** Owner B can `curl` both and get shape-correct JSON.
 
@@ -43,6 +44,7 @@ A12 network isolation ⛔ ─────► the security claim + the deck
 # Phase 1 — mandate-registry
 
 ### A2 ⛔ Implement and deploy the registry
+
 **Estimate:** 2 h · **Blocks:** B3, C10 · **Hard deadline: hour 2**
 
 - [ ] Foundry project under `packages/contracts-sol/`
@@ -56,6 +58,7 @@ A12 network isolation ⛔ ─────► the security claim + the deck
 **Done when:** `forge test` green and the contract is deployed to Fuji.
 
 ### A3 Write the registry test suite
+
 **Estimate:** 45 min · **Depends on:** A2
 
 - [ ] non-owner `revoke` → reverts
@@ -65,6 +68,7 @@ A12 network isolation ⛔ ─────► the security claim + the deck
 - [ ] unknown id → `owner == address(0)`
 
 ### A4 ⛔ Publish `registry.json`
+
 **Estimate:** 20 min · **Depends on:** A2 · **Blocks:** B3, C10
 
 - [ ] Commit `packages/contracts/registry.json`:
@@ -72,10 +76,11 @@ A12 network isolation ⛔ ─────► the security claim + the deck
 - [ ] Announce the address in the team channel
 
 ### A5 Deploy the registry to **mainnet 43114** as well
+
 **Estimate:** 30 min · **Depends on:** A2 · **Do this Saturday, not Sunday**
 
-- [ ] Deploy to 43114 (you have 0.2 AVAX there; a deploy is a fraction of it)
-- [ ] Add the address to `registry.json`
+- [x] Deploy to 43114 — tx `0x91c61dba0afad108049f7fea4ba518d3a11598af9082eada348aebb0fa361e01`, block `92883345`
+- [x] Add `0x47b9b484944d95bc04888e40ad585462a06e7c6d` to `registry.json`
 
 > **Why this is not optional.** The hard event requirement is XSGD on **mainnet 43114**
 > ([project_outline.md:12](project_outline.md)). If production card clearance never arrives,
@@ -89,6 +94,7 @@ A12 network isolation ⛔ ─────► the security claim + the deck
 The **only** component that opens an RPC connection. No policy logic. No signing.
 
 ### A6 `GET /token/constants`
+
 **Estimate:** 45 min · **Depends on:** A1
 
 - [ ] Read `name()` and `decimals()` on-chain
@@ -104,6 +110,7 @@ The **only** component that opens an RPC connection. No policy logic. No signing
 > `version` from `challenge.extra.version`.
 
 ### A7 `GET /mandate/:mandateId`
+
 **Estimate:** 30 min · **Depends on:** A4
 
 - [ ] Read the registry via the published ABI
@@ -111,6 +118,7 @@ The **only** component that opens an RPC connection. No policy logic. No signing
 - [ ] Include `readAtBlock` in the response
 
 ### A8 `POST /settlement/confirm`
+
 **Estimate:** 1 h · **Depends on:** A1
 
 - [ ] Fetch the receipt by `txHash`
@@ -122,6 +130,7 @@ The **only** component that opens an RPC connection. No policy logic. No signing
 receipt trustworthy rather than decorative.
 
 ### A9 `GET /balance` and `POST /tx/build-revoke`
+
 **Estimate:** 45 min
 
 - [ ] `/balance`: XSGD via `balanceOf`, AVAX via `eth_getBalance`, both as base-unit strings
@@ -129,6 +138,7 @@ receipt trustworthy rather than decorative.
 - [ ] **chain-gateway never signs.** The human signs in their own wallet from the dashboard.
 
 ### A10 RPC failure handling
+
 **Estimate:** 30 min
 
 - [ ] Every RPC error → `502` with `retryable: true`
@@ -141,21 +151,24 @@ receipt trustworthy rather than decorative.
 # Phase 3 — signer-service (CHECKPOINT 2 — highest risk in the project)
 
 ### A11 ⛔ KMS key + custody proof
+
 **Estimate:** 1 h · **Blocks:** every signature that will ever settle · **Do this first**
 
 - [ ] Create an AWS KMS **asymmetric secp256k1** key
 - [ ] IAM: only `signer-service`'s execution role may call `Sign`
 - [ ] Derive the Ethereum address from the KMS public key at boot
 - [ ] Expose it as `derivedAddress` on `GET /health`
-- [ ] **Assert `derivedAddress == 0x9f6B4A5DE73CE365238F27236ea04A747E691bF7`**
+- [ ] **Assert `derivedAddress == EXPECTED_SIGNER_ADDRESS`** (env; replaces the literal, see §19.5)
 
-> **This is the custody proof.** That wallet holds 30 XSGD on **both** chains
-> ([execution_plan.md §19.5](execution_plan.md)). On-chain reads prove it is funded; they
-> cannot prove we hold the key. This boot assertion is the proof, and it never touches key
-> material. **If it mismatches, stop and tell the team** — you are signing from an account
-> with no money and no signature will ever settle.
+> **This is the custody proof.** A fresh KMS key derives its own address. The 30 XSGD must
+> be transferred from the funding-origin wallet (`0x9f6B…1bF7`) to the KMS-derived address
+> (Fuji first, mainnet only after Fuji lands). On-chain reads prove the address is funded;
+> they cannot prove we hold the key. This boot assertion is the proof, and it never touches
+> key material. **If it mismatches, stop and tell the team** — you are signing from an
+> account with no money and no signature will ever settle.
 
 ### A12 EIP-3009 typed data construction
+
 **Estimate:** 1 h · **Depends on:** A11
 
 - [ ] Build `TransferWithAuthorization(address from, address to, uint256 value, uint256 validAfter, uint256 validBefore, bytes32 nonce)`
@@ -166,6 +179,7 @@ receipt trustworthy rather than decorative.
 - [ ] `value` is a base-unit string at **6 decimals** — `"5000000"` is 5 XSGD
 
 ### A13 KMS signature normalisation — budget real time for this
+
 **Estimate:** 1–2 h · **Depends on:** A12 · **The classic KMS bug**
 
 - [ ] Parse the DER signature KMS returns into `r` and `s`
@@ -178,21 +192,22 @@ receipt trustworthy rather than decorative.
 > clears and it looks exactly like a wrong-domain bug. Do this offline first.
 
 ### A14 Signer hard-invariant rail
+
 **Estimate:** 1 h · **Depends on:** A12 · **Source: [§12b 2.2](execution_plan.md)**
 
 - [ ] Load an **immutable map from env at boot**, never from the request:
       `mandateId → { settlementRecipient, hardMaxTotal }`
 - [ ] Refuse with `403` + code:
 
-| Condition | `code` |
-| --- | --- |
-| `mandateId` not in the pinned map | `SIGNER_UNPINNED_MANDATE` |
-| `message.to` != pinned `settlementRecipient` | `SIGNER_WRONG_RECIPIENT` |
-| `message.value` > pinned `hardMaxTotal` | `SIGNER_CEILING` |
-| `message.from` != paying wallet | `SIGNER_WRONG_FROM` |
-| `domain.chainId` != configured chain | `SIGNER_WRONG_CHAIN` |
-| `validBefore - validAfter` > 600 | `SIGNER_WINDOW` |
-| `requestId` already signed | `SIGNER_REPLAY` (409) |
+| Condition                                    | `code`                    |
+| -------------------------------------------- | ------------------------- |
+| `mandateId` not in the pinned map            | `SIGNER_UNPINNED_MANDATE` |
+| `message.to` != pinned `settlementRecipient` | `SIGNER_WRONG_RECIPIENT`  |
+| `message.value` > pinned `hardMaxTotal`      | `SIGNER_CEILING`          |
+| `message.from` != paying wallet              | `SIGNER_WRONG_FROM`       |
+| `domain.chainId` != configured chain         | `SIGNER_WRONG_CHAIN`      |
+| `validBefore - validAfter` > 600             | `SIGNER_WINDOW`           |
+| `requestId` already signed                   | `SIGNER_REPLAY` (409)     |
 
 - [ ] Unit-test all seven refusals
 
@@ -201,6 +216,7 @@ receipt trustworthy rather than decorative.
 > They hold **even if policy-service is fully compromised**, which is the entire point.
 
 ### A15 ⛔ Network isolation + the probe test
+
 **Estimate:** 1 h · **Source: [§11](execution_plan.md)**
 
 - [ ] Firewall / security group: **only policy-service may reach port 4003**
@@ -214,32 +230,52 @@ receipt trustworthy rather than decorative.
 > will find it. This test is a deliverable, not hygiene.
 
 ### A16 CHECKPOINT 2 — first real signature
+
 **Estimate:** 2 h · **Depends on:** A11–A14 · **Lead this personally**
 
-- [ ] Fetch a live challenge (free, creates nothing):
-      `curl -i -X POST https://card.straitsx.ai/sandbox/cardapi/issue_card -H 'content-type: application/json' -d '{"amount_sgd":5,"cardholder_name":"Test Probe"}'`
-- [ ] Build typed data from that exact challenge
-- [ ] Sign via KMS
-- [ ] Retry with `PAYMENT-SIGNATURE` → expect `card_opaque_id`, `settlement_tx`
-- [ ] Verify the settlement tx on Fuji with A8
-- [ ] **Measure `202` → settlement latency and hand the number to Owner B** — it sets
-      `maxAuthValiditySeconds` from data, not a guess (check 7)
+## ✅ PASSED 2026-08-15. Automated as `scripts/probe-checkpoint2.ts`.
 
-**Nothing external blocks this.** Domain, asset, and the 30 XSGD balance are all resolved
-([§19.4–19.5](execution_plan.md)).
+- [x] Fetch a live challenge (free, creates nothing) — `probe-checkpoint2.ts` with no flags
+      does exactly this and stops; run it as often as you like
+- [x] Build typed data from that exact challenge
+- [x] Sign via KMS
+- [x] Retry with `PAYMENT-SIGNATURE` → `card_opaque_id` `01KASWWW33N045ABPJKFGSPTM1`,
+      `settlement_tx` `0xe6dcb85e…`
+- [x] Verify the settlement tx on Fuji with A8 — `ok:true`, `transferMatched:true`,
+      `logIndex:1`; and a mismatched `expect` returns `ok:false` on all three of wrong
+      amount, wrong recipient and wrong asset
+- [x] **`202` → settlement latency: ~11 s** (10.7–11.7 s; the probe polls at 1 s granularity,
+      so do not quote it as precise). Hand to Owner B for `maxAuthValiditySeconds`.
+
+**Evidence.** Settlement
+[`0xe6dcb85e…`](https://testnet.snowtrace.io/tx/0xe6dcb85eb3880f9daff8ace963e60bba346d3a785411e19cd4e04972da6094c6)
+at block 57777207 moved 5 XSGD to the recorded settlement recipient. The transaction was
+**submitted and paid for by `0x4b9e841a…`, not by us** — EIP-3009 is a pull mechanism, so the
+paying wallet has never sent a transaction and holds no AVAX. That is the custody claim
+demonstrated rather than asserted, and it is the row to show a judge.
+
+**What it cost to get here.** `PAYMENT-SIGNATURE` was carrying base64 of the EIP-712 typed
+data, which contains no signature at all, and the only test on it asserted the value was a
+string. Three payload shapes were rejected before the right one; all are recorded in
+[api-contracts.md §4](api-contracts.md). Every failure presented as a 402 that never clears —
+indistinguishable at a glance from a domain bug, exactly as A13 warns.
+
+**Budget:** each run spends 5 XSGD of a finite 30. Two are gone; **20 XSGD (4 cards) remain.**
+Use challenge-only mode for anything that does not require a real signature.
 
 ---
 
 # Phase 4 — Decisions and follow-through
 
-### A17 Decide the nonce strategy — **before A16**
+### A17 Decide the nonce strategy — **complete**
+
 **Estimate:** 15 min discussion
 
-- [ ] Choose: random-and-reserved (current plan) **or**
-      `keccak256(requestId ‖ policyHash ‖ intentHash ‖ merchantDomain)`
-- [ ] Tell Owner B — policy-service computes the nonce and passes it in, so this is one line
-      on B's side and none on yours
-- [ ] Record the decision in [execution_plan.md §10](execution_plan.md)
+- [x] Chose the fixed-width commitment encoding documented in
+      [execution_plan.md §10](execution_plan.md)
+- [x] Owner B implemented canonical `intentHash`, commitment nonce generation, reservation,
+      and receipt fields; signer-service remains unchanged and treats the nonce as opaque
+- [x] Decision and exact byte encoding recorded in [execution_plan.md §10](execution_plan.md)
 
 > The commitment variant makes the on-chain settlement itself commit to the human's intent,
 > turning the receipt from a database claim into something anyone can verify from chain data.
@@ -247,6 +283,7 @@ receipt trustworthy rather than decorative.
 > decide now.
 
 ### A18 Production 402 probe — unblocks the mainnet leg
+
 **Estimate:** 20 min · **Ask the organisers about clearance first**
 
 - [ ] Confirm with organisers that teams are cleared for `/production/sse`
@@ -260,13 +297,17 @@ receipt trustworthy rather than decorative.
 ## Definition of done
 
 - [ ] `registry.json` committed with **both** chain addresses
-- [ ] `forge test` green
-- [ ] `/health` shows `derivedAddress == 0x9f6B…1bF7`
-- [ ] A real signature accepted by cardapi; `settlementTx` exists on Fuji
-- [ ] `confirmSettlement` verifies a real `Transfer` log and rejects a mismatched one
+- [x] `forge test` green — 16/16, 2026-08-15
+- [x] `/health` shows `derivedAddress == EXPECTED_SIGNER_ADDRESS` — verified 2026-08-15
+      against the real KMS key: `{"ok":true,"derivedAddress":"0x0F6DdD…7CA7",
+      "kmsKeyId":"arn:aws:kms:…:key/****b03f","chainId":43113}`. The key id is masked and no
+      stub flag remains. **A mismatch provably refuses to start** — booting with a wrong
+      `EXPECTED_SIGNER_ADDRESS` throws and never binds the port.
+- [x] A real signature accepted by cardapi; `settlementTx` exists on Fuji — `0xe6dcb85e…`
+- [x] `confirmSettlement` verifies a real `Transfer` log and rejects a mismatched one — checked against the live checkpoint-2 tx, mismatched amount/recipient/asset all return `ok:false`
 - [ ] Orchestrator→signer connection **demonstrably refused**, screenshotted
-- [ ] All seven signer invariant refusals unit-tested
-- [ ] `202`→settlement latency measured and handed to Owner B
+- [x] All seven signer invariant refusals unit-tested
+- [x] `202`→settlement latency measured (~11 s) — **still to hand to Owner B**
 
 ## Never
 

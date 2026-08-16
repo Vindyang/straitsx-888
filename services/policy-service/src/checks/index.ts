@@ -41,6 +41,7 @@ export const CHECKS: ReadonlyArray<readonly [string, CheckFn]> = [
 
 export const CHECK_INDEX: Readonly<Record<string, number>> = {
   precondition_intent_exists: 0,
+  precondition_merchant_domain: 0,
   check1_mandate_live: 1,
   check2_policy_hash: 2,
   check3_chain_asset: 3,
@@ -54,6 +55,8 @@ export const CHECK_INDEX: Readonly<Record<string, number>> = {
 export const HUMAN_EXPLANATIONS: Readonly<Record<string, string>> = {
   precondition_intent_exists:
     "No record of this purchase request exists. Nothing was signed and no money moved.",
+  precondition_merchant_domain:
+    "The merchant domain required to bind this payment was missing. Nothing was signed and no money moved.",
   check1_mandate_live:
     "This mandate is not currently active — it may be revoked or expired. Nothing was signed and no money moved.",
   check2_policy_hash:

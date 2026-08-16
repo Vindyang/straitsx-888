@@ -10,6 +10,7 @@ type IntentRecord = {
   requestId: string;
   mandateId: string;
   instruction: string;
+  instructionHash: string;
   createdAt: string;
   challenge?: X402Requirements | undefined;
   challengeAttachedAt?: string | undefined;
@@ -18,6 +19,7 @@ type IntentRecord = {
   decision?: string | undefined;
   decidedAt?: string | undefined;
   policyHash?: string | undefined;
+  merchantDomain?: string | undefined;
   validAfter?: number | undefined;
   validBefore?: number | undefined;
 };
@@ -48,6 +50,7 @@ type DecisionEntry = {
   detail?: string | undefined;
   decidedAt: string;
   policyHash?: string | undefined;
+  merchantDomain?: string | undefined;
   validAfter?: number | undefined;
   validBefore?: number | undefined;
 };
@@ -150,6 +153,7 @@ export async function recordDecision(entry: DecisionEntry): Promise<void> {
     intent.decidedAt = entry.decidedAt;
     if (entry.decision === "signed") {
       intent.policyHash = entry.policyHash;
+      intent.merchantDomain = entry.merchantDomain;
       intent.validAfter = entry.validAfter;
       intent.validBefore = entry.validBefore;
     }

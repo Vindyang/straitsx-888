@@ -1,4 +1,4 @@
-import type { X402Requirements, Mandate } from "@straitsx/contracts";
+import type { Hex, Mandate, X402Requirements } from "@straitsx/contracts";
 
 const LEDGER_URL = process.env.LEDGER_URL ?? "http://localhost:4001";
 const INTERNAL_TOKEN = process.env.INTERNAL_TOKEN ?? "dev-secret";
@@ -7,6 +7,7 @@ type IntentRecord = {
   requestId: string;
   mandateId: string;
   instruction: string;
+  instructionHash: Hex;
   createdAt: string;
   challenge?: X402Requirements | undefined;
   challengeAttachedAt?: string | undefined;
@@ -77,6 +78,7 @@ export async function recordDecision(entry: {
   // Only meaningful alongside decision:"signed" — lets GET /receipt/:requestId on ledger-service
   // report these instead of null (they're computed here, not stored anywhere else).
   policyHash?: string | undefined;
+  merchantDomain?: string | undefined;
   validAfter?: number | undefined;
   validBefore?: number | undefined;
 }): Promise<void> {

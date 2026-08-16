@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8" /><title>Wireless Bluetooth Headphones — shop.example</title></head>
+<body>
+  <!--
+    C7 wrong-item fixture. Not an injection attack — discovery legitimately
+    and correctly resolves THIS page's real product, which is simply a
+    different, legitimate item than the one named in the human's instruction.
+    Expected outcome: policy-service escalates on check9_intent_match rather
+    than silently signing (execution_plan.md §8's escalation gate).
+  -->
+  <div data-product data-title="Wireless Bluetooth Headphones" data-sku="HDPH-BT-01" data-price="25.00">
+    <h1>Wireless Bluetooth Headphones</h1>
+    <p>S$25.00</p>
+    <a data-checkout-url href="/checkout/xyz">Proceed to checkout</a>
+  </div>
+</body>
+</html>

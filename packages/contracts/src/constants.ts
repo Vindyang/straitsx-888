@@ -98,6 +98,25 @@ export const MCP_SSE_PRODUCTION: string | null = null;
 export const FUNDING_ORIGIN_WALLET: Address =
   "0x9f6B4A5DE73CE365238F27236ea04A747E691bF7";
 
+/**
+ * There is deliberately NO per-chain `network` constant here.
+ *
+ * One existed briefly and was deleted: the x402 `network` value belongs to the
+ * live challenge (`accepts[0].network`), and the signer now takes the whole
+ * `accepted` block from the 402 rather than reconstructing any of it. A local
+ * map would be a second source of truth for a value we are always handed, and
+ * the first version of it guessed `"avalanche-fuji"` when the real value is the
+ * CAIP-2 form `"eip155:43113"` — a mistake that only surfaces as a 402 which
+ * never clears.
+ *
+ * The observed values are recorded in docs/execution_plan.md §19.3 and
+ * docs/api-contracts.md §4, which is where facts belong. Mainnet has still
+ * never been observed (A18).
+ */
+
+/** The x402 protocol version we build payloads for. */
+export const X402_VERSION = 1;
+
 export const SERVICE_PORTS = {
   ledger: 4001,
   policy: 4002,

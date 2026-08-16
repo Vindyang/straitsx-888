@@ -5,7 +5,8 @@ already does; §6 lists the places the three owners diverged and names the singl
 converge on. If you are adding a file, follow this doc. If this doc and the code disagree,
 the code is the bug — say so in review.
 
-Companion docs: [api-contracts.md](api-contracts.md) is authoritative for **wire shapes**;
+Companion docs: [deployment.md](deployment.md) is authoritative for **how services are
+deployed and configured**; [api-contracts.md](api-contracts.md) is authoritative for **wire shapes**;
 this doc is authoritative for **how the repo is arranged and named**. Facts are resolved in
 [execution_plan.md §19](execution_plan.md).
 
@@ -111,7 +112,7 @@ and thrown as `AppError`:
 
 Status ladder: `400` validation · `401` bad token · `403` caller not allowed · `404` unknown
 id · `409` idempotency/conditional-write conflict · `422` policy refusal · `502` upstream
-failed · `504` upstream timeout.
+failed · `503` required dependency unavailable · `504` upstream timeout.
 
 > Never put a PAN, private key, KMS key id, raw signature, or card iframe URL in an error
 > body or a log line.
@@ -199,7 +200,8 @@ Request/response pairs are `<Thing>Request` / `<Thing>Response`. Stored records 
 ### Error codes
 
 `SCREAMING_SNAKE_CASE`, named for the condition, not the status: `MANDATE_NOT_FOUND`,
-`NONCE_ALREADY_RESERVED`, `POLICY_HASH_DRIFT`, `SIGNER_WRONG_RECIPIENT`. Signer-rail refusals
+`NONCE_ALREADY_RESERVED`, `POLICY_HASH_DRIFT`, `SIGNER_WRONG_RECIPIENT`,
+`DEPENDENCY_UNAVAILABLE`. Signer-rail refusals
 are prefixed `SIGNER_` because they are structural invariants, distinct from policy refusals.
 
 ### Environment variables

@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "redactionDeclaration": "No recording frame, trace, screenshot, console capture, video, or log may contain PAN, CVC, expiry, PAYMENT-SIGNATURE headers, approval signatures, or one-time iframe URLs.",
+  "recordings": [
+    {
+      "run": "run-1-fuji-clean",
+      "status": "pending-external-acceptance-gates",
+      "recordedAt": null,
+      "file": null,
+      "sha256": null,
+      "chainId": 43113,
+      "settlementLink": null,
+      "mandateId": null
+    },
+    {
+      "run": "run-2-fuji-poisoned-recipient-refusal",
+      "status": "pending-external-acceptance-gates",
+      "recordedAt": null,
+      "file": null,
+      "sha256": null,
+      "chainId": 43113,
+      "settlementLink": null,
+      "mandateId": null
+    },
+    {
+      "run": "production-merchant-checkout",
+      "status": "pending-clearance-and-merchant-profile",
+      "recordedAt": null,
+      "file": null,
+      "sha256": null,
+      "chainId": 43114,
+      "settlementLink": null,
+      "mandateId": null
+    }
+  ],
+  "reproductionCommands": [
+    "corepack pnpm install --frozen-lockfile",
+    "corepack pnpm test",
+    "corepack pnpm --filter @straitsx/agent-orchestrator fixtures",
+    "corepack pnpm --filter @straitsx/agent-orchestrator dev",
+    "npm --prefix services/dashboard run dev",
+    "shasum -a 256 artifacts/demo/<redacted-video>"
+  ]
+}

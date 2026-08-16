@@ -103,10 +103,28 @@ export type TransferWithAuthorizationTypedData = {
  * api-contracts.md §4 omits it; the line below the refusal table adds it
  * ("`POST /sign` therefore also takes `mandateId` alongside `typedData`").
  * The rail cannot work without it. */
+/**
+ * One entry of the challenge's `accepts[]` — the requirement the client chose
+ * to satisfy. Goes into the x402 v2 payment payload as `accepted`, and the
+ * facilitator reads `accepted.amount` to learn what is being paid.
+ *
+ * Confirmed live at checkpoint 2 (2026-08-15): omitting it produces
+ * `cannot parse payment amount: invalid atomic amount ""`, because the server
+ * has nowhere else to read the amount from.
+ */
+export type X402Accepted = Omit<X402Requirements, "x402Version">;
+
 export type SignRequest = {
   requestId: string; // UUIDv4, idempotency key across every service
   mandateId: Hex;
   typedData: TransferWithAuthorizationTypedData;
+  /**
+   * The challenge entry being satisfied, passed straight through from the 402.
+   * REQUIRED: without it the emitted header cannot be settled.
+   */
+  accepted: X402Accepted;
+  /** The resource being paid for — the cardapi URL from the challenge. */
+  resource: string;
 };
 
 export type SignResponse = {

@@ -1,5 +1,4 @@
-import { randomBytes } from "node:crypto";
-import type { Mandate, X402Requirements } from "@straitsx/contracts";
+import { buildCommitmentNonce, type Hex, type Mandate, type X402Requirements } from "@straitsx/contracts";
 import * as ledger from "./clients/ledgerClient.js";
 import * as signer from "./clients/signerClient.js";
 import { buildTypedData } from "./typedData.js";
@@ -7,6 +6,12 @@ import { buildTypedData } from "./typedData.js";
 export type SigningOutcome =
   | { ok: true; header: string; nonce: string; validAfter: number; validBefore: number }
   | { ok: false; statusCode: number; code: string; message: string; retryable: boolean };
+
+export type SigningCommitment = {
+  policyHash: Hex;
+  intentHash: Hex;
+  merchantDomain: string;
+};
 
 /**
  * The tail end of B10's pipeline: reserve nonce -> compute validity window -> sign.
@@ -20,8 +25,19 @@ export async function performSigning(
   challenge: X402Requirements,
   amount: string,
   now: number,
+  /**
+   * The resource being paid for — the cardapi URL from the 402 exchange.
+   *
+   * TODO(owner-c-plumbing): this should arrive with the challenge. `get_card_sandbox`
+   * returns `{ cardapiUrl, challenge }` (execution_plan §6), but `cardapiUrl` is
+   * currently dropped before it reaches policy-service, so callers pass the
+   * sandbox constant. Thread it through the intent record and this parameter
+   * becomes the real value instead of an assumption.
+   */
+  resource: string,
+  commitment: SigningCommitment,
 ): Promise<SigningOutcome> {
-  const nonce = `0x${randomBytes(32).toString("hex")}`;
+  const nonce = buildCommitmentNonce({ requestId, ...commitment });
   const reserved = await ledger.reserveNonce(requestId, nonce);
   if (!reserved.ok) {
     return { ok: false, statusCode: 409, code: reserved.code, message: `nonce reservation failed for ${requestId}`, retryable: false };
@@ -32,7 +48,18 @@ export async function performSigning(
   const validBefore = validAfter + window;
   const typedData = buildTypedData(mandate, challenge, amount, validAfter, validBefore, nonce);
 
-  const signResult = await signer.sign(requestId, mandateId, typedData);
+  // `accepted` is the challenge minus its top-level x402Version — the entry the
+  // payment satisfies. Derived here rather than asked of every caller, since the
+  // challenge already carries every field.
+  const { x402Version: _x402Version, ...accepted } = challenge;
+
+  const signResult = await signer.sign(
+    requestId,
+    mandateId,
+    typedData,
+    accepted,
+    resource,
+  );
   if (!signResult.ok) {
     // Pre-signature failure: release the nonce so a retry with a fresh nonce can succeed (B6).
     await ledger.releaseNonce(requestId, signResult.code);

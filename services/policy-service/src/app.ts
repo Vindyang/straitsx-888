@@ -1,5 +1,12 @@
 import Fastify, { type FastifyInstance } from "fastify";
-import { hashPolicy, type Mandate, type ResolvedItem, type X402Requirements } from "@straitsx/contracts";
+import {
+  CARDAPI_SANDBOX_ISSUE_CARD,
+  hashPolicy,
+  verifyEscalationSignature,
+  type Mandate,
+  type ResolvedItem,
+  type X402Requirements,
+} from "@straitsx/contracts";
 import * as chainGateway from "./clients/chainGatewayClient.js";
 import * as ledger from "./clients/ledgerClient.js";
 import {
@@ -104,6 +111,14 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
       return refuseAndRecord(preconditionFailure.check, preconditionFailure.detail);
     }
 
+    if (!resolvedItem || typeof resolvedItem.merchantDomain !== "string" || resolvedItem.merchantDomain.trim().length === 0) {
+      return refuseAndRecord(
+        "precondition_merchant_domain",
+        "resolvedItem.merchantDomain is required to bind the authorization nonce",
+      );
+    }
+    const merchantDomain = resolvedItem.merchantDomain;
+
     // B10 — load policy + window usage; read registry.
     const policyRecord = await ledger.getPolicy(mandateId);
     if (!policyRecord) {
@@ -135,29 +150,37 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
         continue;
       }
       if (failure.outcome === "escalate") {
-        return escalateAndRespond(failure.check, failure.reason as "WINDOW_BUDGET_EXCEEDED", failure.detail);
+        return escalateAndRespond(failure.check, failure.reason as "WINDOW_BUDGET_EXCEEDED", failure.detail, merchantDomain);
       }
       return refuseAndRecord(failure.check, failure.detail);
     }
 
-    // B20 — the intent-match gate. Only runs when discovery data is present; Runs 1-3 don't
-    // depend on Owner C having wired resolvedItem yet.
-    if (resolvedItem) {
-      const hasStandingApproval = await ledger.getStandingApproval(mandateId, resolvedItem.merchantDomain);
-      const c9 = check9_intent_match({
-        resolvedItem,
-        intentConstraint: mandate.intentConstraint,
-        merchantAllowlist: mandate.merchantAllowlist,
-        hasStandingApproval,
-      });
-      if (c9) {
-        return escalateAndRespond(c9.check, c9.reason, c9.detail, resolvedItem.merchantDomain);
-      }
-      checksPassed.push("check9_intent_match");
+    // B20 — the intent-match gate. Merchant discovery is now mandatory because its domain is
+    // one of the four inputs committed into every signed EIP-3009 nonce.
+    const hasStandingApproval = await ledger.getStandingApproval(mandateId, merchantDomain);
+    const c9 = check9_intent_match({
+      resolvedItem,
+      intentConstraint: mandate.intentConstraint,
+      merchantAllowlist: mandate.merchantAllowlist,
+      hasStandingApproval,
+    });
+    if (c9) {
+      return escalateAndRespond(c9.check, c9.reason, c9.detail, merchantDomain);
     }
+    checksPassed.push("check9_intent_match");
 
     // Checks passed. Reserve the nonce and sign.
-    const signing = await performSigning(requestId, mandateId, mandate, challenge, requestedAmount, ctx.now);
+    const policyHash = hashPolicy(mandate);
+    const signing = await performSigning(
+      requestId,
+      mandateId,
+      mandate,
+      challenge,
+      requestedAmount,
+      ctx.now,
+      CARDAPI_SANDBOX_ISSUE_CARD,
+      { policyHash, intentHash: intentRecord!.instructionHash, merchantDomain },
+    );
     if (!signing.ok) {
       await ledger.recordDecision({ requestId, decision: "refused", check: "signer_refused", detail: signing.message, decidedAt: nowIso() });
       return sendError(reply, signing.statusCode, signing.code, signing.message, requestId, signing.retryable);
@@ -167,7 +190,8 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
       requestId,
       decision: "signed",
       decidedAt: nowIso(),
-      policyHash: hashPolicy(mandate),
+      policyHash,
+      merchantDomain,
       validAfter: signing.validAfter,
       validBefore: signing.validBefore,
     });
@@ -189,7 +213,7 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
   // decision/approvedBy/signature) to support "approve this merchant for this window".
   app.post("/escalation/:requestId/resolve", async (request, reply) => {
     const { requestId } = request.params as { requestId: string };
-    const { decision, approvedBy, standingApproval } = request.body as {
+    const { decision, approvedBy, signature, standingApproval } = request.body as {
       decision?: "approve" | "deny" | undefined;
       approvedBy?: string | undefined;
       signature?: string | undefined;
@@ -220,6 +244,44 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
       return sendError(reply, 410, "ESCALATION_EXPIRED", `escalation ${requestId} expired`, requestId);
     }
 
+    // AUTHORIZATION RUNS BEFORE THE approve/deny BRANCH, for both decisions.
+    //
+    // A denial used to return here with no check at all, which meant anyone who
+    // could reach this service could deny somebody else's escalation and have
+    // the ledger record "human denied the escalated request". No money moves on
+    // a denial, but an unauthenticated write that attributes a decision to the
+    // human is still a lie in the audit trail, and denying every escalation is a
+    // cheap denial of service against the whole flow.
+    const policyRecord = await ledger.getPolicy(escalation.mandateId);
+    if (!policyRecord) {
+      return sendError(reply, 404, "POLICY_NOT_FOUND", `no policy on file for mandate ${escalation.mandateId}`, requestId);
+    }
+    const { policy: mandate } = policyRecord;
+
+    // The claim: approvedBy says it is the mandate owner.
+    if (!approvedBy || approvedBy.toLowerCase() !== mandate.owner.toLowerCase()) {
+      return sendError(reply, 403, "NOT_MANDATE_OWNER", "approvedBy does not match mandate.owner", requestId);
+    }
+
+    // The proof. Without this, "the human approved it" is a field in a request
+    // body that anyone able to reach policy-service can set — the escalation
+    // gate would be decoration. The signature is EIP-191 over the canonical
+    // message, which binds requestId + mandateId + decision, so an approval
+    // cannot be replayed onto another request, another mandate, or flipped into
+    // a denial (packages/contracts/src/escalation.ts).
+    if (!signature) {
+      return sendError(reply, 403, "ESCALATION_SIGNATURE_REQUIRED", "signature is required to resolve an escalation", requestId);
+    }
+    const verified = await verifyEscalationSignature({
+      input: { requestId, mandateId: escalation.mandateId, decision },
+      signature,
+      expectedSigner: mandate.owner,
+    });
+    if (!verified.ok) {
+      return sendError(reply, 403, "ESCALATION_SIGNATURE_INVALID", verified.reason, requestId);
+    }
+
+    // Only now, with the decision cryptographically attributed to the owner.
     if (decision === "deny") {
       await ledger.resolveEscalationStorage(requestId, "deny", approvedBy);
       await ledger.recordDecision({
@@ -232,24 +294,41 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
       return reply.code(200).send({ status: "refused", requestId, check: "escalation_denied", detail: "human denied the escalated request" });
     }
 
-    const policyRecord = await ledger.getPolicy(escalation.mandateId);
-    if (!policyRecord) {
-      return sendError(reply, 404, "POLICY_NOT_FOUND", `no policy on file for mandate ${escalation.mandateId}`, requestId);
-    }
-    const { policy: mandate } = policyRecord;
-
-    // Minimal authorization: approvedBy must claim to be the mandate owner. No cryptographic
-    // signature verification against `signature` yet — a known gap, not a security guarantee.
-    if (!approvedBy || approvedBy.toLowerCase() !== mandate.owner.toLowerCase()) {
-      return sendError(reply, 403, "NOT_MANDATE_OWNER", "approvedBy does not match mandate.owner", requestId);
-    }
-
     const intentRecord = await ledger.getIntent(requestId);
     if (!intentRecord?.challenge) {
       return sendError(reply, 404, "CHALLENGE_NOT_FOUND", `no challenge attached to intent ${requestId}`, requestId);
     }
 
-    const signing = await performSigning(requestId, escalation.mandateId, mandate, intentRecord.challenge, intentRecord.challenge.amount, nowSec());
+    const merchantDomain = escalation.merchantDomain;
+    if (typeof merchantDomain !== "string" || merchantDomain.trim().length === 0) {
+      await ledger.resolveEscalationStorage(requestId, "deny", approvedBy);
+      await ledger.recordDecision({
+        requestId,
+        decision: "refused",
+        check: "precondition_merchant_domain",
+        detail: "the escalation does not contain the merchant domain required to bind the authorization nonce",
+        decidedAt: nowIso(),
+      });
+      return sendError(
+        reply,
+        422,
+        "MERCHANT_DOMAIN_REQUIRED",
+        "the escalation does not contain the merchant domain required to bind the authorization nonce",
+        requestId,
+      );
+    }
+
+    const policyHash = hashPolicy(mandate);
+    const signing = await performSigning(
+      requestId,
+      escalation.mandateId,
+      mandate,
+      intentRecord.challenge,
+      intentRecord.challenge.amount,
+      nowSec(),
+      CARDAPI_SANDBOX_ISSUE_CARD,
+      { policyHash, intentHash: intentRecord.instructionHash, merchantDomain },
+    );
     if (!signing.ok) {
       await ledger.resolveEscalationStorage(requestId, "deny", approvedBy);
       await ledger.recordDecision({ requestId, decision: "refused", check: "signer_refused", detail: signing.message, decidedAt: nowIso() });
@@ -261,7 +340,8 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
       requestId,
       decision: "signed",
       decidedAt: nowIso(),
-      policyHash: hashPolicy(mandate),
+      policyHash,
+      merchantDomain,
       validAfter: signing.validAfter,
       validBefore: signing.validBefore,
     });

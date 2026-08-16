@@ -57,6 +57,14 @@ const challenge: X402Requirements = {
   extra: { assetTransferMethod: "eip3009", name: "XSGD", version: "2" },
 };
 
+const matchingResolvedItem = {
+  title: "Black Running Sneakers Size 42",
+  sku: "SNK-42-BLK",
+  price: "5000000",
+  merchantDomain: "shop.example",
+  checkoutUrl: "https://shop.example/checkout/sneakers",
+};
+
 function seedMandate(overrides: Partial<Mandate> = {}) {
   const m: Mandate = { ...mandate, ...overrides };
   fakeLedger.seedPolicy("m1", m);
@@ -73,13 +81,17 @@ function seedIntent(
     requestId,
     mandateId: "m1",
     instruction: "buy sneakers",
+    instructionHash: "0x6ee31b84b68935428c7fc50e1236c8918ad2860145a57933e008dc95db791449",
     createdAt: opts.createdAt ?? "2026-08-15T06:00:00Z",
     challenge: { ...challenge, ...challengeOverrides },
     challengeAttachedAt: opts.challengeAttachedAt === null ? undefined : (opts.challengeAttachedAt ?? "2026-08-15T06:01:00Z"),
   });
 }
 
-function paymentRequest(requestId: string, overrides: Partial<{ requestedAmount: string; challenge: X402Requirements; resolvedItem: unknown }> = {}) {
+function paymentRequest(
+  requestId: string,
+  overrides: Partial<{ requestedAmount: string; challenge: X402Requirements; resolvedItem: unknown }> = {},
+) {
   return app.inject({
     method: "POST",
     url: "/payment/request",
@@ -89,7 +101,7 @@ function paymentRequest(requestId: string, overrides: Partial<{ requestedAmount:
       mandateId: "m1",
       requestedAmount: overrides.requestedAmount ?? challenge.amount,
       challenge: overrides.challenge ?? challenge,
-      ...(overrides.resolvedItem ? { resolvedItem: overrides.resolvedItem } : {}),
+      resolvedItem: overrides.resolvedItem ?? matchingResolvedItem,
     },
   });
 }
@@ -102,7 +114,7 @@ beforeEach(() => {
 });
 
 describe("case 1 — clean purchase inside all limits", () => {
-  it("signs, with all 8 checks passed", async () => {
+  it("signs with all checks passed and a deterministic intent commitment nonce", async () => {
     seedIntent("case1");
     const res = await paymentRequest("case1");
     expect(res.statusCode).toBe(200);
@@ -117,12 +129,16 @@ describe("case 1 — clean purchase inside all limits", () => {
       "check6_window_budget",
       "check7_validity_sane",
       "check8_intent_bound",
+      "check9_intent_match",
     ]);
+    expect(body.nonce).toBe("0x01f3fd27d9290e2e95354538dc2eb3066d6e0ad8470bf82a95f00264e8ddadf9");
+    expect(fakeSigner.getCalls()[0]?.typedData.message.nonce).toBe(body.nonce);
 
     // "receipt complete" — policyHash and the signed window are threaded through to the
     // ledger via POST /decision, not left null (the gap flagged after B1-B23's first pass).
     const intentRecord = fakeLedger.getIntentRecord("case1");
     expect(intentRecord?.policyHash).toBe(hashPolicy(mandate));
+    expect(intentRecord?.merchantDomain).toBe("shop.example");
     expect(intentRecord?.validAfter).toEqual(expect.any(Number));
     expect(intentRecord?.validBefore).toEqual(expect.any(Number));
     expect(intentRecord!.validBefore!).toBeGreaterThan(intentRecord!.validAfter!);
@@ -160,6 +176,20 @@ describe("case 4 — third card when maxCardsPerWindow = 2", () => {
     const body = res.json();
     expect(body.status).toBe("escalated");
     expect(body.reason).toBe("WINDOW_BUDGET_EXCEEDED");
+    expect(fakeLedger.getEscalationRecord("case4c")?.merchantDomain).toBe("shop.example");
+  });
+});
+
+describe("commitment inputs", () => {
+  it("refuses before reserving a nonce when resolvedItem.merchantDomain is missing", async () => {
+    seedIntent("missing-domain");
+    const { merchantDomain: _merchantDomain, ...withoutMerchantDomain } = matchingResolvedItem;
+    const res = await paymentRequest("missing-domain", { resolvedItem: withoutMerchantDomain });
+
+    expect(res.statusCode).toBe(422);
+    expect(res.json().check).toBe("precondition_merchant_domain");
+    expect(fakeLedger.getIntentRecord("missing-domain")?.nonce).toBeUndefined();
+    expect(fakeSigner.getCalls()).toHaveLength(0);
   });
 });
 
@@ -277,7 +307,7 @@ describe("case 13 — escalation unanswered past TTL", () => {
       method: "POST",
       url: "/payment/request",
       headers: auth(),
-      payload: { requestId: "case13", mandateId: "m1", requestedAmount: challenge.amount, challenge },
+      payload: { requestId: "case13", mandateId: "m1", requestedAmount: challenge.amount, challenge, resolvedItem: matchingResolvedItem },
     });
     expect(escalated.statusCode).toBe(202);
 

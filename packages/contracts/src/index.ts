@@ -8,3 +8,4 @@ export * from "./abi";
 export * from "./http";
 export * from "./mandate";
 export * from "./resolvedItem";
+export * from "./escalation";
