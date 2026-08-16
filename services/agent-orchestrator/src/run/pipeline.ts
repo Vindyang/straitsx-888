@@ -59,7 +59,9 @@ function safeFailure(requestId: string, message: string, freshRequestRequired = 
   setRunState(requestId, "FAILED");
 }
 
-export function startRun(input: RunInput): StartRunResult {
+type RunErrorLog = Pick<Console, "error">;
+
+export function startRun(input: RunInput, log?: RunErrorLog): StartRunResult {
   const requestId = randomUUID();
   createRun(requestId, {
     instruction: input.instruction,
@@ -70,7 +72,11 @@ export function startRun(input: RunInput): StartRunResult {
     ...(input.source.kind === "shopify" ? { checkoutSessionId: input.source.checkout.checkoutSessionId } : {}),
     productUrl: productUrl(input.source),
   });
-  void executeRun(requestId, input).catch(() => safeFailure(requestId, "run failed closed before completion"));
+  void executeRun(requestId, input).catch((err: unknown) => {
+    const message = err instanceof Error ? err.message : String(err);
+    log?.error?.({ err, requestId }, "run pipeline failed");
+    safeFailure(requestId, `run failed closed before completion: ${message}`);
+  });
   return { requestId, state: "RUNNING", streamUrl: `/run/${requestId}/events` };
 }
 

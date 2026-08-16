@@ -35,7 +35,7 @@ export function registerRunRoutes(app: FastifyInstance, checkReadiness: Dependen
         true,
       );
     }
-    reply.code(202).send(startRun({ instruction: body.instruction, mandateId: body.mandateId, agentId: body.agentId, source, ...(body.cardholderName ? { cardholderName: body.cardholderName } : {}) }));
+    reply.code(202).send(startRun({ instruction: body.instruction, mandateId: body.mandateId, agentId: body.agentId, source, ...(body.cardholderName ? { cardholderName: body.cardholderName } : {}) }, request.log));
   });
 
   app.post("/run/:requestId/escalation", async (request, reply) => {
