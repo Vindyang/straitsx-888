@@ -603,6 +603,21 @@ signed authorization is live in the world and its nonce can never be reused.
 `rawToolResultHash` is optional during migration but must be stored in receipt evidence before
 live Module C acceptance. It is the hash only; raw MCP result text is never persisted.
 
+### `POST /intent/:requestId/capture` — capture-time settlement finalization (seamless card-issuer settlement)
+
+```json
+{ "orderId": "SO-UCP-1", "capturedAt": "2026-08-15T06:05:30Z", "settlementTx": "0xdead…", "blockNumber": 41230044 }
+```
+
+Recorded only **after** the on-chain transfer was independently verified (the orchestrator
+emits `SETTLEMENT_FINALIZED` and the run reaches `DONE` immediately after this succeeds).
+Responses:
+
+- `200 { requestId, state: "CAPTURED", orderId, settlementTx }`
+- `404 INTENT_NOT_FOUND` · `400 INVALID_BODY` · `409 CAPTURE_EXISTS` (append-only) ·
+  `409 SETTLEMENT_NOT_RECORDED` (settlement must precede capture) ·
+  `409 SETTLEMENT_MISMATCH` (capture `settlementTx` ≠ recorded settlement)
+
 ### `POST /intent/:requestId/spend` _(stretch — checkpoint 6)_
 
 ```json
@@ -670,6 +685,83 @@ choice, not part of what StraitsX sent.
 present together so a verifier can recompute the commitment nonce. `merchantDomain` is the
 validated value stored when policy-service records the signed decision; it does not depend on
 the later optional spend observation.
+
+### `GET /intents`  _(transparency — live view backing)_
+
+The full append-only ledger, newest first, in the read-only view shape below. Consumers
+must not derive authority from it; it is the record, not the reason.
+
+```json
+{
+  "intents": [
+    {
+      "requestId": "3f6c8b2e-…",
+      "mandateId": "0x7f3a…",
+      "agentId": "shopper-1",
+      "instruction": "Buy the 500ml stainless steel water bottle from shop.example, under S$20",
+      "instructionHash": "0x4a…",
+      "createdAt": "2026-08-15T06:00:00Z",
+      "state": "CAPTURED",
+      "decision": "signed",
+      "decidedAt": "2026-08-15T06:01:50Z",
+      "policyHash": "0xab12…",
+      "merchantDomain": "shop.example",
+      "challenge": {
+        "payTo": "0x99a2B2962a6AC463FBe04664027Fdb3F68bd4Cc8",
+        "asset": "0xd769410dc8772695a7f55a304d2125320a65c2a5",
+        "chainId": 43113,
+        "amount": "5000000"
+      },
+      "nonceReserved": true,
+      "settlement": {
+        "settlementTx": "0xdead…",
+        "blockNumber": 41230044,
+        "cardOpaqueId": "crd_…"
+      },
+      "spend": {
+        "merchantDomain": "shop.example",
+        "orderTotal": "15000000",
+        "itemSku": "BTL-500-SS",
+        "orderId": "SO-99213",
+        "observedAt": "2026-08-15T06:05:00Z"
+      },
+      "capture": {
+        "orderId": "SO-99213",
+        "capturedAt": "2026-08-15T06:06:00Z",
+        "settlementTx": "0xdead…",
+        "blockNumber": 41230044
+      }
+    }
+  ]
+}
+```
+
+`challenge`, `settlement`, `spend`, and `capture` are omitted until recorded; a refused intent
+carries `decision: "refused"`, `check`, and `detail` instead. Key fields not shown above:
+`nonce`, `check`, `detail`.
+
+### `GET /ledger/events`  _(transparency — live append-only feed, SSE)_
+
+Server-sent events. Every ledger mutation broadcasts an `append` event as it happens; a
+fresh connection first receives a `snapshot` event with the same shape as `GET /intents`
+so clients can rebuild state, then `append` events for everything after. Heartbeat comment
+frames (`: hb`) every 15 seconds.
+
+```text
+event: snapshot
+data: {"intents":[…]}                                    // same shape as GET /intents
+
+event: append
+data: {"seq":7,"kind":"settlement.recorded","at":"…","requestId":"…","intent":{…}}
+```
+
+Every `append` event carries `seq` / `kind` / `at`; the `kind`s are `intent.created`,
+`challenge.attached`, `nonce.reserved`, `nonce.released`, `decision.recorded`,
+`settlement.recorded`, `spend.recorded`, `capture.recorded`, `escalation.created`,
+`escalation.resolved`, `policy.put`, and `standing_approval.set`. Events that touch an
+intent also carry the latest `intent` view (`decision.recorded` broadcasts refusals too —
+every outcome is visible). The dashboard proxies this stream behind `GET /api/ledger/events`
+and renders it on the Ledger page.
 
 ---
 
@@ -966,8 +1058,14 @@ before A/B without claiming that payment execution is available.
 ```
 
 `source` is `{ "kind": "fixture", "name": "clean" | "poisoned-recipient" |
-"poisoned-amount" | "wrong-item" }` or `{ "kind": "merchant", "profileId": "…" }`.
-The legacy top-level `fixture` field remains accepted during migration.
+"poisoned-amount" | "wrong-item" }`, `{ "kind": "merchant", "profileId": "…" }`, or
+`{ "kind": "shopify", "checkout": { "storeDomain", "checkoutSessionId", "title", "sku",
+"totalBaseUnits", "currency": "SGD", "checkoutJwt"? } }` — the merchant-signed UCP checkout
+snapshot (Shopify agentic commerce; see `docs/shopify-agentic-payments.md`). For Shopify
+sources no page is ever rendered: the pipeline emits `CHECKOUT_ACQUIRED` instead of
+`DISCOVERY_DONE` and completes the checkout through the merchant's UCP `complete` endpoint
+using the StraitsX virtual card as a custom UCP payment instrument. The legacy top-level
+`fixture` field remains accepted during migration.
 
 ```json
 {
@@ -993,8 +1091,16 @@ settlement request, card request, or checkout is created.
 }
 ```
 
-Stages: `INTENT_CREATED` → `DISCOVERY_DONE` → `CHALLENGE_RECEIVED` → `POLICY_DECISION` →
-`SETTLEMENT_CONFIRMED` → `CARD_ISSUED` → `CHECKOUT_ASSERTED` → `SPEND_RECORDED`.
+Stages: `INTENT_CREATED` → `DISCOVERY_DONE` *or* `CHECKOUT_ACQUIRED` (Shopify/UCP sources) →
+`CHALLENGE_RECEIVED` → `POLICY_DECISION` → `CARD_ISSUED` → `CHECKOUT_ASSERTED` →
+`SPEND_RECORDED` → `SETTLEMENT_FINALIZED`.
+
+Settlement is capture-time (seamless card-issuer settlement): the card is issued on the
+signed authorization without blocking on on-chain confirmation; after the card is spent the
+orchestrator independently verifies the on-chain transfer and only then records settlement +
+capture and emits `SETTLEMENT_FINALIZED`. A `TRANSFER_MISMATCH` emits
+`SETTLEMENT_FINALIZED` with `status: "refused"` and the run FAILs closed
+(`freshRequestRequired: true`).
 
 Run states include `AWAITING_CHECKOUT`; only `DONE`, `REFUSED`, and `FAILED` are terminal.
 

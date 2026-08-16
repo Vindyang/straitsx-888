@@ -5,6 +5,23 @@ import { FUJI } from "@straitsx/contracts";
 import type { Mandate } from "@straitsx/contracts";
 import { formatXsgd, sgdToBaseUnits, shortHex } from "../../lib/format";
 import { connectWallet, sendTransaction, waitForReceipt, type UnsignedTx } from "../../lib/wallet";
+import { Alert, AlertDescription, AlertTitle } from "../../components/ui/alert";
+import { Button } from "../../components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../../components/ui/card";
+import {
+  Field,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+} from "../../components/ui/field";
+import { Input } from "../../components/ui/input";
+import { PageHeading } from "../../components/page-heading";
 
 type OnChainMandate = { owner: string; policyHash: string; expiresAt: number; revoked: boolean };
 type MandateRow = {
@@ -150,116 +167,117 @@ export default function MandatesPage() {
   }
 
   return (
-    <main style={{ maxWidth: 960, margin: "0 auto", padding: "2rem" }}>
-      <h1>Mandates</h1>
-      <p style={{ color: "#666" }}>
-        Creation builds an <em>unsigned</em> on-chain transaction — you sign it in your own
-        wallet. Nothing here ever touches a private key.
-      </p>
+    <div className="flex flex-col gap-8">
+      <PageHeading
+        title="Mandates"
+        description="Creation builds an unsigned on-chain transaction — you sign it in your own wallet. Nothing here ever touches a private key."
+      />
 
-      {error && <p style={{ color: "crimson" }}>{error}</p>}
-      {busy && <p style={{ color: "#666" }}>{busy}…</p>}
+      {error ? (
+        <Alert variant="destructive">
+          <AlertTitle>Mandate failed</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      ) : null}
 
-      <fieldset style={{ marginTop: "1.5rem" }}>
-        <legend>Create mandate</legend>
-        <Field label="owner (your wallet)">
-          <input value={form.owner} onChange={(e) => setForm((p) => ({ ...p, owner: e.target.value }))} style={{ width: "70%" }} />
-          <button type="button" onClick={connectOwner} style={{ marginLeft: 8 }}>
-            Use connected wallet
-          </button>
-        </Field>
-        <Field label="agentId">
-          <input value={form.agentId} onChange={(e) => setForm((p) => ({ ...p, agentId: e.target.value }))} />
-        </Field>
-        <Field label="intentConstraint">
-          <input
-            value={form.intentConstraint}
-            onChange={(e) => setForm((p) => ({ ...p, intentConstraint: e.target.value }))}
-            style={{ width: "100%" }}
-          />
-        </Field>
-        <Field label="merchantAllowlist (comma-separated)">
-          <input
-            value={form.merchantAllowlist}
-            onChange={(e) => setForm((p) => ({ ...p, merchantAllowlist: e.target.value }))}
-            style={{ width: "100%" }}
-          />
-        </Field>
-        <Field label="maxPerCard (SGD)">
-          <input
-            value={form.maxPerCardSgd}
-            onChange={(e) => setForm((p) => ({ ...p, maxPerCardSgd: e.target.value }))}
-          />
-        </Field>
-        <Field label="maxPerWindow (SGD)">
-          <input
-            value={form.maxPerWindowSgd}
-            onChange={(e) => setForm((p) => ({ ...p, maxPerWindowSgd: e.target.value }))}
-          />
-        </Field>
-        <Field label="maxCardsPerWindow">
-          <input
-            type="number"
-            value={form.maxCardsPerWindow}
-            onChange={(e) => setForm((p) => ({ ...p, maxCardsPerWindow: Number(e.target.value) }))}
-          />
-        </Field>
-        <Field label="windowSeconds">
-          <input
-            type="number"
-            value={form.windowSeconds}
-            onChange={(e) => setForm((p) => ({ ...p, windowSeconds: Number(e.target.value) }))}
-          />
-        </Field>
-        <button type="button" onClick={createMandate} disabled={busy !== null || !form.owner}>
-          Build + sign createMandate
-        </button>
-      </fieldset>
-
-      <h2 style={{ marginTop: "2rem" }}>All mandates</h2>
-      {rows.length === 0 && <p style={{ color: "#666" }}>None created from this dashboard yet.</p>}
-      {rows.map((row) => {
-        const usage = windows[row.mandate.mandateId];
-        const revoked = row.onChain?.revoked ?? false;
-        return (
-          <div
-            key={row.mandate.mandateId}
-            style={{ border: "1px solid #ddd", borderRadius: 8, padding: "1rem", marginBottom: "1rem" }}
-          >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-              <code>{shortHex(row.mandate.mandateId)}</code>
-              <span style={{ color: revoked ? "crimson" : row.confirmed ? "green" : "#a60" }}>
-                {revoked ? "REVOKED" : row.confirmed ? "live" : "pending confirmation"}
-              </span>
+      <Card>
+        <CardHeader>
+          <CardTitle>Create mandate</CardTitle>
+          <CardDescription>
+            {busy ? `${busy}…` : "Confirm the on-chain constraints stored in the policy registry."}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <FieldGroup>
+            <Field>
+              <FieldLabel htmlFor="owner">owner (your wallet)</FieldLabel>
+              <div className="flex gap-2">
+                <Input id="owner" value={form.owner} onChange={(e) => setForm((p) => ({ ...p, owner: e.target.value }))} />
+                <Button type="button" variant="outline" onClick={connectOwner} disabled={busy !== null}>
+                  Use connected wallet
+                </Button>
+              </div>
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="agentId">agentId</FieldLabel>
+              <Input id="agentId" value={form.agentId} onChange={(e) => setForm((p) => ({ ...p, agentId: e.target.value }))} />
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="intentConstraint">intentConstraint</FieldLabel>
+              <Input id="intentConstraint" value={form.intentConstraint} onChange={(e) => setForm((p) => ({ ...p, intentConstraint: e.target.value }))} />
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="merchantAllowlist">merchantAllowlist (comma-separated)</FieldLabel>
+              <Input id="merchantAllowlist" value={form.merchantAllowlist} onChange={(e) => setForm((p) => ({ ...p, merchantAllowlist: e.target.value }))} />
+              <FieldDescription>Only these merchant domains may settle against this mandate.</FieldDescription>
+            </Field>
+            <div className="grid gap-4 sm:grid-cols-4">
+              <Field>
+                <FieldLabel htmlFor="maxPerCard">maxPerCard (SGD)</FieldLabel>
+                <Input id="maxPerCard" value={form.maxPerCardSgd} onChange={(e) => setForm((p) => ({ ...p, maxPerCardSgd: e.target.value }))} />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="maxPerWindow">maxPerWindow (SGD)</FieldLabel>
+                <Input id="maxPerWindow" value={form.maxPerWindowSgd} onChange={(e) => setForm((p) => ({ ...p, maxPerWindowSgd: e.target.value }))} />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="maxCardsPerWindow">maxCardsPerWindow</FieldLabel>
+                <Input id="maxCardsPerWindow" type="number" value={form.maxCardsPerWindow} onChange={(e) => setForm((p) => ({ ...p, maxCardsPerWindow: Number(e.target.value) }))} />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="windowSeconds">windowSeconds</FieldLabel>
+                <Input id="windowSeconds" type="number" value={form.windowSeconds} onChange={(e) => setForm((p) => ({ ...p, windowSeconds: Number(e.target.value) }))} />
+              </Field>
             </div>
-            <p style={{ margin: "0.5rem 0" }}>{row.mandate.intentConstraint}</p>
-            <p style={{ margin: 0, color: "#666", fontSize: "0.9em" }}>
-              allowlist: {row.mandate.merchantAllowlist.join(", ") || "(none)"} · chain{" "}
-              {row.mandate.chainId} · inSync: {row.inSync === null ? "n/a" : String(row.inSync)}
-            </p>
-            {usage && (
-              <p style={{ margin: "0.5rem 0", fontSize: "0.9em" }}>
-                spend: {formatXsgd(usage.spent)} / {formatXsgd(usage.maxPerWindow)} XSGD · cards:{" "}
-                {usage.cardCount} / {usage.maxCardsPerWindow}
-              </p>
-            )}
-            {!revoked && row.confirmed && (
-              <button type="button" onClick={() => revoke(row.mandate)} disabled={busy !== null}>
-                Revoke
-              </button>
-            )}
-          </div>
-        );
-      })}
-    </main>
-  );
-}
+            <Button type="button" onClick={createMandate} disabled={busy !== null || !form.owner}>
+              {busy === "creating" ? "Creating…" : "Build + sign createMandate"}
+            </Button>
+          </FieldGroup>
+        </CardContent>
+      </Card>
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <label style={{ display: "block", marginBottom: 8 }}>
-      {label}
-      <div>{children}</div>
-    </label>
+      <section className="flex flex-col gap-4">
+        <h2 className="text-xl font-semibold tracking-tight">All mandates</h2>
+        {rows.length === 0 && (
+          <p className="text-sm text-muted-foreground">None created from this dashboard yet.</p>
+        )}
+        {rows.map((row) => {
+          const usage = windows[row.mandate.mandateId];
+          const revoked = row.onChain?.revoked ?? false;
+          return (
+            <Card key={row.mandate.mandateId}>
+              <CardHeader>
+                <div className="flex items-baseline justify-between gap-2">
+                  <CardTitle className="font-mono text-sm">{shortHex(row.mandate.mandateId)}</CardTitle>
+                  <span className={`text-sm font-semibold ${revoked ? "text-red-600" : row.confirmed ? "text-green-600" : "text-amber-600"}`}>
+                    {revoked ? "REVOKED" : row.confirmed ? "live" : "pending confirmation"}
+                  </span>
+                </div>
+                <CardDescription>{row.mandate.intentConstraint}</CardDescription>
+              </CardHeader>
+              <CardContent className="flex flex-col gap-2 text-sm">
+                <p className="text-muted-foreground">
+                  allowlist: {row.mandate.merchantAllowlist.join(", ") || "(none)"} · chain{" "}
+                  {row.mandate.chainId} · inSync: {row.inSync === null ? "n/a" : String(row.inSync)}
+                </p>
+                {usage && (
+                  <p>
+                    spend: {formatXsgd(usage.spent)} / {formatXsgd(usage.maxPerWindow)} XSGD · cards:{" "}
+                    {usage.cardCount} / {usage.maxCardsPerWindow}
+                  </p>
+                )}
+                {!revoked && row.confirmed && (
+                  <div>
+                    <Button type="button" variant="destructive" size="sm" onClick={() => revoke(row.mandate)} disabled={busy !== null}>
+                      Revoke
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          );
+        })}
+      </section>
+    </div>
   );
 }

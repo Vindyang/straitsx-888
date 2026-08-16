@@ -512,15 +512,19 @@ Run these gates in order. Stop on the first failure.
    secret, route, or `4003` egress.
 3. Execute and archive the C10 isolation probe from section 6.4.
 4. Run all four deterministic fixtures:
-   - `clean` signs and proceeds only after independent settlement match;
+   - `clean` signs and reaches `DONE` only after capture-time settlement verification matches;
    - `poisoned-recipient` refuses check 4 with no signature/settlement;
    - `poisoned-amount` refuses check 5 with no signature/settlement;
    - `wrong-item` escalates check 9, supports approve/deny/expiry, and resumes the same run.
-5. Confirm SSE order:
+5. Confirm SSE order (post-seamless-settlement work, 2026-08-16 — see
+   `docs/shopify-agentic-payments.md` §3):
    `INTENT_CREATED -> DISCOVERY_DONE -> CHALLENGE_RECEIVED -> POLICY_DECISION ->
-   SETTLEMENT_CONFIRMED -> CARD_ISSUED -> CHECKOUT_ASSERTED -> SPEND_RECORDED`.
-6. Force settlement `ok=false` and `transferMatched=false` cases. Neither may record
-   settlement, request the card iframe, check out, or record spend.
+   CARD_ISSUED -> CHECKOUT_ASSERTED -> SPEND_RECORDED -> SETTLEMENT_FINALIZED`
+   (Shopify/UCP sources emit `CHECKOUT_ACQUIRED` instead of `DISCOVERY_DONE`).
+6. Force settlement `ok=false` and `transferMatched=false` cases. The card is now issued
+   and the checkout runs (seamless), but settlement is finalized only at capture time:
+   neither settlement nor capture may be recorded, no `SETTLEMENT_FINALIZED` (ok), and the
+   run must FAIL closed.
 7. Verify the ledger receipt stores `rawToolResultHash` and checkout observation uses
    `proof: "none"`.
 8. Test escalation signature verification, denial, expiry auto-denial, standing approval,

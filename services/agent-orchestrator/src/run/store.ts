@@ -3,12 +3,13 @@ import type { ResolvedItem } from "@straitsx/contracts";
 export type RunStage =
   | "INTENT_CREATED"
   | "DISCOVERY_DONE"
+  | "CHECKOUT_ACQUIRED"
   | "CHALLENGE_RECEIVED"
   | "POLICY_DECISION"
-  | "SETTLEMENT_CONFIRMED"
   | "CARD_ISSUED"
   | "CHECKOUT_ASSERTED"
-  | "SPEND_RECORDED";
+  | "SPEND_RECORDED"
+  | "SETTLEMENT_FINALIZED";
 
 export type RunEvent = {
   seq: number;
@@ -32,9 +33,11 @@ export type RunMeta = {
   instruction: string;
   mandateId: string;
   agentId: string;
-  source: { kind: "fixture"; name: string } | { kind: "merchant"; profileId: string };
+  source: { kind: "fixture"; name: string } | { kind: "merchant"; profileId: string } | { kind: "shopify"; checkout: { storeDomain: string; checkoutSessionId: string } };
   /** Deprecated migration field. */
   fixture?: string;
+  /** Shopify/UCP checkout session id (present for shopify sources). */
+  checkoutSessionId?: string;
   productUrl: string;
 };
 

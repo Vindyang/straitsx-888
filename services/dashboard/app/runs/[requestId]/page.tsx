@@ -4,6 +4,16 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { signEscalationDecision } from "../../../lib/wallet";
+import { Alert, AlertDescription, AlertTitle } from "../../../components/ui/alert";
+import { Button, buttonVariants } from "../../../components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../../../components/ui/card";
+import { PageHeading } from "../../../components/page-heading";
 
 type RunOutcome =
   | { status: "refused"; check: string; checkIndex: number | null; detail: string; humanExplanation: string }
@@ -23,10 +33,6 @@ type RunRecord = {
 
 type IndependentCheck = { independentlyFetched: { title?: string; sku?: string; price?: string } };
 
-/**
- * C12 — the refusal panel: the most important screen in the project. Also
- * hosts C15's escalation approval screen when the outcome is "escalated".
- */
 export default function RunDetailPage() {
   const params = useParams<{ requestId: string }>();
   const requestId = params.requestId;
@@ -74,115 +80,162 @@ export default function RunDetailPage() {
   }
 
   if (!run) {
-    return (
-      <main style={{ maxWidth: 800, margin: "0 auto", padding: "2rem" }}>
-        <p>Loading…</p>
-      </main>
-    );
+    return <p className="text-sm text-muted-foreground">Loading…</p>;
   }
 
   const outcome = run.outcome;
 
   return (
-    <main style={{ maxWidth: 800, margin: "0 auto", padding: "2rem" }}>
-      <p>
-        <Link href="/runs">&larr; all runs</Link>
-      </p>
-      <h1>Run {requestId.slice(0, 8)}</h1>
-      <p style={{ color: "#666" }}>
-        {run.meta.instruction} — source: {run.meta.fixture ?? run.meta.source?.profileId ?? run.meta.source?.name}
-      </p>
+    <div className="flex flex-col gap-8">
+      <PageHeading
+        backHref="/runs"
+        title={`Run ${requestId.slice(0, 8)}`}
+        description={`${run.meta.instruction} — source: ${run.meta.fixture ?? run.meta.source?.profileId ?? run.meta.source?.name}`}
+      />
 
       {outcome?.status === "refused" && (
-        <section style={{ background: "#fff2f2", border: "3px solid crimson", borderRadius: 12, padding: "2rem", marginTop: "1.5rem" }}>
-          <p style={{ fontSize: "0.9em", letterSpacing: 1, textTransform: "uppercase", color: "crimson", margin: 0 }}>
-            Refused — check {outcome.checkIndex ?? "?"}
-          </p>
-          <h2 style={{ margin: "0.25rem 0 1rem", fontSize: "2rem" }}>{outcome.check}</h2>
-          <p style={{ fontSize: "1.2rem" }}>{outcome.humanExplanation}</p>
-          <pre style={{ whiteSpace: "pre-wrap", background: "#fff", padding: "1rem", borderRadius: 8 }}>{outcome.detail}</pre>
-          <p style={{ fontWeight: 700, fontSize: "1.3rem", color: "crimson", margin: 0 }}>
-            Nothing was signed. No money moved.
-          </p>
-        </section>
+        <Card className="border-destructive/60 bg-destructive/5">
+          <CardHeader>
+            <CardTitle className="text-sm font-semibold uppercase tracking-wide text-destructive">
+              Refused — check {outcome.checkIndex ?? "?"}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4">
+            <h2 className="text-2xl font-semibold tracking-tight">{outcome.check}</h2>
+            <p className="text-lg">{outcome.humanExplanation}</p>
+            <pre className="whitespace-pre-wrap rounded-md bg-background p-4 text-sm">{outcome.detail}</pre>
+            <p className="text-lg font-bold text-destructive">Nothing was signed. No money moved.</p>
+          </CardContent>
+        </Card>
       )}
 
       {outcome?.status === "escalated" && (
-        <section style={{ border: "3px solid #a60", borderRadius: 12, padding: "2rem", marginTop: "1.5rem" }}>
-          <h2 style={{ marginTop: 0 }}>Escalated — human decision required</h2>
-          <p>reason: {outcome.reason}</p>
-          <CountdownTtl expiresAt={outcome.expiresAt} />
+        <Card className="border-amber-600/60 bg-amber-600/5">
+          <CardHeader>
+            <CardTitle>Escalated — human decision required</CardTitle>
+            <CardDescription>reason: {outcome.reason}</CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4">
+            <CountdownTtl expiresAt={outcome.expiresAt} />
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginTop: "1rem" }}>
-            <div>
-              <h3>Agent&apos;s self-report (not ground truth)</h3>
-              <ComparisonData data={run.resolvedItem ?? {}} other={independent?.independentlyFetched} />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm">Agent&apos;s self-report (not ground truth)</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ComparisonData data={run.resolvedItem ?? {}} other={independent?.independentlyFetched} />
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm">Independently re-fetched (the real control)</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {independent ? (
+                    <ComparisonData data={independent.independentlyFetched} other={run.resolvedItem} />
+                  ) : (
+                    <p className="text-sm text-muted-foreground">loading…</p>
+                  )}
+                </CardContent>
+              </Card>
             </div>
-            <div>
-              <h3>Independently re-fetched (the real control)</h3>
-              {independent ? <ComparisonData data={independent.independentlyFetched} other={run.resolvedItem} /> : "loading…"}
-            </div>
-          </div>
 
-          {error && <p style={{ color: "crimson" }}>{error}</p>}
-          <button type="button" onClick={() => respond("approve")} disabled={busy || isExpired(outcome.expiresAt)} style={{ marginRight: 8 }}>
-            Approve once
-          </button>
-          <button type="button" onClick={() => respond("approve", true)} disabled={busy || isExpired(outcome.expiresAt)} style={{ marginRight: 8 }}>
-            Approve merchant for this window
-          </button>
-          <button type="button" onClick={() => respond("deny")} disabled={busy || isExpired(outcome.expiresAt)}>
-            Deny
-          </button>
-        </section>
+            {error && (
+              <Alert variant="destructive">
+                <AlertTitle>Escalation failed</AlertTitle>
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+
+            <div className="flex flex-wrap gap-2">
+              <Button type="button" onClick={() => respond("approve")} disabled={busy || isExpired(outcome.expiresAt)}>
+                Approve once
+              </Button>
+              <Button type="button" variant="outline" onClick={() => respond("approve", true)} disabled={busy || isExpired(outcome.expiresAt)}>
+                Approve merchant for this window
+              </Button>
+              <Button type="button" variant="destructive" onClick={() => respond("deny")} disabled={busy || isExpired(outcome.expiresAt)}>
+                Deny
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {outcome?.status === "signed" && (
-        <section style={{ border: "2px solid green", borderRadius: 12, padding: "1.5rem", marginTop: "1.5rem" }}>
-          <h2 style={{ marginTop: 0, color: "green" }}>Signed and settled</h2>
-          <p>
-            <Link href={`/receipt/${requestId}`}>View receipt →</Link>
-          </p>
-        </section>
+        <Card className="border-green-600/60 bg-green-600/5">
+          <CardContent className="flex items-center justify-between gap-4 py-6">
+            <div>
+              <h2 className="text-xl font-semibold tracking-tight text-green-700">Signed and settled</h2>
+              <p className="text-sm text-muted-foreground">The settlement was signed by the mandate signer.</p>
+            </div>
+            <Link
+              href={`/receipt/${requestId}`}
+              className={buttonVariants({ variant: "default" })}
+            >
+              View receipt →
+            </Link>
+          </CardContent>
+        </Card>
       )}
 
       {(outcome?.status === "checkout-pending" || run.state === "AWAITING_CHECKOUT") && (
-        <section style={{ border: "2px solid #075985", borderRadius: 12, padding: "1.5rem", marginTop: "1.5rem" }}>
-          <h2 style={{ marginTop: 0 }}>Settlement verified — checkout in progress</h2>
-          <p>The one-time card view exists only inside the isolated browser context.</p>
-        </section>
+        <Card className="border-sky-600/60 bg-sky-600/5">
+          <CardContent className="py-6">
+            <h2 className="text-xl font-semibold tracking-tight text-sky-700">Settlement verified — checkout in progress</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              The one-time card view exists only inside the isolated browser context.
+            </p>
+          </CardContent>
+        </Card>
       )}
 
       {outcome?.status === "failed" && (
-        <section style={{ border: "2px solid #888", borderRadius: 12, padding: "1.5rem", marginTop: "1.5rem" }}>
-          <h2 style={{ marginTop: 0 }}>Failed</h2>
-          <p>{outcome.message}</p>
-        </section>
+        <Card>
+          <CardHeader>
+            <CardTitle>Failed</CardTitle>
+            <CardDescription>{outcome.message}</CardDescription>
+          </CardHeader>
+        </Card>
       )}
 
-      <h3 style={{ marginTop: "2rem" }}>Event timeline</h3>
-      <ol>
-        {run.events.map((event) => (
-          <li key={event.seq}>
-            {event.stage}
-            {event.status ? ` — ${event.status}` : ""}
-            {event.check ? ` (${event.check})` : ""}
-          </li>
-        ))}
-      </ol>
-    </main>
+      <section className="flex flex-col gap-4">
+        <h2 className="text-xl font-semibold tracking-tight">Event timeline</h2>
+        <Card>
+          <CardContent className="py-6">
+            <ol className="space-y-1 text-sm">
+              {run.events.map((event) => (
+                <li key={event.seq}>
+                  {event.stage}
+                  {event.status ? ` — ${event.status}` : ""}
+                  {event.check ? ` (${event.check})` : ""}
+                </li>
+              ))}
+            </ol>
+          </CardContent>
+        </Card>
+      </section>
+    </div>
   );
 }
 
 function isExpired(expiresAt: number): boolean { return Math.floor(Date.now() / 1000) >= expiresAt; }
 
 function ComparisonData({ data, other }: { data: Record<string, unknown>; other?: Record<string, unknown> }) {
-  return <dl>{Object.entries(data).map(([key, value]) => {
-    const mismatch = other && key in other && String(other[key]) !== String(value);
-    return <div key={key} style={{ background: mismatch ? "#fff2f2" : "transparent", padding: 4 }}>
-      <dt style={{ fontWeight: 700 }}>{key}{mismatch ? " — mismatch" : ""}</dt><dd style={{ marginLeft: 0 }}>{String(value)}</dd>
-    </div>;
-  })}</dl>;
+  return (
+    <dl className="space-y-1 text-sm">
+      {Object.entries(data).map(([key, value]) => {
+        const mismatch = other && key in other && String(other[key]) !== String(value);
+        return (
+          <div key={key} className={`rounded px-2 py-1 ${mismatch ? "bg-destructive/10" : ""}`}>
+            <dt className="font-semibold">{key}{mismatch ? " — mismatch" : ""}</dt>
+            <dd className="ml-0 text-muted-foreground">{String(value)}</dd>
+          </div>
+        );
+      })}
+    </dl>
+  );
 }
 
 /** TTL + auto-deny (execution_plan.md §12b 2.1): expiry means DENY, never hang. */
@@ -194,7 +247,7 @@ function CountdownTtl({ expiresAt }: { expiresAt: number }) {
   }, []);
   const remaining = Math.max(0, expiresAt - now);
   return (
-    <p style={{ fontWeight: 600, color: remaining === 0 ? "crimson" : "#a60" }}>
+    <p className={`font-semibold ${remaining === 0 ? "text-red-600" : "text-amber-700"}`}>
       {remaining === 0 ? "Expired — auto-denied" : `${remaining}s remaining (expiry means deny)`}
     </p>
   );

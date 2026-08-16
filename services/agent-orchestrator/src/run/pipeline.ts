@@ -5,10 +5,11 @@ import { getCard, payAndIssue, viewCard } from "../card-gateway/index";
 import type { GetCardResult } from "../card-gateway/types";
 import { getMerchantProfile, type MerchantProfile } from "../checkout/merchant-profiles";
 import { runCheckout } from "../checkout/checkout-worker";
+import { completeUcpCheckout } from "../checkout/ucp-checkout";
 import * as chainGateway from "../clients/chain-gateway-client";
 import * as ledger from "../clients/ledger-client";
 import * as policy from "../clients/policy-client";
-import { discoverMerchantProduct, discoverProduct, type SimulatedCompromise } from "../discovery/discover";
+import { discoverMerchantProduct, discoverProduct, discoverShopifyCheckout, type ShopifyUcpCheckout, type SimulatedCompromise } from "../discovery/discover";
 import { createRun, emitEvent, getRun, setDiscoveredItem, setOutcome, setRunState } from "./store";
 
 const PAYING_WALLET_ADDRESS = (process.env["PAYING_WALLET_ADDRESS"] ?? "") as Address;
@@ -19,7 +20,10 @@ const MAX_BASE_UNITS = 30_000_000n;
 
 export type RunFixture = "clean" | "poisoned-recipient" | "poisoned-amount" | "wrong-item";
 export const RUN_FIXTURES: readonly RunFixture[] = ["clean", "poisoned-recipient", "poisoned-amount", "wrong-item"];
-export type RunSource = { kind: "fixture"; name: RunFixture } | { kind: "merchant"; profileId: string };
+export type RunSource =
+  | { kind: "fixture"; name: RunFixture }
+  | { kind: "merchant"; profileId: string }
+  | { kind: "shopify"; checkout: ShopifyUcpCheckout };
 export type RunInput = { instruction: string; mandateId: string; agentId: string; source: RunSource; cardholderName?: string };
 export type StartRunResult = { requestId: string; state: "RUNNING"; streamUrl: string };
 
@@ -35,7 +39,9 @@ const expiryTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
 function fixtureProductUrl(name: RunFixture): string { return `${FIXTURE_BASE_URL}/fixtures/${name}`; }
 function productUrl(source: RunSource): string {
-  return source.kind === "fixture" ? fixtureProductUrl(source.name) : getMerchantProfile(source.profileId).productUrl;
+  if (source.kind === "fixture") return fixtureProductUrl(source.name);
+  if (source.kind === "merchant") return getMerchantProfile(source.profileId).productUrl;
+  return `https://${source.checkout.storeDomain}/checkout-sessions/${source.checkout.checkoutSessionId}`;
 }
 
 /** Convert a base-unit decimal string to the MCP's SGD number without rounding or clamping. */
@@ -61,6 +67,7 @@ export function startRun(input: RunInput): StartRunResult {
     agentId: input.agentId,
     source: input.source,
     ...(input.source.kind === "fixture" ? { fixture: input.source.name } : {}),
+    ...(input.source.kind === "shopify" ? { checkoutSessionId: input.source.checkout.checkoutSessionId } : {}),
     productUrl: productUrl(input.source),
   });
   void executeRun(requestId, input).catch(() => safeFailure(requestId, "run failed closed before completion"));
@@ -72,12 +79,21 @@ async function executeRun(requestId: string, input: RunInput): Promise<void> {
   await ledger.createIntent({ requestId, mandateId: input.mandateId, agentId: input.agentId, instruction: input.instruction, createdAt: new Date().toISOString() });
   emitEvent(requestId, { stage: "INTENT_CREATED", status: "ok" });
 
+  // Discovery: fixture/merchant sources scrape a page (C6); a Shopify source takes
+  // the merchant-signed UCP checkout snapshot directly — no page is ever rendered.
   const profile = getMerchantProfile(input.source.kind === "merchant" ? input.source.profileId : "local-fixture");
-  const discovery = input.source.kind === "fixture"
-    ? await discoverProduct(fixtureProductUrl(input.source.name))
-    : await discoverMerchantProduct(profile);
+  let discovery;
+  if (input.source.kind === "fixture") {
+    discovery = await discoverProduct(fixtureProductUrl(input.source.name));
+    emitEvent(requestId, { stage: "DISCOVERY_DONE", status: "ok" });
+  } else if (input.source.kind === "merchant") {
+    discovery = await discoverMerchantProduct(profile);
+    emitEvent(requestId, { stage: "DISCOVERY_DONE", status: "ok" });
+  } else {
+    discovery = await discoverShopifyCheckout(input.source.checkout);
+    emitEvent(requestId, { stage: "CHECKOUT_ACQUIRED", status: "ok" });
+  }
   setDiscoveredItem(requestId, discovery.resolvedItem);
-  emitEvent(requestId, { stage: "DISCOVERY_DONE", status: "ok" });
 
   // Validation happens before getCard and therefore before any MCP access.
   const amountSgd = exactAmountSgd(discovery.resolvedItem.price);
@@ -192,38 +208,54 @@ export async function resolveRunEscalation(requestId: string, body: {
 async function continueSignedRun(requestId: string, context: PendingContext, header: string): Promise<void> {
   let signedHeader = header;
   try {
+    // Seamless issuer settlement: the StraitsX virtual card is issued immediately on
+    // the signed authorization (no blocking on on-chain confirmation), so it is live
+    // for the merchant checkout at once. Settlement is FINALIZED at capture time,
+    // after the card is spent: the on-chain transfer is then verified independently
+    // and the capture recorded — the run is DONE only after that (fail-closed).
     const issued = await payAndIssue({ cardapiUrl: context.cardResult.cardapiUrl, header: signedHeader, amountSgd: context.amountSgd, cardholderName: context.input.cardholderName ?? DEFAULT_CARDHOLDER_NAME });
     signedHeader = "";
     if (!issued.ok) return safeFailure(requestId, "cardapi rejected the signed authorization; start a fresh request", true);
+    emitEvent(requestId, { stage: "CARD_ISSUED", status: "ok" });
 
+    setRunState(requestId, "AWAITING_CHECKOUT");
+    setOutcome(requestId, { status: "checkout-pending", settlementTx: issued.settlementTx, cardOpaqueId: issued.cardOpaqueId });
+
+    const spend = context.input.source.kind === "shopify"
+      ? await completeUcpCheckout({
+          requestId,
+          checkout: context.input.source.checkout,
+          cardOpaqueId: issued.cardOpaqueId,
+          settlementTx: issued.settlementTx,
+          onDomainAsserted: () => emitEvent(requestId, { stage: "CHECKOUT_ASSERTED", status: "ok" }),
+        })
+      : await runCheckout({
+          requestId,
+          profile: context.profile,
+          resolvedItem: context.resolvedItem,
+          cardOpaqueId: issued.cardOpaqueId,
+          settlementTx: issued.settlementTx,
+          walletAddress: PAYING_WALLET_ADDRESS,
+          viewCard,
+          onDomainAsserted: () => emitEvent(requestId, { stage: "CHECKOUT_ASSERTED", status: "ok" }),
+        });
+    await ledger.recordSpend(spend);
+    emitEvent(requestId, { stage: "SPEND_RECORDED", status: "ok" });
+
+    // Capture-time settlement finalization. Only after the transfer is independently
+    // verified does the run reach DONE; a mismatch is terminal and must not be retried.
     const confirmation = await chainGateway.confirmSettlement({
       txHash: issued.settlementTx,
       chainId: context.cardResult.challenge.chainId,
       expect: { asset: context.cardResult.challenge.asset, to: context.cardResult.challenge.payTo, amount: context.cardResult.challenge.amount },
     });
     if (!confirmation.ok || !confirmation.transferMatched) {
-      emitEvent(requestId, { stage: "SETTLEMENT_CONFIRMED", status: "refused", check: "TRANSFER_MISMATCH" });
-      return safeFailure(requestId, "independent settlement verification failed; card display and checkout were blocked", true);
+      emitEvent(requestId, { stage: "SETTLEMENT_FINALIZED", status: "refused", check: "TRANSFER_MISMATCH" });
+      return safeFailure(requestId, "capture-time settlement verification failed; the transfer did not match the signed authorization", true);
     }
     await ledger.recordSettlement({ requestId, settlementTx: issued.settlementTx, blockNumber: confirmation.blockNumber, cardOpaqueId: issued.cardOpaqueId, rawToolResultHash: context.cardResult.rawToolResultHash });
-    emitEvent(requestId, { stage: "SETTLEMENT_CONFIRMED", status: "ok" });
-    // Deliberately buffered until independent settlement verification succeeds.
-    emitEvent(requestId, { stage: "CARD_ISSUED", status: "ok" });
-
-    setRunState(requestId, "AWAITING_CHECKOUT");
-    setOutcome(requestId, { status: "checkout-pending", settlementTx: issued.settlementTx, cardOpaqueId: issued.cardOpaqueId });
-    const spend = await runCheckout({
-      requestId,
-      profile: context.profile,
-      resolvedItem: context.resolvedItem,
-      cardOpaqueId: issued.cardOpaqueId,
-      settlementTx: issued.settlementTx,
-      walletAddress: PAYING_WALLET_ADDRESS,
-      viewCard,
-      onDomainAsserted: () => emitEvent(requestId, { stage: "CHECKOUT_ASSERTED", status: "ok" }),
-    });
-    await ledger.recordSpend(spend);
-    emitEvent(requestId, { stage: "SPEND_RECORDED", status: "ok" });
+    await ledger.recordCapture({ requestId, orderId: spend.orderId, capturedAt: spend.observedAt, settlementTx: issued.settlementTx, blockNumber: confirmation.blockNumber });
+    emitEvent(requestId, { stage: "SETTLEMENT_FINALIZED", status: "ok" });
     setOutcome(requestId, { status: "signed", settlementTx: issued.settlementTx, cardOpaqueId: issued.cardOpaqueId });
     setRunState(requestId, "DONE");
   } catch {

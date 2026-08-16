@@ -1,0 +1,13 @@
+# Foundation variable file for account-808 unified demo deployment.
+# Copy to /tmp/foundation.tfvars, set mode 0600, and fill the private values.
+target_account_id = "808198486011"
+aws_region        = "ap-southeast-1"
+project_name      = "straitsx-888"
+vpc_cidr          = "10.20.0.0/16"
+
+# Private: the KMS-derived paying wallet. Supplied only from a mode-0600 file.
+paying_wallet_address = "replace-me"
+
+tags = {
+  Module = "Foundation"
+}

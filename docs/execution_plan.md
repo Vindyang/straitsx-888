@@ -879,6 +879,25 @@ sequenceDiagram
     Note over R: Next decision fails mandate-live within a block
 ```
 
+> **§15 amendment (2026-08-16) — Shopify agentic commerce + seamless card-issuer settlement.**
+> See `docs/shopify-agentic-payments.md`. Stages 3 and 7 are reshaped:
+>
+> - **Stage 3 (Discovery)** gains the `shopify` source kind: the agent hands over the
+>   merchant-signed UCP checkout snapshot instead of a page to scrape — no page is rendered,
+>   no injection surface (`CHECKOUT_ACQUIRED` event instead of `DISCOVERY_DONE`). UCP/AP2
+>   context: Shopify negotiates per UCP (`ucp.version`, capability intersection, `payment.handlers`),
+>   Shop Pay is its built-in `dev.shopify.shop_pay` handler (token → `payment_data` at the
+>   merchant `complete` endpoint), and AP2 supplies Checkout/Payment Mandates binding the
+>   checkout JWT hash — our signer later steps into the Payment-Mandate-signing role.
+> - **Stage 6→7 (Settlement vs checkout order)**: step 29's independent confirmation now runs
+>   at **capture time** (after checkout + `recordSpend`), so the card is usable the moment the
+>   signed authorization is accepted (seamless issuer settlement). Ledger gains
+>   `POST /intent/:requestId/capture` (`CAPTURED` state, `409 CAPTURE_EXISTS` /
+>   `SETTLEMENT_NOT_RECORDED` / `SETTLEMENT_MISMATCH`); the run is DONE only after
+>   `SETTLEMENT_FINALIZED`, i.e. after the on-chain transfer matched (fail-closed preserved).
+>   The single irreversible step is unchanged: the signature burns the nonce and funds
+>   StraitsX cardapi; verification timing moved, the authority of the money leg did not.
+
 ---
 
 ## 16. Build order & checkpoints

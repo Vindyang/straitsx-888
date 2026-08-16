@@ -63,10 +63,25 @@ export async function recordSpend(entry: {
   itemSku: string;
   orderId: string;
   observedAt: string;
-  proof?: "none";
+  proof?: "none" | "ucp";
 }): Promise<{ recorded: boolean; spendLeg: { status: string; proof: string } }> {
   const { requestId, ...body } = entry;
   const res = await call(`/intent/${requestId}/spend`, { method: "POST", body: JSON.stringify(body) });
   if (!res.ok) throw new Error(`ledger recordSpend ${res.status}`);
   return res.json() as Promise<{ recorded: boolean; spendLeg: { status: string; proof: string } }>;
+}
+
+/** Capture-time settlement finalization — recorded only after the on-chain transfer
+ *  was independently verified (SETTLEMENT_FINALIZED). */
+export async function recordCapture(entry: {
+  requestId: string;
+  orderId: string;
+  capturedAt: string;
+  settlementTx: string;
+  blockNumber: number;
+}): Promise<{ requestId: string; state: string; orderId: string; settlementTx: string }> {
+  const { requestId, ...body } = entry;
+  const res = await call(`/intent/${requestId}/capture`, { method: "POST", body: JSON.stringify(body) });
+  if (!res.ok) throw new Error(`ledger recordCapture ${res.status}`);
+  return res.json() as Promise<{ requestId: string; state: string; orderId: string; settlementTx: string }>;
 }

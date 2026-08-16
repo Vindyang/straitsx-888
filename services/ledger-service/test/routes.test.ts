@@ -1,4 +1,5 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import http from "node:http";
 import { buildApp } from "../src/app.js";
 import { resetStore } from "../src/store.js";
 
@@ -165,6 +166,69 @@ describe("GET /window/:mandateId", () => {
   });
 });
 
+describe("POST /intent/:requestId/capture (seamless issuer settlement)", () => {
+  beforeEach(async () => {
+    await app.inject({ method: "POST", url: "/intent", headers: auth(), payload: { ...baseIntent, requestId: "r-capture" } });
+    await app.inject({ method: "POST", url: "/intent/r-capture/settlement", headers: auth(), payload: { settlementTx: "0xsettle", blockNumber: 42, cardOpaqueId: "card-1" } });
+    await app.inject({ method: "POST", url: "/intent/r-capture/spend", headers: auth(), payload: { merchantDomain: "water.example", orderTotal: "5000000", itemSku: "BTL-500-SS", orderId: "SO-1", observedAt: "2026-08-15T06:05:00Z" } });
+  });
+
+  it("records the capture only after a verified settlement and marks the intent CAPTURED", async () => {
+    const res = await app.inject({ method: "POST", url: "/intent/r-capture/capture", headers: auth(), payload: { orderId: "SO-1", capturedAt: "2026-08-15T06:05:30Z", settlementTx: "0xsettle", blockNumber: 42 } });
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toMatchObject({ requestId: "r-capture", state: "CAPTURED", orderId: "SO-1", settlementTx: "0xsettle" });
+
+    const intent = await app.inject({ method: "GET", url: "/intent/r-capture", headers: auth() });
+    expect(intent.json().state).toBe("CAPTURED");
+    expect(intent.json().capture).toMatchObject({ orderId: "SO-1", settlementTx: "0xsettle", blockNumber: 42 });
+  });
+
+  it("is append-only: a second capture for the same intent returns 409 CAPTURE_EXISTS", async () => {
+    const ok = await app.inject({ method: "POST", url: "/intent/r-capture/capture", headers: auth(), payload: { orderId: "SO-1", capturedAt: "2026-08-15T06:05:30Z" } });
+    expect(ok.statusCode).toBe(200);
+    const again = await app.inject({ method: "POST", url: "/intent/r-capture/capture", headers: auth(), payload: { orderId: "SO-1", capturedAt: "2026-08-15T06:06:00Z" } });
+    expect(again.statusCode).toBe(409);
+    expect(again.json().error.code).toBe("CAPTURE_EXISTS");
+  });
+
+  it("rejects capture before a settlement has been recorded (409 SETTLEMENT_NOT_RECORDED)", async () => {
+    await app.inject({ method: "POST", url: "/intent", headers: auth(), payload: { ...baseIntent, requestId: "r-nosettle" } });
+    const res = await app.inject({ method: "POST", url: "/intent/r-nosettle/capture", headers: auth(), payload: { orderId: "SO-2", capturedAt: "2026-08-15T06:07:00Z" } });
+    expect(res.statusCode).toBe(409);
+    expect(res.json().error.code).toBe("SETTLEMENT_NOT_RECORDED");
+  });
+
+  it("rejects a capture whose settlementTx does not match the recorded settlement", async () => {
+    const res = await app.inject({ method: "POST", url: "/intent/r-capture/capture", headers: auth(), payload: { orderId: "SO-1", capturedAt: "2026-08-15T06:08:00Z", settlementTx: "0xother" } });
+    expect(res.statusCode).toBe(409);
+    expect(res.json().error.code).toBe("SETTLEMENT_MISMATCH");
+  });
+});
+
+describe("GET /intents (transparency listing)", () => {
+  it("lists created intents newest-first in view shape, including settlement/spend/capture", async () => {
+    await app.inject({ method: "POST", url: "/intent", headers: auth(), payload: baseIntent });
+    await app.inject({ method: "POST", url: "/intent", headers: auth(), payload: { ...baseIntent, requestId: "r2", instruction: "buy a second bottle", createdAt: "2026-08-15T07:00:00Z" } });
+    await app.inject({ method: "POST", url: "/intent/r2/settlement", headers: auth(), payload: { settlementTx: "0xsettle", blockNumber: 7, cardOpaqueId: "card-2" } });
+    await app.inject({ method: "POST", url: "/intent/r2/capture", headers: auth(), payload: { orderId: "SO-2", capturedAt: "2026-08-15T07:01:00Z" } });
+
+    const res = await app.inject({ method: "GET", url: "/intents", headers: auth() });
+    expect(res.statusCode).toBe(200);
+    const { intents: listed } = res.json();
+    expect(listed.map((i: { requestId: string }) => i.requestId)).toEqual(["r2", "r1"]);
+    expect(listed[0]).toMatchObject({
+      requestId: "r2",
+      state: "CAPTURED",
+      settlement: { settlementTx: "0xsettle", blockNumber: 7 },
+      capture: { orderId: "SO-2", settlementTx: "0xsettle" },
+      instructionHash: expect.any(String),
+    });
+    expect(listed[1]).toMatchObject({ state: "INTENT_CREATED" });
+    expect(listed[1]).not.toHaveProperty("challenge");
+    expect(listed[1]).not.toHaveProperty("settlement");
+  });
+});
+
 describe("policy storage", () => {
   it("PUT then GET round-trips and increments policyVersion", async () => {
     const policy = { mandateId: "m1", note: "raw storage, no drift validation here" };
@@ -246,5 +310,87 @@ describe("standing approvals", () => {
     });
     const res = await app.inject({ method: "GET", url: "/standing-approval?mandateId=m1&merchantDomain=shop.example", headers: auth() });
     expect(res.json().active).toBe(false);
+  });
+});
+
+describe("GET /ledger/events (live SSE feed)", () => {
+  let port = 0;
+
+  beforeAll(async () => {
+    await app.listen({ port: 0, host: "127.0.0.1" });
+    const addr = app.server.address();
+    port = typeof addr === "object" && addr !== null ? addr.port : 0;
+  });
+
+  afterAll(async () => {
+    await app.close();
+  });
+
+  function openFeed() {
+    return new Promise<http.IncomingMessage>((resolve, reject) => {
+      const req = http.get({ host: "127.0.0.1", port, path: "/ledger/events", headers: auth() }, (res) => resolve(res));
+      req.on("error", reject);
+    });
+  }
+
+  async function waitFor(stream: http.IncomingMessage, marker: string, timeoutMs = 4000): Promise<string> {
+    let buffered = "";
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error(`stream never contained ${marker}; got: ${buffered.slice(0, 600)}`)), timeoutMs);
+      const onData = (chunk: Buffer) => {
+        buffered += chunk.toString("utf-8");
+        if (buffered.includes(marker)) {
+          clearTimeout(timer);
+          stream.off("data", onData);
+          resolve(buffered);
+        }
+      };
+      stream.on("data", onData);
+      stream.on("error", (error: Error) => {
+        clearTimeout(timer);
+        reject(error);
+      });
+    });
+  }
+
+  it("emits a snapshot first, then an append for intent.created with the intent view", async () => {
+    await app.inject({ method: "POST", url: "/intent", headers: auth(), payload: baseIntent });
+    const stream = await openFeed();
+    await app.inject({ method: "POST", url: "/intent", headers: auth(), payload: { ...baseIntent, requestId: "r-live", createdAt: "2026-08-15T08:00:00Z" } });
+    const chunk = await waitFor(stream, '"requestId":"r-live"');
+    stream.destroy();
+    expect(chunk).toContain("event: snapshot");
+    expect(chunk).toContain('"requestId":"r1"');
+    expect(chunk).toContain("event: append");
+    expect(chunk).toContain('"kind":"intent.created"');
+  });
+
+  it("emits settlement, spend and capture appends with the final intent view", async () => {
+    await app.inject({ method: "POST", url: "/intent", headers: auth(), payload: { ...baseIntent, requestId: "r-live-c", createdAt: "2026-08-15T08:05:00Z" } });
+    const stream = await openFeed();
+    await app.inject({ method: "POST", url: "/intent/r-live-c/settlement", headers: auth(), payload: { settlementTx: "0xsettle", blockNumber: 9, cardOpaqueId: "card-3" } });
+    await app.inject({ method: "POST", url: "/intent/r-live-c/spend", headers: auth(), payload: { merchantDomain: "water.example", orderTotal: "5000000", itemSku: "BTL-500-SS", orderId: "SO-3", observedAt: "2026-08-15T08:06:00Z" } });
+    await app.inject({ method: "POST", url: "/intent/r-live-c/capture", headers: auth(), payload: { orderId: "SO-3", capturedAt: "2026-08-15T08:06:30Z" } });
+    const chunk = await waitFor(stream, '"kind":"capture.recorded"');
+    stream.destroy();
+    expect(chunk).toContain('"kind":"settlement.recorded"');
+    expect(chunk).toContain('"kind":"spend.recorded"');
+    expect(chunk).toContain('"state":"CAPTURED"');
+    expect(chunk).toContain('"orderId":"SO-3"');
+  });
+
+  it("broadcasts decision refusals too — every outcome is visible", async () => {
+    await app.inject({ method: "POST", url: "/intent", headers: auth(), payload: { ...baseIntent, requestId: "r-refused", createdAt: "2026-08-15T08:10:00Z" } });
+    const stream = await openFeed();
+    await app.inject({
+      method: "POST",
+      url: "/decision",
+      headers: auth(),
+      payload: { requestId: "r-refused", decision: "refused", check: "check4_recipient_pinned", detail: "payTo mismatch", decidedAt: "2026-08-15T08:11:00Z" },
+    });
+    const chunk = await waitFor(stream, '"kind":"decision.recorded"');
+    stream.destroy();
+    expect(chunk).toContain('"decision":"refused"');
+    expect(chunk).toContain('"check":"check4_recipient_pinned"');
   });
 });

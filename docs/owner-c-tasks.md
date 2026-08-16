@@ -147,9 +147,13 @@ The MCP tool result **contains a live prompt injection**
 ### C8 SSE run events
 **Estimate:** 1 h
 
-- [ ] `GET /run/:requestId/events` streaming stages: `INTENT_CREATED` → `DISCOVERY_DONE` →
-      `CHALLENGE_RECEIVED` → `POLICY_DECISION` → `SETTLEMENT_CONFIRMED` → `CARD_ISSUED` →
-      `CHECKOUT_ASSERTED` → `SPEND_RECORDED`
+- [ ] `GET /run/:requestId/events` streaming stages: `INTENT_CREATED` → `DISCOVERY_DONE`
+      (or `CHECKOUT_ACQUIRED` for Shopify/UCP sources) → `CHALLENGE_RECEIVED` →
+      `POLICY_DECISION` → `CARD_ISSUED` → `CHECKOUT_ASSERTED` → `SPEND_RECORDED` →
+      `SETTLEMENT_FINALIZED`
+- [x] `DISCOVERY_DONE`/`CHECKOUT_ACQUIRED`, `CARD_ISSUED` (issued on signature, seamless) and
+      `SETTLEMENT_FINALIZED` (capture-time settlement) — implemented 2026-08-16 (see
+      `docs/shopify-agentic-payments.md` §3)
 
 ### C9 Post-issuance controls
 **Estimate:** 1.5 h · **Source: [§12](execution_plan.md)**

@@ -10,32 +10,21 @@ output "cloudfront_distribution_id" {
 output "orchestrator_security_group_id" {
   value = aws_security_group.orchestrator.id
 }
+output "starnote_adapter_security_group_id" {
+  description = "Security group the StarNote payment adapter Lambda uses inside this VPC"
+  value       = aws_security_group.starnote_adapter.id
+}
 output "dashboard_security_group_id" {
   value = aws_security_group.dashboard.id
 }
 output "cloudwatch_log_group" {
   value = aws_cloudwatch_log_group.module_c.name
 }
-output "execution_role_arn" {
-  value = aws_iam_role.execution.arn
+output "orchestrator_task_role_arn" {
+  value = aws_iam_role.task["orchestrator"].arn
 }
-output "task_role_arn" {
-  value = aws_iam_role.task.arn
-}
-output "private_subnet_ids" {
-  value = local.effective_private_subnet_ids
-}
-output "ecs_cluster_arn" {
-  value = local.effective_ecs_cluster_arn
-}
-output "vpc_id" {
-  value = local.effective_vpc_id
-}
-output "cloudmap_namespace_id" {
-  value = local.effective_cloudmap_namespace_id
-}
-output "alarm_topic_arn" {
-  value = local.effective_alarm_topic_arn
+output "orchestrator_execution_role_arn" {
+  value = aws_iam_role.execution["orchestrator"].arn
 }
 output "orchestrator_image" {
   value = var.orchestrator_image

@@ -1,30 +1,47 @@
-import type { ReactNode } from "react";
-import Link from "next/link";
+import type { Metadata } from "next"
+import { Geist_Mono, Noto_Sans } from "next/font/google"
 
-export const metadata = {
+import "./globals.css"
+import { AppShell } from "@/components/app-shell"
+import { ThemeProvider } from "@/components/theme-provider"
+import { cn } from "@/lib/utils"
+
+const notoSans = Noto_Sans({
+  subsets: ["latin"],
+  variable: "--font-sans",
+})
+
+const fontMono = Geist_Mono({
+  subsets: ["latin"],
+  variable: "--font-mono",
+})
+
+export const metadata: Metadata = {
   title: "StraitsX — Mandated Payments",
-};
+  description:
+    "A fail-closed agentic checkout where the registry state is the only shared fact.",
+}
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode
+}>) {
   return (
-    <html lang="en">
-      <body style={{ margin: 0, fontFamily: "system-ui, sans-serif" }}>
-        <nav
-          style={{
-            display: "flex",
-            gap: "1.5rem",
-            padding: "1rem 2rem",
-            borderBottom: "1px solid #ddd",
-            fontSize: "0.95rem",
-          }}
-        >
-          <Link href="/">Run</Link>
-          <Link href="/mandates">Mandates</Link>
-          <Link href="/runs">Runs</Link>
-          <Link href="/injection-demo">Injection boundary</Link>
-        </nav>
-        {children}
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={cn(
+        "font-sans antialiased",
+        notoSans.variable,
+        fontMono.variable
+      )}
+    >
+      <body suppressHydrationWarning>
+        <ThemeProvider>
+          <AppShell>{children}</AppShell>
+        </ThemeProvider>
       </body>
     </html>
-  );
+  )
 }

@@ -24,9 +24,13 @@ whole story.
 
 1. Dashboard home (`/`): instruction `Buy the 500ml stainless water bottle from localhost,
    under S$20`, the mandate's `mandateId`, fixture `clean`, start the run.
-2. Watch the event stream reach `SPEND_RECORDED`; the run detail page shows **Signed and
-   settled** with a link to the receipt.
-3. Receipt page: click the settlement tx through to `testnet.snowtrace.io` — a judge will
+2. Watch the event stream reach `SPEND_RECORDED`, then `SETTLEMENT_FINALIZED` (capture-time
+   verification); the run detail page shows **Signed and settled** with a link to the receipt.
+3. Keep the **Ledger** page open in a second tab from the start: each step (`intent.created`
+   → `challenge.attached` → `nonce.reserved` → `decision.recorded` → `settlement.recorded`
+   → `spend.recorded` → `capture.recorded`) arrives via live SSE as it happens, newest intent
+   first, with the settlement tx and capture order visible in the same view as the run page.
+4. Receipt page: click the settlement tx through to `testnet.snowtrace.io` — a judge will
    click it, so this has to resolve to a real, matching transfer.
 
 ## Run 2 — poisoned. NEVER CUT THIS RUN.
@@ -38,7 +42,8 @@ whole story.
    `run/pipeline.ts` reads it, to model what a *compromised* agent would submit.
 3. Expected: the run detail page shows the refusal panel — `check4_recipient_pinned`, both
    addresses in `detail`, **"Nothing was signed. No money moved."** in crimson, unmissable
-   from across a room.
+   from across a room. The Ledger page broadcasts the same refusal live (`decision.recorded`
+   with `decision: "refused"`) — every outcome is visible.
 4. Repeat with fixture `poisoned-amount` for `check5_amount_bounds` if time allows — same
    pattern, inflated amount instead of a redirected recipient.
 

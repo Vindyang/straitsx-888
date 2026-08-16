@@ -16,6 +16,51 @@ export type SimulatedCompromise = {
   amountOverride?: string | undefined;
 };
 
+/** A merchant-signed UCP checkout snapshot supplied by the agent the way Shopify's
+ *  Universal Commerce Protocol delivers it: the merchant owns the totals and the
+ *  session; the checkout JWT (when present, AP2) cryptographically binds them. */
+export type ShopifyUcpCheckout = {
+  storeDomain: string;
+  checkoutSessionId: string;
+  title: string;
+  sku: string;
+  totalBaseUnits: string;
+  currency: "SGD";
+  /** Merchant-signed UCP checkout JWT (AP2 checkout binding, optional in sandbox). */
+  checkoutJwt?: string | undefined;
+};
+
+export function checkoutUrlOf(checkout: ShopifyUcpCheckout): string {
+  return `https://${checkout.storeDomain}/checkout-sessions/${checkout.checkoutSessionId}/complete`;
+}
+
+/** C6-shopify — resolve the purchase target from a UCP checkout snapshot instead of
+ *  scraping a page. The merchant (Shopify storefront) signed the totals; we never
+ *  render or read an HTML page, so there is no page-injection surface at all. */
+export async function discoverShopifyCheckout(checkout: ShopifyUcpCheckout): Promise<DiscoveryResult> {
+  const domain = checkout.storeDomain.toLowerCase();
+  if (!/^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*$/.test(domain)) {
+    throw new Error("shopify source storeDomain is not a valid hostname");
+  }
+  if (!/^[A-Za-z0-9_-]{8,}$/.test(checkout.checkoutSessionId)) {
+    throw new Error("shopify source checkoutSessionId is invalid");
+  }
+  if (checkout.currency !== "SGD") throw new Error("shopify source checkout must be denominated in SGD");
+  const price = checkout.totalBaseUnits;
+  if (!/^\d+$/.test(price)) throw new Error("shopify source totalBaseUnits must be a base-unit decimal string");
+  if (!checkout.title.trim() || !checkout.sku.trim()) throw new Error("shopify source checkout must carry line-item title and sku");
+  return {
+    resolvedItem: {
+      title: checkout.title.trim(),
+      sku: checkout.sku.trim(),
+      price,
+      merchantDomain: domain,
+      checkoutUrl: checkoutUrlOf(checkout),
+    },
+    simulatedCompromise: null,
+  };
+}
+
 export type DiscoveryResult = {
   resolvedItem: ResolvedItem;
   /**

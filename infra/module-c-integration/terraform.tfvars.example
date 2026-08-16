@@ -1,17 +1,9 @@
 name       = "straitsx-module-c"
 aws_region = "ap-southeast-1"
 
-# Module C outputs.
-execution_role_arn             = "arn:aws:iam::111122223333:role/straitsx-module-c-execution"
-task_role_arn                  = "arn:aws:iam::111122223333:role/straitsx-module-c-task"
-cloudwatch_log_group           = "/ecs/straitsx-module-c"
-orchestrator_image             = "111122223333.dkr.ecr.ap-southeast-1.amazonaws.com/straitsx/module-c-orchestrator@sha256:replace-me"
-
-# Stable A/B interface names. The A/B owner remains responsible for its ingress
-# rules, policy -> signer port 4003, and removing any broader signer ingress.
-ledger_service_name             = "ledger.internal"
-policy_service_name             = "policy.internal"
-chain_gateway_service_name      = "chain-gateway.internal"
+# Nothing else is required: the stack consumes foundation, module-c and
+# module-ab remote state from the shared state bucket. Set tags for
+# cost-allocation tracing of the probe task.
 
 tags = {
   Environment = "demo"

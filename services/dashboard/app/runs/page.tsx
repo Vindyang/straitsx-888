@@ -2,6 +2,15 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { RiArrowRightLine } from "@remixicon/react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../../components/ui/card";
+import { PageHeading } from "../../components/page-heading";
 
 type RunSummary = {
   requestId: string;
@@ -11,17 +20,15 @@ type RunSummary = {
   outcome?: { status: string; check?: string };
 };
 
-const STATE_COLOR: Record<string, string> = {
-  RUNNING: "#a60",
-  AWAITING_CHECKOUT: "#075985",
-  DONE: "green",
-  REFUSED: "crimson",
-  ESCALATED: "#a60",
-  FAILED: "#888",
+const STATE_BADGE: Record<string, string> = {
+  RUNNING: "bg-amber-600/15 text-amber-700",
+  AWAITING_CHECKOUT: "bg-sky-600/15 text-sky-700",
+  DONE: "bg-green-600/15 text-green-700",
+  REFUSED: "bg-red-600/15 text-red-700",
+  ESCALATED: "bg-amber-600/15 text-amber-700",
+  FAILED: "bg-muted text-muted-foreground",
 };
 
-/** C12 — the run list. Each row links to the refusal panel (or escalation
- *  screen, or receipt) for that run. */
 export default function RunsPage() {
   const [runs, setRuns] = useState<RunSummary[]>([]);
 
@@ -36,34 +43,38 @@ export default function RunsPage() {
   }, []);
 
   return (
-    <main style={{ maxWidth: 960, margin: "0 auto", padding: "2rem" }}>
-      <h1>Runs</h1>
-      {runs.length === 0 && <p style={{ color: "#666" }}>No runs yet — start one from the home page.</p>}
-      {runs.map((run) => (
-        <Link
-          key={run.requestId}
-          href={`/runs/${run.requestId}`}
-          style={{
-            display: "block",
-            border: "1px solid #ddd",
-            borderRadius: 8,
-            padding: "1rem",
-            marginBottom: "0.75rem",
-            textDecoration: "none",
-            color: "inherit",
-          }}
-        >
-          <div style={{ display: "flex", justifyContent: "space-between" }}>
-            <code>{run.requestId.slice(0, 8)}</code>
-            <span style={{ color: STATE_COLOR[run.state] ?? "#333", fontWeight: 600 }}>{run.state}</span>
-          </div>
-          <p style={{ margin: "0.5rem 0" }}>{run.meta.instruction}</p>
-          <p style={{ margin: 0, color: "#666", fontSize: "0.9em" }}>
-            source: {run.meta.fixture ?? run.meta.source?.profileId ?? run.meta.source?.name ?? "unknown"}
-            {run.outcome && "check" in run.outcome && run.outcome.check ? ` · ${run.outcome.check}` : ""}
-          </p>
-        </Link>
-      ))}
-    </main>
+    <div className="flex flex-col gap-8">
+      <PageHeading
+        title="Runs"
+        description="Every run and its outcome. Refused runs never sign anything."
+      />
+      {runs.length === 0 && (
+        <p className="text-sm text-muted-foreground">No runs yet — start one from the home page.</p>
+      )}
+      <section className="flex flex-col gap-4">
+        {runs.map((run) => (
+          <Link key={run.requestId} href={`/runs/${run.requestId}`} className="group">
+            <Card className="transition-colors group-hover:bg-muted/40">
+              <CardHeader>
+                <div className="flex items-center justify-between gap-4">
+                  <CardTitle className="font-mono text-sm">{run.requestId.slice(0, 8)}</CardTitle>
+                  <span className={`rounded-full px-3 py-1 text-xs font-semibold ${STATE_BADGE[run.state] ?? "bg-muted"}`}>
+                    {run.state}
+                  </span>
+                </div>
+                <CardDescription className="text-foreground">{run.meta.instruction}</CardDescription>
+              </CardHeader>
+              <CardContent className="flex items-center justify-between text-sm text-muted-foreground">
+                <span>
+                  source: {run.meta.fixture ?? run.meta.source?.profileId ?? run.meta.source?.name ?? "unknown"}
+                  {run.outcome?.check ? ` · ${run.outcome.check}` : ""}
+                </span>
+                <RiArrowRightLine className="size-4 opacity-0 transition-opacity group-hover:opacity-60" />
+              </CardContent>
+            </Card>
+          </Link>
+        ))}
+      </section>
+    </div>
   );
 }

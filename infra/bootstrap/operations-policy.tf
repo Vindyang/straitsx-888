@@ -139,7 +139,10 @@ locals {
           "budgets:CreateBudget",
           "budgets:DeleteBudget",
           "budgets:DescribeBudget",
+          "budgets:ListTagsForResource",
           "budgets:ModifyBudget",
+          "budgets:TagResource",
+          "budgets:UntagResource",
           "budgets:ViewBudget",
         ]
         Resource = local.budget_arn

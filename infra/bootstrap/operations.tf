@@ -12,8 +12,13 @@ resource "aws_sns_topic_policy" "operations" {
         Sid       = "AccountAdministration"
         Effect    = "Allow"
         Principal = { AWS = "arn:aws:iam::${var.target_account_id}:root" }
-        Action    = "sns:*"
-        Resource  = aws_sns_topic.operations.arn
+        Action = [
+          "sns:Publish",
+          "sns:Subscribe",
+          "sns:GetTopicAttributes",
+          "sns:SetTopicAttributes",
+        ]
+        Resource = aws_sns_topic.operations.arn
       },
       {
         Sid    = "AllowOperationalAWSServicePublishers"
