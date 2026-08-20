@@ -1,0 +1,509 @@
+<mxfile host="app.diagrams.net" agent="opencode">
+  <diagram id="sequence" name="Sequence">
+    <mxGraphModel dx="1860" dy="1036" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="3300" pageHeight="4580" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" parent="1" style="text;html=1;align=left;verticalAlign=middle;fontSize=20;fontStyle=1;fontColor=#1A1A1A;" value="Agentic stablecoin card purchase under an on-chain mandate — sequence" vertex="1">
+          <mxGeometry height="34" width="1400" x="16" y="10" as="geometry" />
+        </mxCell>
+        <mxCell id="subtitle" parent="1" style="text;html=1;align=left;verticalAlign=middle;fontSize=12;fontColor=#6B7280;" value="Fuji 43113 sandbox · MandateRegistry + KMS-held signer + StraitsX card MCP · stages 1–8, three decision outcomes: signed | refused | escalated · test token TSGD (mock XSGD) on Fuji, swap to real XSGD for production · Stage A: real StraitsX card generation, simulated issuer auth" vertex="1">
+          <mxGeometry height="22" width="2200" x="16" y="44" as="geometry" />
+        </mxCell>
+        <mxCell id="L1" parent="1" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=0;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#FFFFFF;strokeColor=#1A1A1A;fontSize=12;fontStyle=1;verticalAlign=middle;size=48;" value="Human" vertex="1">
+          <mxGeometry height="4060" width="200" x="270" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="L2" parent="1" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=0;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#FFFFFF;strokeColor=#1A1A1A;fontSize=12;fontStyle=1;verticalAlign=middle;size=48;" value="Web app&lt;br&gt;Next.js" vertex="1">
+          <mxGeometry height="4060" width="200" x="520" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="L3" parent="1" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=0;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#FFFFFF;strokeColor=#1A1A1A;fontSize=12;fontStyle=1;verticalAlign=middle;size=48;" value="chain-gateway" vertex="1">
+          <mxGeometry height="4060" width="200" x="770" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="L4" parent="1" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=0;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#FFFFFF;strokeColor=#1A1A1A;fontSize=12;fontStyle=1;verticalAlign=middle;size=48;" value="MandateRegistry&lt;br&gt;Fuji 43113" vertex="1">
+          <mxGeometry height="4060" width="200" x="1020" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="L5" parent="1" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=0;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#FFFFFF;strokeColor=#1A1A1A;fontSize=12;fontStyle=1;verticalAlign=middle;size=48;" value="Agent runtime" vertex="1">
+          <mxGeometry height="4060" width="200" x="1270" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="L6" parent="1" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=0;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#FFFFFF;strokeColor=#1A1A1A;fontSize=12;fontStyle=1;verticalAlign=middle;size=48;" value="Ledger&lt;br&gt;DynamoDB" vertex="1">
+          <mxGeometry height="4060" width="200" x="1520" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="L7" parent="1" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=0;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#FFFFFF;strokeColor=#1A1A1A;fontSize=12;fontStyle=1;verticalAlign=middle;size=48;" value="card-gateway&lt;br&gt;MCP SSE client" vertex="1">
+          <mxGeometry height="4060" width="200" x="1770" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="L8" parent="1" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=0;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#FFFFFF;strokeColor=#1A1A1A;fontSize=12;fontStyle=1;verticalAlign=middle;size=48;" value="StraitsX card MCP" vertex="1">
+          <mxGeometry height="4060" width="200" x="2020" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="L9" parent="1" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=0;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#FFFFFF;strokeColor=#1A1A1A;fontSize=12;fontStyle=1;verticalAlign=middle;size=48;" value="Policy service&lt;br&gt;Lambda" vertex="1">
+          <mxGeometry height="4060" width="200" x="2270" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="L10" parent="1" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=0;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#FFFFFF;strokeColor=#1A1A1A;fontSize=12;fontStyle=1;verticalAlign=middle;size=48;" value="Signer service&lt;br&gt;AWS KMS" vertex="1">
+          <mxGeometry height="4060" width="200" x="2520" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="L11" parent="1" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=0;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#FFFFFF;strokeColor=#1A1A1A;fontSize=12;fontStyle=1;verticalAlign=middle;size=48;" value="StraitsX cardapi" vertex="1">
+          <mxGeometry height="4060" width="200" x="2770" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="L12" parent="1" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=0;collapsible=0;recursiveResize=0;outlineConnect=0;fillColor=#FFFFFF;strokeColor=#1A1A1A;fontSize=12;fontStyle=1;verticalAlign=middle;size=48;" value="TSGD&lt;br&gt;Avalanche Fuji&lt;br&gt;(mock XSGD; prod = XSGD)" vertex="1">
+          <mxGeometry height="4060" width="200" x="3020" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="B1" parent="1" style="shape=umlActivation;html=1;fillColor=#FFFFFF;strokeColor=#1A1A1A;" value="" vertex="1">
+          <mxGeometry height="280" width="24" x="608" y="230" as="geometry" />
+        </mxCell>
+        <mxCell id="B2" parent="1" style="shape=umlActivation;html=1;fillColor=#FFFFFF;strokeColor=#1A1A1A;" value="" vertex="1">
+          <mxGeometry height="210" width="24" x="608" y="3800" as="geometry" />
+        </mxCell>
+        <mxCell id="B3" parent="1" style="shape=umlActivation;html=1;fillColor=#FFFFFF;strokeColor=#1A1A1A;" value="" vertex="1">
+          <mxGeometry height="70" width="24" x="858" y="1550" as="geometry" />
+        </mxCell>
+        <mxCell id="B4" parent="1" style="shape=umlActivation;html=1;fillColor=#FFFFFF;strokeColor=#1A1A1A;" value="" vertex="1">
+          <mxGeometry height="70" width="24" x="858" y="3190" as="geometry" />
+        </mxCell>
+        <mxCell id="B5" parent="1" style="shape=umlActivation;html=1;fillColor=#FFFFFF;strokeColor=#1A1A1A;" value="" vertex="1">
+          <mxGeometry height="70" width="24" x="858" y="4010" as="geometry" />
+        </mxCell>
+        <mxCell id="B6" parent="1" style="shape=umlActivation;html=1;fillColor=#FFFFFF;strokeColor=#1A1A1A;" value="" vertex="1">
+          <mxGeometry height="3190" width="24" x="1358" y="610" as="geometry" />
+        </mxCell>
+        <mxCell id="B7" parent="1" style="shape=umlActivation;html=1;fillColor=#FFFFFF;strokeColor=#1A1A1A;" value="" vertex="1">
+          <mxGeometry height="210" width="24" x="1858" y="950" as="geometry" />
+        </mxCell>
+        <mxCell id="B8" parent="1" style="shape=umlActivation;html=1;fillColor=#FFFFFF;strokeColor=#1A1A1A;" value="" vertex="1">
+          <mxGeometry height="70" width="24" x="1858" y="3400" as="geometry" />
+        </mxCell>
+        <mxCell id="B9" parent="1" style="shape=umlActivation;html=1;fillColor=#FFFFFF;strokeColor=#1A1A1A;" value="" vertex="1">
+          <mxGeometry height="1250" width="24" x="2358" y="1340" as="geometry" />
+        </mxCell>
+        <mxCell id="B10" parent="1" style="shape=umlActivation;html=1;fillColor=#FFFFFF;strokeColor=#1A1A1A;" value="" vertex="1">
+          <mxGeometry height="140" width="24" x="2608" y="2380" as="geometry" />
+        </mxCell>
+        <mxCell id="B11" parent="1" style="shape=umlActivation;html=1;fillColor=#FFFFFF;strokeColor=#1A1A1A;" value="" vertex="1">
+          <mxGeometry height="210" width="24" x="2858" y="2860" as="geometry" />
+        </mxCell>
+        <mxCell id="S1" parent="1" style="shape=note;whiteSpace=wrap;html=1;size=14;fillColor=#FFF3CD;strokeColor=#C8A415;fontSize=12;fontStyle=1;fontColor=#5C4708;verticalAlign=middle;align=left;spacingLeft=8;spacingRight=8;" value="Stage 1 — Mandate creation (once, up front)" vertex="1">
+          <mxGeometry height="26" width="300" x="16" y="200" as="geometry" />
+        </mxCell>
+        <mxCell id="S2" parent="1" style="shape=note;whiteSpace=wrap;html=1;size=14;fillColor=#FFF3CD;strokeColor=#C8A415;fontSize=12;fontStyle=1;fontColor=#5C4708;verticalAlign=middle;align=left;spacingLeft=8;spacingRight=8;" value="Stage 2 — Intent" vertex="1">
+          <mxGeometry height="26" width="300" x="16" y="580" as="geometry" />
+        </mxCell>
+        <mxCell id="S3" parent="1" style="shape=note;whiteSpace=wrap;html=1;size=14;fillColor=#FFF3CD;strokeColor=#C8A415;fontSize=12;fontStyle=1;fontColor=#5C4708;verticalAlign=middle;align=left;spacingLeft=8;spacingRight=8;" value="Stage 3 — Discovery (every byte is input, never instruction)" vertex="1">
+          <mxGeometry height="26" width="300" x="16" y="750" as="geometry" />
+        </mxCell>
+        <mxCell id="S4" parent="1" style="shape=note;whiteSpace=wrap;html=1;size=14;fillColor=#FFF3CD;strokeColor=#C8A415;fontSize=12;fontStyle=1;fontColor=#5C4708;verticalAlign=middle;align=left;spacingLeft=8;spacingRight=8;" value="Stage 4 — Card request" vertex="1">
+          <mxGeometry height="26" width="300" x="16" y="920" as="geometry" />
+        </mxCell>
+        <mxCell id="S5" parent="1" style="shape=note;whiteSpace=wrap;html=1;size=14;fillColor=#FFF3CD;strokeColor=#C8A415;fontSize=12;fontStyle=1;fontColor=#5C4708;verticalAlign=middle;align=left;spacingLeft=8;spacingRight=8;" value="Stage 5 — Decision (the project)" vertex="1">
+          <mxGeometry height="26" width="300" x="16" y="1310" as="geometry" />
+        </mxCell>
+        <mxCell id="S6" parent="1" style="shape=note;whiteSpace=wrap;html=1;size=14;fillColor=#FFF3CD;strokeColor=#C8A415;fontSize=12;fontStyle=1;fontColor=#5C4708;verticalAlign=middle;align=left;spacingLeft=8;spacingRight=8;" value="Stage 6 — Settlement (the ONE irreversible step)" vertex="1">
+          <mxGeometry height="26" width="300" x="16" y="2830" as="geometry" />
+        </mxCell>
+        <mxCell id="S7" parent="1" style="shape=note;whiteSpace=wrap;html=1;size=14;fillColor=#FFF3CD;strokeColor=#C8A415;fontSize=12;fontStyle=1;fontColor=#5C4708;verticalAlign=middle;align=left;spacingLeft=8;spacingRight=8;" value="Stage 7 — Verify, render, post-issuance controls" vertex="1">
+          <mxGeometry height="26" width="300" x="16" y="3160" as="geometry" />
+        </mxCell>
+        <mxCell id="S8" parent="1" style="shape=note;whiteSpace=wrap;html=1;size=14;fillColor=#FFF3CD;strokeColor=#C8A415;fontSize=12;fontStyle=1;fontColor=#5C4708;verticalAlign=middle;align=left;spacingLeft=8;spacingRight=8;" value="Stage 8 — Receipt and revoke" vertex="1">
+          <mxGeometry height="26" width="300" x="16" y="3770" as="geometry" />
+        </mxCell>
+        <mxCell id="M1" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=blockThin;endFill=1;strokeColor=#1A1A1A;fontSize=10;fontColor=#1A1A1A;labelBackgroundColor=#FFFFFF;verticalLabelPosition=bottom;" value="1 · set caps, window, expiry, intentConstraint, merchantAllowlist">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="370" y="230" as="sourcePoint" />
+            <mxPoint x="620" y="230" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="M2" edge="1" parent="1" style="html=1;endArrow=blockThin;endFill=1;rounded=1;curved=1;strokeColor=#1A1A1A;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="585" y="332" />
+              <mxPoint x="655" y="332" />
+            </Array>
+            <mxPoint x="585" y="300" as="sourcePoint" />
+            <mxPoint x="655" y="300" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="M3" edge="1" parent="1" style="html=1;endArrow=blockThin;endFill=1;rounded=1;curved=1;strokeColor=#1A1A1A;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="585" y="402" />
+              <mxPoint x="655" y="402" />
+            </Array>
+            <mxPoint x="585" y="370" as="sourcePoint" />
+            <mxPoint x="655" y="370" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="M4" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=blockThin;endFill=1;strokeColor=#1A1A1A;fontSize=10;fontColor=#1A1A1A;labelBackgroundColor=#FFFFFF;verticalLabelPosition=bottom;" value="4 · createMandate(id, policyHash, expiresAt)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="620" y="440" as="sourcePoint" />
+            <mxPoint x="1120" y="440" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="M5" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=blockThin;endFill=1;strokeColor=#1A1A1A;fontSize=10;fontColor=#1A1A1A;labelBackgroundColor=#FFFFFF;verticalLabelPosition=bottom;" value="5 · store full policy body + intentConstraint">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint as="offset" />
+            <mxPoint x="620" y="510" as="sourcePoint" />
+            <mxPoint x="1620" y="510" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="M6" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=blockThin;endFill=1;strokeColor=#1A1A1A;fontSize=10;fontColor=#1A1A1A;labelBackgroundColor=#FFFFFF;verticalLabelPosition=bottom;" value="6 · purchase instruction (verbatim)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="370" y="610" as="sourcePoint" />
+            <mxPoint x="1370" y="610" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="M7" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=blockThin;endFill=1;strokeColor=#1A1A1A;fontSize=10;fontColor=#1A1A1A;labelBackgroundColor=#FFFFFF;verticalLabelPosition=bottom;" value="7 · createIntent — immutable, append-only">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1370" y="680" as="sourcePoint" />
+            <mxPoint x="1620" y="680" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="M8" edge="1" parent="1" style="html=1;endArrow=blockThin;endFill=1;rounded=1;curved=1;strokeColor=#1A1A1A;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1335" y="812" />
+              <mxPoint x="1405" y="812" />
+            </Array>
+            <mxPoint x="1335" y="780" as="sourcePoint" />
+            <mxPoint x="1405" y="780" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="M9" edge="1" parent="1" style="html=1;endArrow=blockThin;endFill=1;rounded=1;curved=1;strokeColor=#1A1A1A;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1335" y="882" />
+              <mxPoint x="1405" y="882" />
+            </Array>
+            <mxPoint x="1335" y="850" as="sourcePoint" />
+            <mxPoint x="1405" y="850" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="M10" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=blockThin;endFill=1;strokeColor=#1A1A1A;fontSize=10;fontColor=#1A1A1A;labelBackgroundColor=#FFFFFF;verticalLabelPosition=bottom;" value="10 · getCard(wallet, name 2–26, amount 5–30)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1370" y="950" as="sourcePoint" />
+            <mxPoint x="1870" y="950" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="M11" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;endFill=0;strokeColor=#1A1A1A;fontSize=10;fontColor=#1A1A1A;labelBackgroundColor=#FFFFFF;verticalLabelPosition=bottom;" value="11 · get_card_sandbox — 202, answer arrives on the SSE stream">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1870" y="1020" as="sourcePoint" />
+            <mxPoint x="2120" y="1020" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="M12" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;endFill=0;dashed=1;strokeColor=#5B6472;fontSize=10;fontColor=#37474F;labelBackgroundColor=#FFFFFF;verticalLabelPosition=bottom;" value="12 · cardapi URL + x402 requirements (payTo = StraitsX)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="2120" y="1090" as="sourcePoint" />
+            <mxPoint x="1870" y="1090" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="M13" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;endFill=0;dashed=1;strokeColor=#5B6472;fontSize=10;fontColor=#37474F;labelBackgroundColor=#FFFFFF;verticalLabelPosition=bottom;" value="13 · cardapiUrl, challenge">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1870" y="1160" as="sourcePoint" />
+            <mxPoint x="1370" y="1160" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="M14" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=blockThin;endFill=1;strokeColor=#1A1A1A;fontSize=10;fontColor=#1A1A1A;labelBackgroundColor=#FFFFFF;verticalLabelPosition=bottom;" value="14 · attach challenge to intent">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1370" y="1230" as="sourcePoint" />
+            <mxPoint x="1620" y="1230" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="M15" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=blockThin;endFill=1;strokeColor=#1A1A1A;fontSize=10;fontColor=#1A1A1A;labelBackgroundColor=#FFFFFF;verticalLabelPosition=bottom;" value="15 · requestPayment { requestId, intent, resolvedItem, challenge }">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1370" y="1340" as="sourcePoint" />
+            <mxPoint x="2370" y="1340" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="M16" edge="1" parent="1" style="html=1;endArrow=blockThin;endFill=1;rounded=1;curved=1;strokeColor=#1A1A1A;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="2335" y="1442" />
+              <mxPoint x="2405" y="1442" />
+            </Array>
+            <mxPoint x="2335" y="1410" as="sourcePoint" />
+            <mxPoint x="2405" y="1410" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="M17" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=blockThin;endFill=1;strokeColor=#1A1A1A;fontSize=10;fontColor=#1A1A1A;labelBackgroundColor=#FFFFFF;verticalLabelPosition=bottom;" value="17 · load policy, intentConstraint, window spend">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="2370" y="1480" as="sourcePoint" />
+            <mxPoint x="1620" y="1480" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="M18" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=blockThin;endFill=1;strokeColor=#1A1A1A;fontSize=10;fontColor=#1A1A1A;labelBackgroundColor=#FFFFFF;verticalLabelPosition=bottom;" value="18 · getMandate(mandateId)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="2370" y="1550" as="sourcePoint" />
+            <mxPoint x="870" y="1550" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="M19" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=blockThin;endFill=1;strokeColor=#1A1A1A;fontSize=10;fontColor=#1A1A1A;labelBackgroundColor=#FFFFFF;verticalLabelPosition=bottom;" value="19 · read revoked, expiry, policyHash">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="870" y="1620" as="sourcePoint" />
+            <mxPoint x="1120" y="1620" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="M20" edge="1" parent="1" style="html=1;endArrow=blockThin;endFill=1;rounded=1;curved=1;strokeColor=#1A1A1A;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="2335" y="1722" />
+              <mxPoint x="2405" y="1722" />
+            </Array>
+            <mxPoint x="2335" y="1690" as="sourcePoint" />
+            <mxPoint x="2405" y="1690" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="F" parent="1" style="shape=umlFrame;whiteSpace=wrap;html=1;width=70;height=26;fillColor=none;strokeColor=#5B6472;fontSize=11;fontStyle=1;fontColor=#5B6472;" value="alt" vertex="1">
+          <mxGeometry height="980" width="3140" x="40" y="1760" as="geometry" />
+        </mxCell>
+        <mxCell id="SA" parent="1" style="text;html=1;align=left;verticalAlign=middle;fontSize=11;fontStyle=2;fontColor=#5B6472;" value="[ any hard check fails — 1, 2, 3, 4, 5a, 7, 8 ]" vertex="1">
+          <mxGeometry height="22" width="560" x="120" y="1780" as="geometry" />
+        </mxCell>
+        <mxCell id="M21" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=blockThin;endFill=1;strokeColor=#1A1A1A;fontSize=10;fontColor=#1A1A1A;labelBackgroundColor=#FFFFFF;verticalLabelPosition=bottom;" value="21 · refused { check, detail }">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="2370" y="1820" as="sourcePoint" />
+            <mxPoint x="1370" y="1820" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="M22" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=blockThin;endFill=1;strokeColor=#1A1A1A;fontSize=10;fontColor=#1A1A1A;labelBackgroundColor=#FFFFFF;verticalLabelPosition=bottom;" value="22 · log refusal — every outcome recorded">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="2370" y="1890" as="sourcePoint" />
+            <mxPoint x="1620" y="1890" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="D1" edge="1" parent="1" style="line;strokeWidth=1;html=1;dashed=1;strokeColor=#5B6472;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="40" y="1960" as="sourcePoint" />
+            <mxPoint x="3180" y="1960" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="SB" parent="1" style="text;html=1;align=left;verticalAlign=middle;fontSize=11;fontStyle=2;fontColor=#5B6472;" value="[ check 6 budget overflow, or gate 9 intent mismatch — human-gated ]" vertex="1">
+          <mxGeometry height="22" width="760" x="120" y="1980" as="geometry" />
+        </mxCell>
+        <mxCell id="M23" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=blockThin;endFill=1;strokeColor=#1A1A1A;fontSize=10;fontColor=#1A1A1A;labelBackgroundColor=#FFFFFF;verticalLabelPosition=bottom;" value="23 · escalated { approvalUrl, TTL 5 min }">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="2370" y="2030" as="sourcePoint" />
+            <mxPoint x="1370" y="2030" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="M24" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=blockThin;endFill=1;strokeColor=#1A1A1A;fontSize=10;fontColor=#1A1A1A;labelBackgroundColor=#FFFFFF;verticalLabelPosition=bottom;" value="24 · review independent checkout fetch vs intentConstraint">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="370" y="2100" as="sourcePoint" />
+            <mxPoint x="620" y="2100" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="M25" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=blockThin;endFill=1;strokeColor=#1A1A1A;fontSize=10;fontColor=#1A1A1A;labelBackgroundColor=#FFFFFF;verticalLabelPosition=bottom;" value="25 · approve once | merchant for window | deny — no answer → auto-deny">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="620" y="2170" as="sourcePoint" />
+            <mxPoint x="2370" y="2170" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="D2" edge="1" parent="1" style="line;strokeWidth=1;html=1;dashed=1;strokeColor=#5B6472;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="40" y="2240" as="sourcePoint" />
+            <mxPoint x="3180" y="2240" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="SC" parent="1" style="text;html=1;align=left;verticalAlign=middle;fontSize=11;fontStyle=2;fontColor=#5B6472;" value="[ all checks pass ]" vertex="1">
+          <mxGeometry height="22" width="560" x="120" y="2260" as="geometry" />
+        </mxCell>
+        <mxCell id="M26" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=blockThin;endFill=1;strokeColor=#1A1A1A;fontSize=10;fontColor=#1A1A1A;labelBackgroundColor=#FFFFFF;verticalLabelPosition=bottom;" value="26 · reserve EIP-3009 nonce — conditional write, pre-sign">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="2370" y="2310" as="sourcePoint" />
+            <mxPoint x="1620" y="2310" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="M27" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=blockThin;endFill=1;strokeColor=#1A1A1A;fontSize=10;fontColor=#1A1A1A;labelBackgroundColor=#FFFFFF;verticalLabelPosition=bottom;" value="27 · sign(typedData, requestId) — the ONLY permitted caller">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="2370" y="2380" as="sourcePoint" />
+            <mxPoint x="2620" y="2380" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="M28" edge="1" parent="1" style="html=1;endArrow=blockThin;endFill=1;rounded=1;curved=1;strokeColor=#1A1A1A;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="2585" y="2482" />
+              <mxPoint x="2655" y="2482" />
+            </Array>
+            <mxPoint x="2585" y="2450" as="sourcePoint" />
+            <mxPoint x="2655" y="2450" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="M29" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;endFill=0;dashed=1;strokeColor=#5B6472;fontSize=10;fontColor=#37474F;labelBackgroundColor=#FFFFFF;verticalLabelPosition=bottom;" value="29 · signature">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="2620" y="2520" as="sourcePoint" />
+            <mxPoint x="2370" y="2520" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="M30" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;endFill=0;dashed=1;strokeColor=#5B6472;fontSize=10;fontColor=#37474F;labelBackgroundColor=#FFFFFF;verticalLabelPosition=bottom;" value="30 · signed { PAYMENT-SIGNATURE header, nonce }">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="2370" y="2590" as="sourcePoint" />
+            <mxPoint x="1370" y="2590" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="M31" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=blockThin;endFill=1;strokeColor=#1A1A1A;fontSize=10;fontColor=#1A1A1A;labelBackgroundColor=#FFFFFF;verticalLabelPosition=bottom;" value="31 · retry cardapi with PAYMENT-SIGNATURE — the one irreversible step">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1370" y="2860" as="sourcePoint" />
+            <mxPoint x="2870" y="2860" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="M32" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=blockThin;endFill=1;strokeColor=#1A1A1A;fontSize=10;fontColor=#1A1A1A;labelBackgroundColor=#FFFFFF;verticalLabelPosition=bottom;" value="32 · submit transferWithAuthorization (gasless for the payer)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="2870" y="2930" as="sourcePoint" />
+            <mxPoint x="3120" y="2930" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="M33" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;endFill=0;dashed=1;strokeColor=#5B6472;fontSize=10;fontColor=#37474F;labelBackgroundColor=#FFFFFF;verticalLabelPosition=bottom;" value="33 · settlement_tx">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="3120" y="3000" as="sourcePoint" />
+            <mxPoint x="2870" y="3000" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="M34" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;endFill=0;dashed=1;strokeColor=#5B6472;fontSize=10;fontColor=#37474F;labelBackgroundColor=#FFFFFF;verticalLabelPosition=bottom;" value="34 · card_opaque_id, card_html, settlement_tx">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="2870" y="3070" as="sourcePoint" />
+            <mxPoint x="1370" y="3070" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="M35" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=blockThin;endFill=1;strokeColor=#1A1A1A;fontSize=10;fontColor=#1A1A1A;labelBackgroundColor=#FFFFFF;verticalLabelPosition=bottom;" value="35 · confirmSettlement(txHash) — confirm independently">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1370" y="3190" as="sourcePoint" />
+            <mxPoint x="870" y="3190" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="M36" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=blockThin;endFill=1;strokeColor=#1A1A1A;fontSize=10;fontColor=#1A1A1A;labelBackgroundColor=#FFFFFF;verticalLabelPosition=bottom;" value="36 · receipt lookup, block number">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="870" y="3260" as="sourcePoint" />
+            <mxPoint x="3120" y="3260" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="M37" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=blockThin;endFill=1;strokeColor=#1A1A1A;fontSize=10;fontColor=#1A1A1A;labelBackgroundColor=#FFFFFF;verticalLabelPosition=bottom;" value="37 · record tx hash + block">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1370" y="3330" as="sourcePoint" />
+            <mxPoint x="1620" y="3330" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="M38" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=blockThin;endFill=1;strokeColor=#1A1A1A;fontSize=10;fontColor=#1A1A1A;labelBackgroundColor=#FFFFFF;verticalLabelPosition=bottom;" value="38 · viewCard(cardOpaqueId, settlementTx, wallet)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1370" y="3400" as="sourcePoint" />
+            <mxPoint x="1870" y="3400" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="M39" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=blockThin;endFill=1;strokeColor=#1A1A1A;fontSize=10;fontColor=#1A1A1A;labelBackgroundColor=#FFFFFF;verticalLabelPosition=bottom;" value="39 · view_card_sandbox — fresh one-time iframe URL">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1870" y="3470" as="sourcePoint" />
+            <mxPoint x="2120" y="3470" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="M40" edge="1" parent="1" style="html=1;endArrow=blockThin;endFill=1;rounded=1;curved=1;strokeColor=#1A1A1A;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1335" y="3572" />
+              <mxPoint x="1405" y="3572" />
+            </Array>
+            <mxPoint x="1335" y="3540" as="sourcePoint" />
+            <mxPoint x="1405" y="3540" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="M41" edge="1" parent="1" style="html=1;endArrow=blockThin;endFill=1;rounded=1;curved=1;strokeColor=#1A1A1A;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1335" y="3642" />
+              <mxPoint x="1405" y="3642" />
+            </Array>
+            <mxPoint x="1335" y="3610" as="sourcePoint" />
+            <mxPoint x="1405" y="3610" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="M42" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=blockThin;endFill=1;strokeColor=#1A1A1A;fontSize=10;fontColor=#1A1A1A;labelBackgroundColor=#FFFFFF;verticalLabelPosition=bottom;" value="42 · recordSpend — observational, not cryptographic">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1370" y="3680" as="sourcePoint" />
+            <mxPoint x="1620" y="3680" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="M43" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=blockThin;endFill=1;strokeColor=#1A1A1A;fontSize=10;fontColor=#1A1A1A;labelBackgroundColor=#FFFFFF;verticalLabelPosition=bottom;" value="43 · emit receipt — funding leg proved, spend leg observed">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1370" y="3800" as="sourcePoint" />
+            <mxPoint x="620" y="3800" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="M44" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;endFill=0;dashed=1;strokeColor=#5B6472;fontSize=10;fontColor=#37474F;labelBackgroundColor=#FFFFFF;verticalLabelPosition=bottom;" value="44 · show receipt, window spend, spend-leg status">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="620" y="3870" as="sourcePoint" />
+            <mxPoint x="370" y="3870" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="M45" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=blockThin;endFill=1;strokeColor=#1A1A1A;fontSize=10;fontColor=#1A1A1A;labelBackgroundColor=#FFFFFF;verticalLabelPosition=bottom;" value="45 · revoke(mandateId)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="370" y="3940" as="sourcePoint" />
+            <mxPoint x="620" y="3940" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="M46" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=blockThin;endFill=1;strokeColor=#1A1A1A;fontSize=10;fontColor=#1A1A1A;labelBackgroundColor=#FFFFFF;verticalLabelPosition=bottom;" value="46 · buildRevokeTx — human wallet signs">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="620" y="4010" as="sourcePoint" />
+            <mxPoint x="870" y="4010" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="M47" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=blockThin;endFill=1;strokeColor=#1A1A1A;fontSize=10;fontColor=#1A1A1A;labelBackgroundColor=#FFFFFF;verticalLabelPosition=bottom;" value="47 · revoke — owner only, NO timelock (effective within a block)">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="870" y="4080" as="sourcePoint" />
+            <mxPoint x="1120" y="4080" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="SL2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;fontSize=10;fontColor=#1A1A1A;fillColor=#FFFFFF;strokeColor=none;spacingLeft=6;" value="2 · serialise policy canonically → policyHash (shared package)" vertex="1">
+          <mxGeometry height="20" width="380" x="668" y="286" as="geometry" />
+        </mxCell>
+        <mxCell id="SL3" parent="1" style="rounded=1;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;fontSize=10;fontColor=#1A1A1A;fillColor=#FFFFFF;strokeColor=none;spacingLeft=6;" value="3 · buildCreateMandate — human wallet signs" vertex="1">
+          <mxGeometry height="20" width="380" x="668" y="356" as="geometry" />
+        </mxCell>
+        <mxCell id="SL8" parent="1" style="rounded=1;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;fontSize=10;fontColor=#1A1A1A;fillColor=#FFFFFF;strokeColor=none;spacingLeft=6;" value="8 · select paid resource endpoint — x402 merchant manifest or UCP /.well-known/ucp (no page parsing)" vertex="1">
+          <mxGeometry height="20" width="520" x="1418" y="766" as="geometry" />
+        </mxCell>
+        <mxCell id="SL9" parent="1" style="rounded=1;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;fontSize=10;fontColor=#1A1A1A;fillColor=#FFFFFF;strokeColor=none;spacingLeft=6;" value="9 · request endpoint; server returns 402 + payment-required challenge (amount, payTo, window) — price from the server, not a scrape; cap checked in stage 5" vertex="1">
+          <mxGeometry height="20" width="520" x="1418" y="836" as="geometry" />
+        </mxCell>
+        <mxCell id="SL16" parent="1" style="rounded=1;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;fontSize=10;fontColor=#1A1A1A;fillColor=#FFFFFF;strokeColor=none;spacingLeft=6;" value="16 · precondition — intent anchored? (cheapest refusal)" vertex="1">
+          <mxGeometry height="20" width="420" x="2418" y="1396" as="geometry" />
+        </mxCell>
+        <mxCell id="SL20" parent="1" style="rounded=1;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;fontSize=10;fontColor=#1A1A1A;fillColor=#FFFFFF;strokeColor=none;spacingLeft=6;" value="20 · checks 1–8 — deterministic, never LLM-judged" vertex="1">
+          <mxGeometry height="20" width="420" x="2418" y="1676" as="geometry" />
+        </mxCell>
+        <mxCell id="SL28" parent="1" style="rounded=1;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;fontSize=10;fontColor=#1A1A1A;fillColor=#FFFFFF;strokeColor=none;spacingLeft=6;" value="28 · hard-invariant rail — recipient pinned, value ≤ hardMaxTotal" vertex="1">
+          <mxGeometry height="20" width="420" x="2668" y="2436" as="geometry" />
+        </mxCell>
+        <mxCell id="SL40" parent="1" style="rounded=1;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;fontSize=10;fontColor=#1A1A1A;fillColor=#FFFFFF;strokeColor=none;spacingLeft=6;" value="40 · assertCheckoutDomain — refuse to fill on domain mismatch (last gate before the merchant payment)" vertex="1">
+          <mxGeometry height="20" width="420" x="1418" y="3526" as="geometry" />
+        </mxCell>
+        <mxCell id="SL41" parent="1" style="rounded=1;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;fontSize=10;fontColor=#1A1A1A;fillColor=#FFFFFF;strokeColor=none;spacingLeft=6;" value="41 · auto-fill card in one-time iframe, checkout, capture — the ONLY payment to the merchant (card network charge)" vertex="1">
+          <mxGeometry height="20" width="420" x="1418" y="3596" as="geometry" />
+        </mxCell>
+        <mxCell id="N1" parent="1" style="shape=note;whiteSpace=wrap;html=1;size=14;fillColor=#FFF3CD;strokeColor=#C8A415;fontColor=#5C4708;fontSize=11;fontStyle=1;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=8;" value="Not drawn because it cannot happen: Agent runtime → Signer service — network-denied, asserted by a CI probe test." vertex="1">
+          <mxGeometry height="60" width="760" x="40" y="4160" as="geometry" />
+        </mxCell>
+        <mxCell id="N2" parent="1" style="shape=note;whiteSpace=wrap;html=1;size=14;fillColor=#FFF3CD;strokeColor=#C8A415;fontColor=#5C4708;fontSize=11;fontStyle=1;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=8;" value="After signing the intent is terminal — if settlement times out, rotate to a fresh intentId and nonce; never reuse, or two authorizations could both settle." vertex="1">
+          <mxGeometry height="60" width="760" x="840" y="4160" as="geometry" />
+        </mxCell>
+        <mxCell id="N3" parent="1" style="shape=note;whiteSpace=wrap;html=1;size=14;fillColor=#FFF3CD;strokeColor=#C8A415;fontColor=#5C4708;fontSize=11;fontStyle=1;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=8;" value="Revoke is effective within a block — the next decision fails check 1 (mandate live) with no agent↔signer coordination." vertex="1">
+          <mxGeometry height="60" width="760" x="1640" y="4160" as="geometry" />
+        </mxCell>
+        <mxCell id="N4" parent="1" style="shape=note;whiteSpace=wrap;html=1;size=14;fillColor=#FFF3CD;strokeColor=#C8A415;fontColor=#5C4708;fontSize=11;fontStyle=1;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=8;" value="Policy decision: maxCardsPerWindow = 1 — at most ONE card per window. check 6 only guards window spend and a single card; cardCount is always 0 | 1." vertex="1">
+          <mxGeometry height="50" width="2400" x="40" y="4240" as="geometry" />
+        </mxCell>
+        <mxCell id="N5" parent="1" style="shape=note;whiteSpace=wrap;html=1;size=14;fillColor=#E8F0FE;strokeColor=#4285F4;fontColor=#174EA6;fontSize=11;fontStyle=1;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=8;" value="Staged demo model — Stage A (test): token = TSGD (mock XSGD, same EIP-3009 interface) on Fuji 43113; merchant = mock resource server exposing BOTH x402 (402 + payment-required) and UCP (/.well-known/ucp → cart/checkout whose payment handler issues the TSGD challenge); card generation is REAL — StraitsX sandbox MCP get_card_sandbox/wallet → real cardapi URL + iframe card view; only the issuer AUTH leg is simulated (local RHA stand-in mirroring StraitsX simulate-transaction contract — approved|declined, response codes), swapped to the real simulate_transactions API when the rep provisions it. Money movement: &#39;SGD → mint TSGD&#39; (simulated on-ramp) → EIP-3009 on-chain transfer → &#39;burn TSGD → SGD&#39; (simulated redemption, 1:1); TSGD minted exactly once per purchase, burned exactly once. Stage B (production): swap TSGD → real XSGD (Avalanche 43114, 0xb2F85b7AB3c2b6f62DF06dE6aE7D09c010a5096E) — token moves buyer → merchant on-chain; the XSGD → SGD → card-issuer redemption leg is executed by StraitsX (MAS-licensed), not by us." vertex="1">
+          <mxGeometry height="110" width="3240" x="40" y="4310" as="geometry" />
+        </mxCell>
+        <mxCell id="N6" parent="1" style="shape=note;whiteSpace=wrap;html=1;size=14;fillColor=#E8F0FE;strokeColor=#4285F4;fontColor=#174EA6;fontSize=11;fontStyle=1;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=8;" value="Real-time transparency + audit — the Ledger broadcasts EVERY mutation as an append-only SSE event (GET /ledger/events: snapshot on connect, then append as each step lands). The Web app proxies the stream and renders it live on the Ledger page: intent.created → challenge.attached → nonce.reserved → decision.recorded (refusals and escalations included — every outcome is visible) → settlement.recorded → spend.recorded → capture.recorded, plus policy.put and escalation events. Full history for audit = GET /intents (append-only, newest first, read-only view) and per-purchase GET /receipt/:requestId; the user sees the same records on the History page. Append-only by design: nothing is ever rewritten or deleted, only a new state appended." vertex="1">
+          <mxGeometry height="110" width="3240" x="40" y="4430" as="geometry" />
+        </mxCell>
+        <mxCell id="WwGnjc5qa93_VqSgDrvF-1" parent="1" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;shapeInside=1;fixedSize=1;fillColor=#e1d5e7;strokeColor=#9673a6;" value="Done seamlessly in chat, after user has given valid product URL" vertex="1">
+          <mxGeometry height="90" width="180" x="1382" y="990" as="geometry" />
+        </mxCell>
+        <mxCell id="a_xSBKqbxRFXzQ7aq_lP-1" parent="1" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;shapeInside=1;fixedSize=1;fillColor=#e1d5e7;strokeColor=#9673a6;" value="Can we add 1 more check that asks for user&#39;s approval (clicking button or saying keywords) bypasses agent" vertex="1">
+          <mxGeometry height="90" width="180" x="2678" y="1641" as="geometry" />
+        </mxCell>
+        <mxCell id="a_xSBKqbxRFXzQ7aq_lP-2" parent="1" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;shapeInside=1;fixedSize=1;fillColor=#e1d5e7;strokeColor=#9673a6;" value="To check whether it&#39;s possible for other checks to bypass the agent as well" vertex="1">
+          <mxGeometry height="90" width="180" x="2668" y="1760" as="geometry" />
+        </mxCell>
+        <mxCell id="a_xSBKqbxRFXzQ7aq_lP-3" parent="1" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;shapeInside=1;fixedSize=1;fillColor=#e1d5e7;strokeColor=#9673a6;" value="TTL 5 mins" vertex="1">
+          <mxGeometry height="90" width="180" x="2668" y="1880" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
